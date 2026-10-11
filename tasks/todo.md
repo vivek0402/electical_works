@@ -35,7 +35,7 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
 - [x] Task 4 Ledger models + posting services: 2843d36 + validation fixes 79227a4 (72 tests incl. 2-thread oversell; spec ✅ quality ✅)
 - [x] Task 5 Item services: 965cbc9 + review fixes b135ef9 (89 tests; spec ✅ quality ✅)
 - [x] Task 6 Layout + dashboard: 9188adf + review fixes 5b9cbe4 (104 tests; 0 JS errors; spec ✅ quality ✅)
-- [ ] Task 7 Current stock / movements / low stock lists
+- [x] Task 7 Current stock / movements / low stock lists: 9ddadc4 + review fixes 6009b20 (130 tests; fits 1366px; spec ✅ quality ✅)
 - [ ] Task 8 Items list, form, item card
 - [ ] Task 9 Entry forms, entry detail, undo
 - [ ] Task 10 Excel exports
