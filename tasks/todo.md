@@ -32,7 +32,7 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
 - [x] Task 1 Skeleton: a36dfd1 + review fixes a4e3e7d (3 tests pass; spec ✅ quality ✅)
 - [x] Task 2 Accounts, roles, login, static, admin: fd14283 + review fixes 516425c (16 tests; spec ✅ quality ✅)
 - [x] Task 3 Masters, Item, code normalisation: 5c39213 + integrity fixes 37fdba7 (32 tests; spec ✅ quality ✅)
-- [ ] Task 4 Ledger models + posting services
+- [x] Task 4 Ledger models + posting services: 2843d36 + validation fixes 79227a4 (72 tests incl. 2-thread oversell; spec ✅ quality ✅)
 - [ ] Task 5 Item services
 - [ ] Task 6 Layout + dashboard
 - [ ] Task 7 Current stock / movements / low stock lists
