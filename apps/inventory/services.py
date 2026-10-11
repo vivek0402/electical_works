@@ -17,12 +17,14 @@ from .models import (
     EntryKind,
     InSource,
     Item,
+    ItemAlias,
     Location,
     OutTarget,
     StockBalance,
     StockEntry,
     StockLine,
 )
+from .normalise import normalise_code, search_key
 
 
 class StockError(ValidationError):
@@ -285,3 +287,91 @@ def balance_drift():
         for key in sorted(set(ledger) | set(cached))
         if cached.get(key, 0) != ledger.get(key, 0)
     ]
+
+
+class ItemError(ValidationError):
+    """An item rule was broken. The message is safe to show to staff as-is."""
+
+
+def find_item_by_code(text, exclude=None):
+    """Exact code, then a stored other spelling, then a look-alike code (O/0, I/1, hyphens, leading zeros)."""
+    code, key = normalise_code(text), search_key(text)
+    if not code:
+        return None
+    items = Item.objects.exclude(pk=exclude.pk) if exclude else Item.objects.all()
+    aliases = ItemAlias.objects.exclude(item=exclude) if exclude else ItemAlias.objects.all()
+    hit = items.filter(code=code).first()
+    if hit:
+        return hit
+    alias = aliases.filter(alias=code).select_related("item").first() or (
+        aliases.filter(search_key=key).select_related("item").first() if key else None
+    )
+    if alias:
+        return alias.item
+    return items.filter(search_key=key).first() if key else None
+
+
+@transaction.atomic
+def save_item(*, data, item=None) -> Item:
+    """Create (item=None) or update an item from cleaned form data. Raises ItemError (friendly message)."""
+    code = normalise_code(data["code"])
+    if not code:
+        raise ItemError("Item code is required.")
+    if not search_key(code):
+        raise ItemError("Item code must contain at least one letter or number.")
+    clash = find_item_by_code(code, exclude=item)
+    if clash:
+        raise ItemError(
+            f"{code} already exists."
+            if clash.code == code
+            else f"{code} looks the same as {clash.code}. Use that item instead."
+        )
+    if item and item.code != code and item.lines.exists():
+        raise ItemError(
+            "This item already has stock entries, so its code can't be changed. "
+            "Add the new spelling under 'Other spellings'."
+        )
+    aliases = []
+    for raw in data.get("aliases", []):
+        alias = normalise_code(raw)
+        if not alias or alias == code or alias in aliases:
+            continue
+        if not search_key(alias):
+            raise ItemError(f"Other spelling {alias} must contain at least one letter or number.")
+        owner = find_item_by_code(alias, exclude=item)
+        if owner and owner.code != code:
+            raise ItemError(f"Other spelling {alias} belongs to {owner.code}.")
+        aliases.append(alias)
+    item = item or Item()
+    item.code, item.search_key = code, search_key(code)
+    item.spare_type, item.company = data["spare_type"], data["company"]
+    item.description = (data.get("description") or "").strip()
+    item.cat_ref = normalise_code(data.get("cat_ref"))
+    item.fitting_type = data.get("fitting_type")
+    item.wattage_w, item.current_ma = data.get("wattage_w"), data.get("current_ma")
+    item.unit = data["unit"]
+    item.reorder_level = data.get("reorder_level") or 0
+    item.is_active = data.get("is_active", True)
+    item.save()
+    item.aliases.all().delete()
+    ItemAlias.objects.bulk_create(ItemAlias(item=item, alias=a, search_key=search_key(a)) for a in aliases)
+    return item
+
+
+def search_items(text, limit=8, active_only=False):
+    """Items matching any code, other spelling, description or fitting cat ref (typo-tolerant on codes)."""
+    raw, code, key = (text or "").strip(), normalise_code(text), search_key(text)
+    if len(raw) < 2:
+        return []
+    match = (
+        Q(code__icontains=code)
+        | Q(description__icontains=raw)
+        | Q(cat_ref__icontains=code)
+        | Q(aliases__alias__icontains=code)
+    )
+    if len(key) > 2:
+        match |= Q(search_key__contains=key) | Q(aliases__search_key__contains=key)
+    items = Item.objects.filter(match)
+    if active_only:
+        items = items.filter(is_active=True)
+    return list(items.select_related("spare_type", "company").distinct().order_by("code")[:limit])
