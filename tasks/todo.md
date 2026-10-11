@@ -23,6 +23,10 @@ Confirmed decisions:
 - [x] A.5 `make_sample_exports.py` (XlsxWriter) → 4 neat `.xlsx` files; Export buttons download them; read back to verify formatting
 - [x] A.6 Playwright walkthrough (desktop + phone, zero JS errors) → serve on localhost for review
 
+### Step A2: redesign as a modern admin dashboard (user's choice) ⛔ approval gate
+- [x] Tabler layout (sidebar, top bar with global search, low-stock bell, user menu), KPI cards, weekly IN vs OUT chart (CVD-validated colours, table view), sortable and paged tables, Tabler forms with pill choices, modals and toasts
+- [x] Walkthrough passes (desktop + phone, zero JS errors), now also covering global search, column sorting, paging and the phone menu
+
 ### Step B: build (after approval)
 - [ ] B1 Setup · B2 Masters · B3 Stock engine · B4 Screens · B5 Exports · B6 Demo data (details in the plan)
 
