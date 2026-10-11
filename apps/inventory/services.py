@@ -11,11 +11,26 @@ from django.db import connection, transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
 
-from .models import EntryCounter, EntryKind, Item, Location, StockBalance, StockEntry, StockLine
+from .models import (
+    AdjustReason,
+    EntryCounter,
+    EntryKind,
+    InSource,
+    Item,
+    Location,
+    OutTarget,
+    StockBalance,
+    StockEntry,
+    StockLine,
+)
 
 
 class StockError(ValidationError):
     """A stock rule was broken. The message is safe to show to staff as-is."""
+
+
+class NotEnoughStock(StockError):
+    """Posting would take a balance below zero."""
 
 
 @dataclass(frozen=True)
@@ -27,14 +42,50 @@ class Line:
     pkd: date | None = None
 
 
-def _validate(kind, entry_date, lines, reason, note):
+def _is_whole(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
+    if kind not in EntryKind.values:
+        raise StockError("Unknown entry kind.")
+    if kind == EntryKind.REV and reverses is None:
+        raise StockError("An undo must name the entry it cancels.")
+    if kind != EntryKind.REV and reverses is not None:
+        raise StockError("Only an undo can cancel another entry.")
+
+    # Common checks, for every kind (including REV).
     if not lines:
         raise StockError("Add at least one item.")
     if entry_date > timezone.localdate():
         raise StockError("The date can't be in the future.")
     for line in lines:
-        if not isinstance(line.qty, int) or line.qty == 0:
+        if not _is_whole(line.qty) or line.qty == 0:
             raise StockError(f"Quantity for {line.item.code} must be a whole number, not zero.")
+    if kind == EntryKind.REV:
+        return  # an undo mirrors an existing entry, so the rules below do not apply to it
+
+    # Kind-specific checks for new entries.
+    if kind == EntryKind.IN:
+        if subtype and subtype not in InSource.values:
+            raise StockError("Choose where the stock came from.")
+    elif kind == EntryKind.OUT:
+        if subtype and subtype not in OutTarget.values:
+            raise StockError("Choose who the stock was issued to.")
+    elif subtype:
+        raise StockError(f"{EntryKind(kind).label} entries don't take a type.")
+    if kind != EntryKind.ADJ and reason:
+        raise StockError("Only an adjustment takes a reason.")
+
+    inactive_item = Item.objects.filter(pk__in={line.item.pk for line in lines}, is_active=False).first()
+    if inactive_item:
+        raise StockError(f"{inactive_item.code} is inactive.")
+    inactive_place = Location.objects.filter(
+        pk__in={line.location.pk for line in lines}, is_active=False
+    ).first()
+    if inactive_place:
+        raise StockError(f"{inactive_place.name} is inactive.")
+
     label = EntryKind(kind).label
     if kind == EntryKind.IN and any(line.qty < 0 for line in lines):
         raise StockError(f"{label} can only add stock.")
@@ -51,12 +102,16 @@ def _validate(kind, entry_date, lines, reason, note):
     if kind == EntryKind.ADJ:
         if not reason:
             raise StockError("Choose the reason for the adjustment.")
+        if reason not in AdjustReason.values:
+            raise StockError("Choose a valid reason for the adjustment.")
         if not note.strip():
             raise StockError("Write a short note explaining the adjustment.")
 
 
 def _lock_balances(keys):
     """Make sure balance rows exist, then lock them in a fixed order (avoids deadlocks)."""
+    if not keys:
+        return {}
     StockBalance.objects.bulk_create(
         [StockBalance(item_id=i, location_id=loc, qty=0) for i, loc in keys], ignore_conflicts=True
     )
@@ -91,8 +146,15 @@ def post_entry(
 
     Raises StockError (and saves nothing) if a rule is broken or stock would go negative.
     """
-    if kind != EntryKind.REV:
-        _validate(kind, entry_date, lines, reason, note)
+    _validate(
+        kind=kind,
+        entry_date=entry_date,
+        lines=lines,
+        subtype=subtype,
+        reason=reason,
+        note=note,
+        reverses=reverses,
+    )
     deltas = defaultdict(int)
     for line in lines:
         deltas[(line.item.pk, line.location.pk)] += line.qty
@@ -105,7 +167,7 @@ def post_entry(
         new_qty = balances[key].qty + deltas[key]
         if new_qty < 0:
             item, place = items[key[0]], places[key[1]]
-            raise StockError(f"Only {balances[key].qty} {item.unit} of {item.code} at {place.name}.")
+            raise NotEnoughStock(f"Only {balances[key].qty} {item.unit} of {item.code} at {place.name}.")
         balances[key].qty = new_qty
         balances[key].updated_at = now  # bulk_update does not apply auto_now
     entry = StockEntry.objects.create(
@@ -143,9 +205,16 @@ def adjust_counts(*, entry_date, location, counts, reason, note, user) -> StockE
         raise StockError("Choose the reason for the adjustment.")
     if not note.strip():
         raise StockError("Write a short note explaining the adjustment.")
-    keys = sorted({(item.pk, location.pk) for item, _ in counts})
-    if not keys:
+    if not counts:
         raise StockError("Add at least one item.")
+    seen = set()
+    for item, counted in counts:
+        if item.pk in seen:
+            raise StockError(f"{item.code} is listed twice.")
+        seen.add(item.pk)
+        if not _is_whole(counted) or counted < 0:
+            raise StockError(f"Counted quantity for {item.code} must be a whole number, 0 or more.")
+    keys = sorted((item.pk, location.pk) for item, _ in counts)
     balances = _lock_balances(keys)
     lines = [Line(item, location, counted - balances[(item.pk, location.pk)].qty) for item, counted in counts]
     lines = [line for line in lines if line.qty]
@@ -166,6 +235,9 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
         raise StockError("This entry was already undone.")
     if not reason.strip():
         raise StockError("Please give a reason.")
+    entry_date = entry_date or timezone.localdate()
+    if entry_date < entry.entry_date:
+        raise StockError("The undo can't be dated before the entry it cancels.")
     lines = [
         Line(line.item, line.location, -line.qty, line.batch_code, line.pkd)
         for line in entry.lines.select_related("item", "location")
@@ -173,15 +245,16 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
     try:
         return post_entry(
             kind=EntryKind.REV,
-            entry_date=entry_date or timezone.localdate(),
+            entry_date=entry_date,
             lines=lines,
             user=user,
             party=entry.party,
+            company=entry.company,
             ref=entry.ref,
             note=reason,
             reverses=entry,
         )
-    except StockError as exc:
+    except NotEnoughStock as exc:
         raise StockError(
             f"{exc.message} That stock has already been used, so this entry can't be undone."
         ) from exc
