@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+<p>
+  Signed in as
+  {% if is_admin %}<mark>Admin</mark>{% elif is_office %}<mark>Office</mark>{% elif is_technician %}<mark>Technician</mark>{% else %}<mark>no role assigned</mark>{% endif %}.
+</p>
+{% if not is_admin and not is_office and not is_technician %}
+  <p>Your account has no role yet. Please ask the admin to assign one.</p>
+{% endif %}
+{% endblock %}
