@@ -31,6 +31,12 @@ Plan file: see "Approved plan" at the top of this file (same path, updated 2026-
 - [x] M.5 Seed from sample sheets (18 complaints with fake phones, pieces from the defective list); delete stock-app.html
 - [x] M.6 Playwright walkthrough of the cross-system flow (desktop + phone, zero JS errors, defective invariant after every step) → serve at localhost:8080/mockups/app/ for review
 
+### Step M2: Everything Wipro (and others) can send (approved 2026-10-11) ⛔ same approval gate
+- [x] M2.1 core.js: item units (NOS/MTR/ROLL/BOX/PKT) + non-Wipro wire item; RECEIVED_FROM_SUPPLIER; piece outcomes REPLACED (any item) / REPAIRED / CREDITED / REJECTED + Wipro notes; matchReplacements with per-line capacity; batch PARTLY_SETTLED
+- [x] M2.2 stock.js: Stock IN from Wipro / other supplier / opening; "match replacements" prompt after a Wipro receipt; units in lists and messages
+- [x] M2.3 defectives.js: Match-replacements screen; batch actions (Replaced with editable item + extra items, Repaired, Credit note, Rejected, Wipro note); progress "x of y answered"; outcome-mix report
+- [x] M2.4 Seed all four cases; extend walkthrough (different item, partial, repaired, credit note, extra stock, wire in MTR); zero JS errors, invariant holds
+
 ### Phase 2: item master + ledger core (done on `phase-2`)
 - [x] 2.1 `Item`, `ItemAlias` (unique normalised code/alias, pg_trgm GIN index, item_type, is_active); admin
 - [x] 2.2 `normalise_code()`, `search_key()`, `parse_qty()` + unit tests with every messy value
@@ -85,3 +91,6 @@ Plan file: see "Approved plan" at the top of this file (same path, updated 2026-
 ### Step M (2026-10-11): 3-system mockup built, waiting for approval ⛔
 - `mockups/app/` (index.html, core.js, ui.js, stock.js, defectives.js, complaints.js, mockup.css), served at http://localhost:8080/mockups/app/
 - Evidence: `mockups/walkthrough.py` (Playwright, desktop + phone) passes with zero JS errors. Flow: file complaint (bad phone warns) → technician visit (an over-issue is refused, nothing saved; then 2 parts issued + 2 tagged pieces collected) → return batch → Wipro list → sent → 1 replaced (fresh +1, linked) + 1 rejected → batch SETTLED → close refused without reason, accepted with one. Defective invariant holds after every step.
+
+### Step M2 (2026-10-11): Wipro "other" outcomes in the mockup, waiting for approval ⛔
+- Evidence: `mockups/walkthrough.py` passes, zero JS errors, invariant holds. It covers: a Wipro receipt with 3 lines matched to 2 pieces (one a different item), an over-match refused, 10 units left as new stock, batch PARTLY_SETTLED → repaired (fresh +1) → credit note → SETTLED; the batch "Replaced" dialog accepting an old spelling of a different item plus 3 extra LENS; another supplier's 40 MTR of wire, and an over-issue refused with "Only 130 MTR of WIRE 1.5 SQMM".

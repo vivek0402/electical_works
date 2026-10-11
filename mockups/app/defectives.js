@@ -9,7 +9,7 @@ const sentAge = b => b.sentOn ? daysBetween(b.sentOn, today()) : 0;
 
 ROUTES.def = () => {
   const count = s => pieces.filter(p => p.status === s).length;
-  const sent = batches.filter(b => b.status === "SENT");
+  const sent = batches.filter(b => ["SENT", "PARTLY_SETTLED"].includes(b.status));
   const oldest = sent.length ? Math.max(...sent.map(sentAge)) : 0;
   view().innerHTML = `${flashHtml()}<h1>② Defective pieces</h1>
     <div class="bigbtns">
@@ -23,7 +23,7 @@ ROUTES.def = () => {
         <div class="num">${count(s)}</div>${pieceBadge(s)}${s === "SENT_TO_WIPRO" && oldest ? `<br><span class="muted">oldest batch ${oldest} days</span>` : ""}</article></a>`).join("")}
     </div>
     <div class="tiles" style="margin-top:1rem">
-      ${["REPLACED", "REJECTED", "SCRAPPED"].map(s => `<a href="#def/pieces/status:${s}"><article><div class="num">${count(s)}</div>${pieceBadge(s)}</article></a>`).join("")}
+      ${["REPLACED", "REPAIRED", "CREDITED", "REJECTED", "SCRAPPED"].map(s => `<a href="#def/pieces/status:${s}"><article><div class="num">${count(s)}</div>${pieceBadge(s)}</article></a>`).join("")}
       <a href="#def/pieces"><article><div class="num">${pieces.length}</div>pieces on record</article></a>
     </div>
     <h3 style="margin-top:2rem">Return batches in progress</h3>
@@ -154,6 +154,14 @@ function doScrap() { const err = scrapPieces([...sel], document.getElementById("
   closeDlg(); sel.clear(); setFlash("Pieces scrapped."); route(); }
 
 /* ------------------------------ Piece detail + timeline ------------------------------ */
+function outcomeText(p) {
+  if (p.status === "REPLACED") return `Replaced${p.replacementCode !== p.code ? ` with a <strong>different item</strong>: ${codeLink(p.replacementCode)}` : ""} · ${entryLink(p.replacement)}`;
+  if (p.status === "REPAIRED") return `Repaired and returned · ${entryLink(p.replacement)}`;
+  if (p.status === "CREDITED") return `Credit note <strong>${esc(p.creditNo)}</strong>${p.creditAmt ? ` · ₹${p.creditAmt}` : ""}`;
+  if (p.status === "REJECTED") return `Rejected: ${esc(p.outcomeNote || "no reason given")}`;
+  const note = p.events.filter(e => e.from === e.to && e.note.startsWith("Wipro:")).at(-1);
+  return note ? `<span class="warn">${esc(note.note)}</span> <span class="muted">(${note.date})</span>` : "";
+}
 ROUTES["def/piece"] = tag => {
   const p = piece(tag);
   if (!p) { view().innerHTML = "<p>Piece not found.</p>"; return; }
@@ -166,32 +174,35 @@ ROUTES["def/piece"] = tag => {
       <p><strong>Fault</strong><br>${esc(p.fault) || "—"}</p>
       <p><strong>Batch code / PKD</strong><br>${esc(p.batchCode) || "—"} / ${esc(p.pkd) || "—"}</p>
       <p><strong>Return batch</strong><br>${batchLink(p.batch) || "—"}</p>
-      <p><strong>Wipro outcome</strong><br>${p.outcome ? pieceBadge(p.outcome) : "—"} ${esc(p.outcomeNote)}
-        ${p.replacement ? `<br>replacement ${entryLink(p.replacement)}` : ""}</p>
+      <p><strong>Wipro result</strong><br>${outcomeText(p) || "—"}</p>
     </div>
     <h3>History</h3>
     <ul class="timeline">${p.events.slice().reverse().map(e => `<li><strong>${e.date}</strong> · ${esc(e.by)}<br>
-      ${e.from && e.from !== e.to ? `${PIECE_STATUS[e.from]} → ` : ""}${PIECE_STATUS[e.to]}${e.note ? ` <span class="muted">· ${esc(e.note)}</span>` : ""}</li>`).join("")}</ul>
-    <p class="muted">Stock entries: ${p.entries.map(entryLink).join(", ") || "none"}</p>
+      ${e.from && e.from !== e.to ? `${PIECE_STATUS[e.from]} → ` : ""}${e.from === e.to ? "" : PIECE_STATUS[e.to]}${e.note ? ` <span class="muted">· ${esc(e.note)}</span>` : ""}</li>`).join("")}</ul>
+    <p class="muted">Stock entries: ${[...p.entries, p.replacement].filter(Boolean).map(entryLink).join(", ") || "none"}</p>
     <a href="#def/pieces" role="button" class="secondary outline">← Pieces</a>`;
 };
 
 /* ------------------------------ Return batches ------------------------------ */
+const BATCH_LABEL = { DRAFT: "Draft", SENT: "With Wipro", PARTLY_SETTLED: "Partly settled", SETTLED: "Settled" };
+const batchBadge = s => `<span class="badge s-${s}">${BATCH_LABEL[s]}</span>`;
 function batchTable(list) {
   if (!list.length) return `<p class="muted">None.</p>`;
-  return `<div class="table-wrap"><table class="striped"><thead><tr><th>Batch</th><th>Status</th><th>Created</th><th>Sent</th>
-    <th>Docket</th><th class="num">Pieces</th><th class="num">With Wipro</th><th class="num">Replaced</th><th class="num">Rejected</th></tr></thead><tbody>
+  return `<div class="table-wrap"><table class="striped"><thead><tr><th>Batch</th><th>Status</th><th>Created</th><th>Sent</th><th>Docket</th>
+    <th class="num">Pieces</th><th class="num">Answered</th><th class="num">Replaced</th><th class="num">Repaired</th><th class="num">Credit</th><th class="num">Rejected</th></tr></thead><tbody>
     ${list.slice().reverse().map(b => { const ps = b.tags.map(piece), n = s => ps.filter(p => p.status === s).length;
-      return `<tr><td>${batchLink(b.no)}</td><td><span class="badge s-${b.status}">${b.status}</span></td><td>${b.created}</td>
-        <td>${b.sentOn ? `${b.sentOn} <span class="age ${batchAgeClass(sentAge(b))}">${sentAge(b)} d</span>` : ""}</td><td>${esc(b.docket)}</td>
-        <td class="num">${ps.length}</td><td class="num">${n("SENT_TO_WIPRO")}</td><td class="num">${n("REPLACED")}</td><td class="num">${n("REJECTED")}</td></tr>`; }).join("")}
+      return `<tr><td>${batchLink(b.no)}</td><td>${batchBadge(b.status)}</td><td>${b.created}</td>
+        <td>${b.sentOn ? `${b.sentOn} ${b.status !== "SETTLED" ? `<span class="age ${batchAgeClass(sentAge(b))}">${sentAge(b)} d</span>` : ""}` : ""}</td><td>${esc(b.docket)}</td>
+        <td class="num">${ps.length}</td><td class="num">${b.sentOn ? `${answered(b)} of ${ps.length}` : ""}</td><td class="num">${n("REPLACED")}</td>
+        <td class="num">${n("REPAIRED")}</td><td class="num">${n("CREDITED")}</td><td class="num">${n("REJECTED")}</td></tr>`; }).join("")}
     </tbody></table></div>`;
 }
 ROUTES["def/batches"] = () => {
   view().innerHTML = `${flashHtml()}<h1>Return batches to Wipro</h1>
     <div class="actions" style="margin-bottom:1rem"><a href="#def/pieces/status:AT_OFFICE" role="button" class="btn-def">📦 New return batch</a></div>
     ${batchTable(batches)}
-    <p class="muted">DRAFT: still at the office, being packed · SENT: with Wipro (age = days since sent) · SETTLED: every piece has Wipro's result.</p>`;
+    <p class="muted">Draft: at the office, being packed · With Wipro: sent, no answers yet (age = days since sent) ·
+      Partly settled: Wipro has answered for some pieces · Settled: every piece has Wipro's result.</p>`;
 };
 function showWiproList(no) {
   openDlg(`<header><strong>Wipro Defective List · ${no}</strong></header><div class="table-wrap">${wiproList(batch(no))}</div>
@@ -216,50 +227,143 @@ let bsel = new Set();
 ROUTES["def/batch"] = no => {
   const b = batch(no);
   if (!b) { view().innerHTML = "<p>Batch not found.</p>"; return; }
-  const ps = b.tags.map(piece);
-  const sentPicked = [...bsel].filter(t => piece(t).status === "SENT_TO_WIPRO");
-  view().innerHTML = `${flashHtml()}<h1><span class="code">${b.no}</span> <span class="badge s-${b.status}">${b.status}</span></h1>
-    <p>Created ${b.created}${b.sentOn ? ` · sent ${b.sentOn} (docket ${esc(b.docket)}, ${sentAge(b)} days with Wipro) · ${entryLink(b.sentEntry)}` : ""}</p>
+  const ps = b.tags.map(piece), open = ["SENT", "PARTLY_SETTLED"].includes(b.status);
+  const picked = [...bsel].filter(t => b.tags.includes(t) && piece(t).status === "SENT_TO_WIPRO"), k = picked.length;
+  const act = (cls, label, fn) => `<button class="${cls}" ${k ? "" : "disabled"} onclick="${fn}('${b.no}')">${label} (${k})</button>`;
+  view().innerHTML = `${flashHtml()}<h1><span class="code">${b.no}</span> ${batchBadge(b.status)}</h1>
+    <p>Created ${b.created}${b.sentOn ? ` · sent ${b.sentOn} (docket ${esc(b.docket)}) · ${entryLink(b.sentEntry)}
+      <br><strong>${answered(b)} of ${ps.length}</strong> answered by Wipro${b.status !== "SETTLED" ? ` · ${sentAge(b)} days with Wipro` : ""}` : ""}</p>
     <div class="actions" style="margin-bottom:1rem">
       <button class="secondary" onclick="showWiproList('${b.no}')">📄 Wipro list (print / Excel)</button>
       ${b.status === "DRAFT" ? `<a href="#def/pieces/status:AT_OFFICE" role="button" class="secondary outline">+ Add pieces</a>
         <button class="btn-def" onclick="askSend('${b.no}')">🚚 Mark as sent to Wipro</button>` : ""}
-      ${b.status === "SENT" ? `<button class="btn-in" ${sentPicked.length ? "" : "disabled"} onclick="askReplace('${b.no}')">✓ Replacement received (${sentPicked.length})</button>
-        <button class="secondary" ${sentPicked.length ? "" : "disabled"} onclick="askReject('${b.no}')">✗ Rejected by Wipro (${sentPicked.length})</button>` : ""}
     </div>
-    ${b.status === "SENT" ? `<p class="muted">Tick the pieces Wipro has answered for, then record the result.</p>` : ""}
-    <div class="table-wrap"><table class="striped"><thead><tr>${b.status === "SENT" ? `<th><input type="checkbox" title="Select all with Wipro" onchange="selAll(bsel,[${ps.filter(p => p.status === "SENT_TO_WIPRO").map(p => `'${p.tag}'`).join(",")}],this.checked)"></th>` : ""}
-      <th>Tag</th><th>Item</th><th>Batch code</th><th>PKD</th><th>From</th><th>Status</th><th>Result</th>${b.status === "DRAFT" ? "<th></th>" : ""}</tr></thead><tbody>
-      ${ps.map(p => `<tr class="${bsel.has(p.tag) ? "sel" : ""}">${b.status === "SENT" ? `<td>${p.status === "SENT_TO_WIPRO" ? `<input type="checkbox" ${bsel.has(p.tag) ? "checked" : ""}
+    ${open ? `<article><strong>What did Wipro do?</strong> <span class="muted">Tick the pieces, then pick the result. Unticked pieces stay "With Wipro".</span>
+      <div class="actions" style="margin-top:.75rem">
+        ${act("btn-in", "✓ Replaced", "askReplace")}${act("secondary", "🔧 Repaired & returned", "askRepair")}
+        ${act("secondary", "₹ Credit note", "askCredit")}${act("secondary outline", "✗ Rejected", "askReject")}
+        ${act("secondary outline", "📝 Wipro note", "askNote")}</div></article>` : ""}
+    <div class="table-wrap"><table class="striped"><thead><tr>${open ? `<th><input type="checkbox" title="Select all with Wipro"
+        onchange="selAll(bsel,[${ps.filter(p => p.status === "SENT_TO_WIPRO").map(p => `'${p.tag}'`).join(",")}],this.checked)"></th>` : ""}
+      <th>Tag</th><th>Item</th><th>Batch code</th><th>PKD</th><th>From</th><th>Status</th><th>Wipro result</th>${b.status === "DRAFT" ? "<th></th>" : ""}</tr></thead><tbody>
+      ${ps.map(p => `<tr class="${bsel.has(p.tag) ? "sel" : ""}">${open ? `<td>${p.status === "SENT_TO_WIPRO" ? `<input type="checkbox" ${bsel.has(p.tag) ? "checked" : ""}
           onchange="this.checked?bsel.add('${p.tag}'):bsel.delete('${p.tag}');route()">` : ""}</td>` : ""}
         <td>${pieceLink(p.tag)}</td><td>${codeLink(p.code)}</td><td>${esc(p.batchCode)}</td><td>${esc(p.pkd)}</td><td>${esc(p.source)}</td>
-        <td>${pieceBadge(p.status)}</td><td>${p.replacement ? `replaced by ${entryLink(p.replacement)}` : esc(p.outcomeNote)}</td>
+        <td>${pieceBadge(p.status)}</td><td>${outcomeText(p)}</td>
         ${b.status === "DRAFT" ? `<td><button class="small secondary outline" onclick="removeFromBatch('${b.no}','${p.tag}');route()">Remove</button></td>` : ""}</tr>`).join("")}
     </tbody></table></div>
     <a href="#def/batches" role="button" class="secondary outline">← Batches</a>`;
 };
+const pickedIn = no => [...bsel].filter(t => batch(no).tags.includes(t) && piece(t).status === "SENT_TO_WIPRO");
+const dlgFooter = (save, cls = "") => `<div id="dl-err"></div><footer class="actions"><button class="secondary" onclick="closeDlg()">Cancel</button>
+  <button class="${cls}" onclick="${save}">Save</button></footer>`;
+const wiproWhere = () => `<div class="fields"><label>Received into <select id="dl-loc">${opts(LOCATIONS, "Vizag Office")}</select></label>
+  <label>Date <input id="dl-date" value="${today()}"></label><label>Wipro DC no. <input id="dl-dc"></label></div>`;
+const val = id => document.getElementById(id).value;
+function done(msg) { closeDlg(); bsel.clear(); setFlash(msg); route(); }
 function askSend(no) {
   openDlg(`<header><strong>Send ${no} to Wipro</strong></header><p>${batch(no).tags.length} pieces leave defective stock.</p>
     <div class="fields"><label>Date sent <input id="sd-date" value="${today()}"></label><label>Docket / challan no. <input id="sd-docket"></label></div><div id="sd-err"></div>
     <footer class="actions"><button class="secondary" onclick="closeDlg()">Cancel</button><button class="btn-def" onclick="doSend('${no}')">Mark sent</button></footer>`);
 }
-function doSend(no) { const err = sendBatch(no, document.getElementById("sd-date").value, document.getElementById("sd-docket").value);
+function doSend(no) { const err = sendBatch(no, val("sd-date"), val("sd-docket"));
   if (err) return formError("sd-err", err); closeDlg(); setFlash(`${no} marked as sent. Stock register updated.`); route(); }
+
+/* Replaced: record what Wipro actually sent (item may differ; extra items allowed) or match an already-entered receipt. */
 function askReplace(no) {
-  openDlg(`<header><strong>Replacement received for ${[...bsel].length} piece(s)</strong></header>
-    <p>Adds the replacements to <strong>fresh</strong> stock and links each piece to the receipt.</p>
-    <div class="fields"><label>Received into <select id="rp-loc">${opts(LOCATIONS, "Vizag Office")}</select></label>
-      <label>Date <input id="rp-date" value="${today()}"></label><label>Wipro DC no. <input id="rp-dc"></label></div><div id="rp-err"></div>
-    <footer class="actions"><button class="secondary" onclick="closeDlg()">Cancel</button><button class="btn-in" onclick="doReplace()">Save</button></footer>`);
+  const tags = pickedIn(no);
+  const receipts = entries.filter(e => e.type === "RECEIVED_FROM_WIPRO" && !e.reverses && e.purpose !== "REPAIR" && sum(Object.values(capacity(e.no)), x => x) > 0);
+  openDlg(`<header><strong>Replaced by Wipro: ${tags.length} piece(s)</strong></header>
+    ${receipts.length ? `<p class="muted">Already entered this delivery in Stock IN? <a href="#" onclick="closeDlg();go('#def/match/'+document.getElementById('dl-rc').value);return false">Match to receipt</a>
+      <select id="dl-rc" style="display:inline-block;width:auto;margin:0">${opts(receipts.map(e => [e.no, `${e.no} · ${e.ref} · ${e.date}`]))}</select></p><hr>` : ""}
+    <p><strong>Record the delivery now</strong> <span class="muted">(adds the items to fresh stock)</span></p>
+    ${wiproWhere()}
+    <table><thead><tr><th>Piece</th><th>Sent</th><th>Wipro sent back</th></tr></thead><tbody>
+      ${tags.map(t => `<tr><td class="code">${t}</td><td class="code">${esc(piece(t).code)}</td>
+        <td><input list="itemlist" class="rp-code" data-tag="${t}" value="${esc(piece(t).code)}" style="margin:0"></td></tr>`).join("")}</tbody></table>
+    <p class="muted">If Wipro sent a different item, change the code. Anything else on the same DC (extra or new stock) goes below.</p>
+    ${lineEditor("rp-extra", { reset: true, create: true })}
+    ${dlgFooter(`doReplace('${no}')`, "btn-in")}`);
+  edRender("rp-extra");
 }
-function doReplace() { const err = receiveReplacement([...bsel], document.getElementById("rp-loc").value, document.getElementById("rp-date").value, document.getElementById("rp-dc").value);
-  if (err) return formError("rp-err", err); closeDlg(); bsel.clear(); setFlash("Replacement received into fresh stock."); route(); }
+function doReplace(no) {
+  const pairs = [];
+  for (const inp of document.querySelectorAll(".rp-code")) {
+    const r = lookup(inp.value);
+    if (!r.item) return formError("dl-err", `${inp.dataset.tag}: "${inp.value}" is not a known item.`);
+    pairs.push({ tag: inp.dataset.tag, code: r.item.code });
+  }
+  const extra = edCollect("rp-extra", { optional: true });
+  if (extra.error) return formError("dl-err", extra.error);
+  const r = receiveFromWipro({ pairs, extra: extra.lines.map(l => ({ code: l.code, qty: l.qty })), loc: val("dl-loc"), date: val("dl-date"), dc: val("dl-dc") });
+  if (r.error) return formError("dl-err", r.error);
+  const diff = pairs.filter(p => p.code !== piece(p.tag).code).length;
+  done(`Saved ${entryLink(r.entry.no)}: ${pairs.length} piece(s) replaced${diff ? ` (${diff} with a different item)` : ""}${extra.lines.length ? `, plus ${extra.lines.length} other line(s) as new stock` : ""}.`);
+}
+function askRepair(no) {
+  openDlg(`<header><strong>Repaired & returned: ${pickedIn(no).length} piece(s)</strong></header>
+    <p>The same pieces come back working and go into <strong>fresh</strong> stock.</p>${wiproWhere()}${dlgFooter(`doRepair('${no}')`)}`);
+}
+function doRepair(no) { const err = repairPieces(pickedIn(no), val("dl-loc"), val("dl-date"), val("dl-dc"));
+  if (err) return formError("dl-err", err); done("Repaired pieces added back to fresh stock."); }
+function askCredit(no) {
+  openDlg(`<header><strong>Credit note for ${pickedIn(no).length} piece(s)</strong></header><p>No material comes back; the pieces are closed against the credit note.</p>
+    <div class="fields"><label>Credit note no. <input id="dl-cn"></label><label>Amount ₹ (total) <input id="dl-amt" type="number" min="0"></label></div>${dlgFooter(`doCredit('${no}')`)}`);
+}
+function doCredit(no) { const err = creditPieces(pickedIn(no), val("dl-cn"), val("dl-amt"));
+  if (err) return formError("dl-err", err); done("Credit note recorded."); }
 function askReject(no) {
-  openDlg(`<header><strong>Rejected by Wipro: ${[...bsel].length} piece(s)</strong></header>
-    <label>Wipro's reason <input id="rj-note" placeholder="e.g. physical damage, out of warranty"></label>
-    <footer class="actions"><button class="secondary" onclick="closeDlg()">Cancel</button><button onclick="doReject()">Save</button></footer>`);
+  openDlg(`<header><strong>Rejected by Wipro: ${pickedIn(no).length} piece(s)</strong></header>
+    <label>Wipro's reason <input id="rj-note" placeholder="e.g. physical damage, out of warranty"></label>${dlgFooter(`doReject('${no}')`)}`);
 }
-function doReject() { rejectPieces([...bsel], document.getElementById("rj-note").value); closeDlg(); bsel.clear(); setFlash("Marked as rejected. You can scrap them from the pieces list."); route(); }
+function doReject(no) { const err = rejectPieces(pickedIn(no), val("rj-note"));
+  if (err) return formError("dl-err", err); done("Marked as rejected. You can scrap them from the pieces list."); }
+function askNote(no) {
+  openDlg(`<header><strong>Wipro note: ${pickedIn(no).length} piece(s)</strong></header><p class="muted">Pieces stay "With Wipro"; the note goes into their history.</p>
+    <label>Note <input id="dl-note" placeholder="e.g. under investigation, will reply next week"></label>${dlgFooter(`doNote('${no}')`)}`);
+}
+function doNote(no) { const err = wiproNote(pickedIn(no), val("dl-note"));
+  if (err) return formError("dl-err", err); done("Note added."); }
+
+/* ------------------------------ Match replacements to a Wipro receipt ------------------------------ */
+let matchPick = {};
+ROUTES["def/match"] = no => {
+  const e = entry(no);
+  if (!e || e.type !== "RECEIVED_FROM_WIPRO" || e.purpose === "REPAIR") { view().innerHTML = "<p>That is not a Wipro receipt of new material.</p>"; return; }
+  const cap = capacity(no), waiting = pieces.filter(p => p.status === "SENT_TO_WIPRO");
+  if (matchPick.no !== no) {
+    matchPick = { no };
+    const left = { ...cap };
+    for (const t of bsel) { const p = piece(t); if (p && p.status === "SENT_TO_WIPRO" && left[p.code] > 0) { matchPick[t] = p.code; left[p.code]--; } }
+  }
+  const chosen = Object.entries(matchPick).filter(([t, c]) => t !== "no" && c);
+  const used = chosen.reduce((a, [, c]) => (a[c] = (a[c] || 0) + 1, a), {});
+  view().innerHTML = `${flashHtml()}<h1>Match replacements · <span class="code">${e.no}</span></h1>
+    <p>Wipro DC / ref <strong>${esc(e.ref.replace(/^Wipro DC /, ""))}</strong> · ${e.date} · into ${esc(e.lines[0].loc)}</p>
+    <div class="table-wrap"><table><thead><tr><th>Received item</th><th class="num">Qty</th><th class="num">Already matched</th><th class="num">Picked now</th><th class="num">Left as new stock</th></tr></thead><tbody>
+      ${Object.keys(cap).map(c => { const tot = sum(e.lines.filter(l => l.code === c), l => l.qty), now = used[c] || 0;
+        return `<tr><td>${codeLink(c)}</td><td class="num">${tot}</td><td class="num">${tot - cap[c]}</td><td class="num ${now > cap[c] ? "bad" : ""}">${now}</td>
+          <td class="num">${Math.max(0, cap[c] - now)}</td></tr>`; }).join("")}</tbody></table></div>
+    <h3>Pieces with Wipro <span class="muted">(${waiting.length})</span></h3>
+    <p class="muted">For each piece this delivery replaces, pick the item that came back. Leave the rest as "not in this delivery".</p>
+    <div class="table-wrap"><table class="striped"><thead><tr><th>Piece</th><th>Item sent</th><th>Batch</th><th>From</th><th>Replaced by</th></tr></thead><tbody>
+      ${waiting.map(p => { const c = matchPick[p.tag] || "";
+        return `<tr class="${c ? "sel" : ""}"><td>${pieceLink(p.tag)}</td><td>${codeLink(p.code)}</td><td>${batchLink(p.batch)}</td><td>${esc(p.source)}</td>
+          <td><select style="margin:0" onchange="matchPick['${p.tag}']=this.value;route()"><option value="">— not in this delivery —</option>
+            ${opts(Object.keys(cap).map(k => [k, `${k}${k === p.code ? " (same item)" : " (different item)"}`]), c)}</select></td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div id="mt-err"></div>
+    <div class="actions"><button class="btn-def" onclick="doMatch('${no}')">Save matches (${chosen.length})</button>
+      <a href="#stock/entry/${no}" role="button" class="secondary outline">Back to receipt</a></div>`;
+};
+function doMatch(no) {
+  const pairs = Object.entries(matchPick).filter(([t, c]) => t !== "no" && c).map(([tag, code]) => ({ tag, code }));
+  const err = matchReplacements(no, pairs);
+  if (err) return formError("mt-err", err);
+  matchPick = {}; bsel.clear();
+  setFlash(`${pairs.length} piece(s) marked as replaced by ${no}. Unmatched quantity stays as new stock.`);
+  go(`#stock/entry/${no}`);
+}
 
 /* ------------------------------ Reports ------------------------------ */
 ROUTES["def/reports"] = () => {
@@ -267,14 +371,19 @@ ROUTES["def/reports"] = () => {
   const byCust = Object.entries(pieces.filter(p => p.ticket).reduce((a, p) => { const k = complaint(p.ticket).customer; a[k] = (a[k] || 0) + 1; return a; }, {})).sort((x, y) => y[1] - x[1]);
   const sent = pieces.filter(p => p.status === "SENT_TO_WIPRO").map(p => sentAge(batch(p.batch)));
   const buckets = [["0–30 days", d => d <= 30], ["31–60 days", d => d > 30 && d <= 60], ["61–90 days", d => d > 60 && d <= 90], ["> 90 days", d => d > 90]];
-  const repl = pieces.filter(p => p.status === "REPLACED").map(p => daysBetween(batch(p.batch).sentOn, entry(p.replacement).date));
+  const back = pieces.filter(p => ["REPLACED", "REPAIRED"].includes(p.status)).map(p => daysBetween(batch(p.batch).sentOn, entry(p.replacement).date));
+  const mix = ["REPLACED", "REPAIRED", "CREDITED", "REJECTED"].map(s => [s, pieces.filter(p => p.status === s || (s === "REJECTED" && p.outcome === "REJECTED")).length]);
+  const diff = pieces.filter(p => p.status === "REPLACED" && p.replacementCode !== p.code).length;
+  const credit = sum(pieces.filter(p => p.status === "CREDITED"), p => p.creditAmt);
   const max = top.length ? top[0][1] : 1;
   view().innerHTML = `<h1>Defective reports</h1>
     <div class="fields">
       <article><h4>Top failing parts</h4><table>${top.map(([c, n]) => `<tr><td>${codeLink(c)}<br>
         <span style="display:block;height:.5rem;background:var(--def);width:${Math.round(100 * n / max)}%;border-radius:.25rem"></span></td><td class="num">${n} NOS</td></tr>`).join("")}</table></article>
-      <article><h4>Pending with Wipro</h4><table>${buckets.map(([l, f]) => `<tr><td>${l}</td><td class="num">${sent.filter(f).length} NOS</td></tr>`).join("")}</table>
-        <h4>Replacement turnaround</h4><p>${repl.length ? `<strong>${Math.round(sum(repl, x => x) / repl.length)} days</strong> average (sent → replacement received, ${repl.length} pieces)` : "No replacements yet."}</p></article>
+      <article><h4>Wipro's answers</h4><table>${mix.map(([s, n]) => `<tr><td>${pieceBadge(s)}</td><td class="num">${n}</td></tr>`).join("")}</table>
+        <p class="muted">${diff} replaced with a different item · credit notes total <strong>₹${credit}</strong></p>
+        <h4>Pending with Wipro</h4><table>${buckets.map(([l, f]) => `<tr><td>${l}</td><td class="num">${sent.filter(f).length} NOS</td></tr>`).join("")}</table>
+        <h4>Turnaround</h4><p>${back.length ? `<strong>${Math.round(sum(back, x => x) / back.length)} days</strong> average from sending to material back (replaced or repaired, ${back.length} pieces)` : "Nothing back yet."}</p></article>
       <article><h4>Defectives by customer</h4><table>${byCust.map(([c, n]) => `<tr><td>${esc(c)}</td><td class="num">${n}</td></tr>`).join("") || "<tr><td>None linked to complaints yet.</td></tr>"}</table></article>
     </div>
     <button class="secondary" onclick="alert('Real app: each report exports to Excel.')">⬇ Export to Excel</button>`;

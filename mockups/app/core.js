@@ -49,8 +49,11 @@ const ITEMS = [
   ["LENS", "LENS", "Lens (generic)", 0, []],
   ["BULCK HEAD", "ACCESSORY", "Bulkhead (generic)", 0, []],
   ["ISENSE DALI CONTROLLER (WCS-IS-DA4)", "CONTROLLER", "iSense DALI controller", 0, []],
-].map(([code, type, desc, reorder, aliases]) => ({ code, type, desc, reorder, aliases }));
+  ["WIRE 1.5 SQMM", "OTHER", "Copper wire 1.5 sq.mm", 50, [], "MTR", "Finolex"],
+].map(([code, type, desc, reorder, aliases, unit = "NOS", brand = "Wipro"]) => ({ code, type, desc, reorder, aliases, unit, brand }));
+const UNITS = ["NOS", "MTR", "ROLL", "BOX", "PKT"];
 const item = code => ITEMS.find(i => i.code === code);
+const unitOf = code => (item(code) || {}).unit || "NOS";
 
 /* Item lookup: exact code, alias, look-alike spelling (O/0, I/1, hyphens, leading zeros), then near misses. */
 function lev(a, b) {
@@ -75,7 +78,8 @@ function lookup(text) {
 
 /* ============================== Stock ledger (append-only) ============================== */
 const DOC = {
-  RECEIVED_FROM_WIPRO: { dir: "IN", bucket: "FRESH", label: "Fresh received from Wipro", hint: "New spares arrived (DC / invoice)" },
+  RECEIVED_FROM_WIPRO: { dir: "IN", bucket: "FRESH", label: "Received from Wipro", hint: "New stock or replacements (Wipro DC)" },
+  RECEIVED_FROM_SUPPLIER: { dir: "IN", bucket: "FRESH", label: "Received from other supplier", hint: "Wires, other brands (supplier bill)" },
   OPENING: { dir: "IN", bucket: "FRESH", label: "Opening count", hint: "First stock count (admin only)" },
   ISSUED_TO_COMPLAINT: { dir: "OUT", bucket: "FRESH", label: "Issued to site / complaint", hint: "Fresh spares taken for a repair" },
   SCRAPPED: { dir: "OUT", bucket: "FRESH", label: "Scrapped / written off", hint: "Damaged or lost (reason required)" },
@@ -98,6 +102,13 @@ function balance(code, loc, bucket) {
 }
 const totalBalance = (code, bucket) => sum(LOCATIONS, l => balance(code, l, bucket));
 const bucketName = b => b === "FRESH" ? "Fresh" : "Defective";
+/* Totals are per unit: "629 NOS · 90 MTR". rows: [{code|i, q}] */
+function unitTotals(rows) {
+  const t = {};
+  for (const r of rows) { const u = r.i ? r.i.unit : unitOf(r.code); t[u] = (t[u] || 0) + r.q; }
+  return Object.entries(t).map(([u, q]) => `${q} ${u}`).join(" · ") || "0";
+}
+const stockTotals = bucket => unitTotals(ITEMS.map(i => ({ i, q: totalBalance(i.code, bucket) })));
 
 // Posts an entry only if no bucket goes negative. Returns an error message, or null and sets e.no.
 function post(e) {
@@ -105,7 +116,7 @@ function post(e) {
   for (const l of e.lines) { const k = `${l.code}|${l.loc}|${l.bucket}`; delta[k] = (delta[k] || 0) + l.qty; }
   for (const k in delta) {
     const [code, loc, bucket] = k.split("|"), have = balance(code, loc, bucket);
-    if (have + delta[k] < 0) return `Only ${have} NOS of ${code} (${bucketName(bucket)}) at ${loc}.`;
+    if (have + delta[k] < 0) return `Only ${have} ${unitOf(code)} of ${code} (${bucketName(bucket)}) at ${loc}.`;
   }
   const dir = e.reverses ? "REV" : DOC[e.type].dir;
   e.no = `${PREFIX[dir]}-${pad(++seq[dir])}`;
@@ -118,6 +129,7 @@ const isReversed = e => entries.some(x => x.reverses === e.no);
 function undo(no, reason) {
   const orig = entry(no);
   if (DOC[orig.type].system === "def") return "Defective entries are undone from the Defective Pieces system.";
+  if (pieces.some(p => p.replacement === no)) return "Defective pieces are matched to this Wipro receipt, so it cannot be undone.";
   return post({ type: orig.type, date: today(), ref: orig.ref, party: orig.party, reverses: no, note: reason,
     lines: orig.lines.map(l => ({ ...l, qty: -l.qty })) });
 }
@@ -127,10 +139,12 @@ const entryQty = e => e.lines.some(l => l.qty > 0) && e.lines.some(l => l.qty < 
 /* ============================== System 2: defective pieces ============================== */
 const PIECE_STATUS = {
   AT_SITE: "At site", AT_OFFICE: "At office", IN_RETURN_BATCH: "In return batch", SENT_TO_WIPRO: "With Wipro",
-  REPLACED: "Replaced", REJECTED: "Rejected by Wipro", SCRAPPED: "Scrapped" };
+  REPLACED: "Replaced", REPAIRED: "Repaired by Wipro", CREDITED: "Credit note", REJECTED: "Rejected by Wipro", SCRAPPED: "Scrapped" };
+const FINAL = ["REPLACED", "REPAIRED", "CREDITED", "REJECTED", "SCRAPPED"];
 const PIECE_NEXT = {
   AT_SITE: ["AT_OFFICE"], AT_OFFICE: ["IN_RETURN_BATCH", "SCRAPPED"], IN_RETURN_BATCH: ["AT_OFFICE", "SENT_TO_WIPRO"],
-  SENT_TO_WIPRO: ["REPLACED", "REJECTED"], REJECTED: ["SCRAPPED"], REPLACED: [], SCRAPPED: [] };
+  SENT_TO_WIPRO: ["REPLACED", "REPAIRED", "CREDITED", "REJECTED"], REJECTED: ["SCRAPPED"],
+  REPLACED: [], REPAIRED: [], CREDITED: [], SCRAPPED: [] };
 const IN_LEDGER = ["AT_OFFICE", "IN_RETURN_BATCH"]; // pieces physically in our DEFECTIVE stock
 let pieces = [], batches = [];
 const tagSeq = {};
@@ -160,7 +174,7 @@ function collectPieces({ code, qty, loc, date, fault, batchCode, pkd, source, ti
   const made = Array.from({ length: qty }, () => ({
     tag: newTag(date), code, loc, status: atSite ? "AT_SITE" : "AT_OFFICE", batchCode: batchCode || "", pkd: pkd || "",
     fault: fault || "", source: source || "", ticket: ticket || "", visit: visit || "", collectedBy: by || ME,
-    collectedOn: date, batch: "", outcome: "", outcomeNote: "", entries: [], replacement: "",
+    collectedOn: date, batch: "", outcome: "", outcomeNote: "", entries: [], replacement: "", replacementCode: "", creditNo: "", creditAmt: 0,
     events: [{ date, by: by || ME, from: "", to: atSite ? "AT_SITE" : "AT_OFFICE", note: opening ? "Opening stock" : (source || "") }] }));
   if (!atSite) {
     const e = { type: opening ? "DEFECTIVE_OPENING" : "DEFECTIVE_COLLECTED", date, party: source, ref: ticket,
@@ -238,20 +252,84 @@ function rejectPieces(tags, note) {
   list.forEach(p => { move(p, "REJECTED", note || "Rejected by Wipro"); p.outcome = "REJECTED"; p.outcomeNote = note; });
   settleBatches(); return null;
 }
-/* Replacement received: one FRESH receipt settles many pieces, and each piece links to it. */
-function receiveReplacement(tags, loc, date, dc) {
-  const list = tags.map(piece).filter(p => p.status === "SENT_TO_WIPRO");
-  if (!list.length) return "Tick pieces that are with Wipro.";
-  if (!dc.trim()) return "Enter Wipro's DC number for the replacement.";
-  const fresh = Object.values(list.reduce((a, p) => { a[p.code] = a[p.code] || { code: p.code, loc, bucket: "FRESH", qty: 0 }; a[p.code].qty++; return a; }, {}));
-  const e = { type: "RECEIVED_FROM_WIPRO", date, ref: `Wipro DC ${dc}`, party: `Replacement for ${uniq(list.map(p => p.batch)).join(", ")}`, lines: fresh };
-  const err = post(e); if (err) return err;
-  list.forEach(p => { move(p, "REPLACED", `Replacement received (${e.no})`, date); p.outcome = "REPLACED"; p.replacement = e.no; });
+/* Wipro sends what it sends: a receipt is recorded as-is, then pieces are matched to its lines.
+   A line settles at most its qty; the replacement may be a different item; leftovers are plain stock. */
+const matched = (no, code) => pieces.filter(p => p.replacement === no && p.replacementCode === code && p.status === "REPLACED").length;
+function capacity(no) {
+  const e = entry(no), cap = {};
+  if (e.purpose === "REPAIR") return cap; // repaired pieces came back themselves; nothing to match
+  for (const l of e.lines) if (l.qty > 0) cap[l.code] = (cap[l.code] || 0) + l.qty;
+  for (const c in cap) cap[c] -= matched(no, c);
+  return cap; // code -> qty still free to settle pieces
+}
+function matchReplacements(no, pairs, date) {
+  const e = entry(no);
+  if (!e || e.type !== "RECEIVED_FROM_WIPRO" || e.reverses || e.purpose === "REPAIR") return "Pick a Wipro receipt of new material.";
+  if (!pairs.length) return "Pick at least one piece.";
+  const cap = capacity(no), want = {};
+  for (const { tag, code } of pairs) {
+    if (piece(tag).status !== "SENT_TO_WIPRO") return `${tag} is not with Wipro.`;
+    want[code] = (want[code] || 0) + 1;
+  }
+  for (const c in want) if (want[c] > (cap[c] || 0))
+    return `${e.no} has only ${cap[c] || 0} ${unitOf(c)} of ${c} left to match; you picked ${want[c]}.`;
+  for (const { tag, code } of pairs) {
+    const p = piece(tag);
+    move(p, "REPLACED", code === p.code ? `Replaced (${no})` : `Replaced with a different item: ${code} (${no})`, date || e.date);
+    Object.assign(p, { outcome: "REPLACED", replacement: no, replacementCode: code });
+  }
   settleBatches(); return null;
 }
-function settleBatches() {
-  for (const b of batches) if (b.status === "SENT" && b.tags.every(t => ["REPLACED", "REJECTED", "SCRAPPED"].includes(piece(t).status))) b.status = "SETTLED";
+/* Record a Wipro delivery now and match it in one go. pairs: piece -> item received for it; extra: other lines on the same DC. */
+function receiveFromWipro({ pairs, extra = [], loc, date, dc }) {
+  if (!dc.trim()) return { error: "Enter Wipro's DC number." };
+  if (!pairs.length && !extra.length) return { error: "Nothing received." };
+  const lines = {};
+  for (const x of [...pairs.map(p => ({ code: p.code, qty: 1 })), ...extra]) {
+    lines[x.code] = lines[x.code] || { code: x.code, loc, bucket: "FRESH", qty: 0 };
+    lines[x.code].qty += x.qty;
+  }
+  const e = { type: "RECEIVED_FROM_WIPRO", supplier: "Wipro", date, ref: `Wipro DC ${dc}`,
+    party: pairs.length ? `Replacements for ${uniq(pairs.map(p => piece(p.tag).batch)).join(", ")}` : "", lines: Object.values(lines) };
+  const err = post(e); if (err) return { error: err };
+  if (!pairs.length) return { entry: e };
+  const merr = matchReplacements(e.no, pairs, date);
+  return merr ? { error: merr } : { entry: e };
 }
+function repairPieces(tags, loc, date, dc) {
+  const list = tags.map(piece).filter(p => p.status === "SENT_TO_WIPRO");
+  if (!list.length) return "Tick pieces that are with Wipro.";
+  if (!dc.trim()) return "Enter Wipro's DC number.";
+  const e = { type: "RECEIVED_FROM_WIPRO", supplier: "Wipro", purpose: "REPAIR", date, ref: `Wipro DC ${dc}`, party: "Repaired pieces returned",
+    lines: Object.values(list.reduce((a, p) => { a[p.code] = a[p.code] || { code: p.code, loc, bucket: "FRESH", qty: 0 }; a[p.code].qty++; return a; }, {})) };
+  const err = post(e); if (err) return err;
+  list.forEach(p => { move(p, "REPAIRED", `Repaired and returned to fresh stock (${e.no})`, date);
+    Object.assign(p, { outcome: "REPAIRED", replacement: e.no, replacementCode: p.code }); });
+  settleBatches(); return null;
+}
+function creditPieces(tags, creditNo, amount) {
+  const list = tags.map(piece).filter(p => p.status === "SENT_TO_WIPRO");
+  if (!list.length) return "Tick pieces that are with Wipro.";
+  if (!creditNo.trim()) return "Enter the credit note number.";
+  const each = Math.round((Number(amount) || 0) / list.length);
+  list.forEach(p => { move(p, "CREDITED", `Credit note ${creditNo}${amount ? ` (₹${amount} for ${list.length})` : ""}`);
+    Object.assign(p, { outcome: "CREDITED", creditNo, creditAmt: each }); });
+  settleBatches(); return null;
+}
+function wiproNote(tags, note, date) {
+  if (!note.trim()) return "Write Wipro's note.";
+  tags.map(piece).filter(p => p.status === "SENT_TO_WIPRO").forEach(p =>
+    p.events.push({ date: date || today(), by: ME, from: p.status, to: p.status, note: `Wipro: ${note}` }));
+  return null;
+}
+function settleBatches() {
+  for (const b of batches) if (["SENT", "PARTLY_SETTLED"].includes(b.status)) {
+    const done = b.tags.filter(t => FINAL.includes(piece(t).status)).length;
+    b.status = done === b.tags.length ? "SETTLED" : done ? "PARTLY_SETTLED" : "SENT";
+  }
+}
+const answered = b => b.tags.filter(t => FINAL.includes(piece(t).status)).length;
+
 /* Invariant the real app enforces: DEFECTIVE stock == pieces at office + in a draft batch. */
 function checkInvariant() {
   const bad = [];
@@ -297,7 +375,7 @@ function addVisit(c, { date, techs, work, loc, parts, defects, next }) {
   if (!techs.length) return "Tick at least one technician.";
   for (const p of parts) {
     const have = balance(p.code, loc, "FRESH");
-    if (p.qty > have) return `Only ${have} NOS of ${p.code} (Fresh) at ${loc}. Nothing was saved.`;
+    if (p.qty > have) return `Only ${have} ${unitOf(p.code)} of ${p.code} (Fresh) at ${loc}. Nothing was saved.`;
   }
   if (next && next !== c.status && !(c.status === "NOT_ATTENDED" ? ["ATTENDED", "MATERIAL_TO_CHECK", "AWAITING_MATERIAL", "RESOLVED"] : CMP_NEXT[c.status]).includes(next))
     return `Cannot move from ${CMP_STATUS[c.status]} to ${CMP_STATUS[next]}.`;
@@ -358,10 +436,25 @@ const phoneOk = p => /^(\+91)?[6-9]\d{9}$/.test(p.replace(/[\s-]/g, "")) || /^0\
   // A return batch already with Wipro, and an older one settled.
   const old = createBatch(pieces.filter(p => p.code === "LG66-040-078-480IT").slice(0, 6).map(p => p.tag), "12-06-2026").batch;
   sendBatch(old.no, "15-06-2026", "VZG/0615");
-  receiveReplacement(old.tags.slice(0, 4), V, "20-07-2026", "5590");
+  receiveFromWipro({ pairs: old.tags.slice(0, 4).map(tag => ({ tag, code: "LG66-040-078-480IT" })), loc: V, date: "20-07-2026", dc: "5590" });
   rejectPieces(old.tags.slice(4), "Physical damage, not covered");
   const open = createBatch(pieces.filter(p => p.code === "18WATT DRIVERS").slice(0, 8).map(p => p.tag), daysAgo(43)).batch;
   sendBatch(open.no, daysAgo(40), "VZG/0902");
+
+  // A batch showing everything Wipro can do: different item, same item, repaired, credit note, still pending.
+  const mix = createBatch([...pieces.filter(p => p.code === "15WATT (190MA)").slice(0, 4),
+    ...pieces.filter(p => p.code === "LG26-048-0720").slice(0, 2)].map(p => p.tag), daysAgo(64)).batch;
+  sendBatch(mix.no, daysAgo(60), "VZG/0811");
+  const [w1, w2, w3, , l1, l2] = mix.tags;
+  receiveFromWipro({ pairs: [{ tag: w1, code: "18WATT DRIVERS" }, { tag: w2, code: "15WATT (190MA)" }],
+    extra: [{ code: "EIO9326", qty: 5 }], loc: V, date: daysAgo(30), dc: "6110" }); // 5 × EIO9326 = new stock, not a replacement
+  repairPieces([l1], V, daysAgo(25), "6188");
+  creditPieces([l2], "CN-2231", 850);
+  wiproNote([w3], "Under investigation at Wipro lab", daysAgo(20));
+
+  // Other supplier: wire in metres.
+  post({ type: "RECEIVED_FROM_SUPPLIER", supplier: "Sri Sai Electricals", date: daysAgo(15), ref: "Bill B-118",
+    party: "Sri Sai Electricals", lines: [{ code: "WIRE 1.5 SQMM", loc: V, bucket: "FRESH", qty: 90 }] });
 
   // Complaints from AP_Pending_Compliants_details.xlsx (phone numbers replaced with fake ones).
   const rows = [

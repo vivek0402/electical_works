@@ -106,3 +106,5 @@ details.notes { margin-top: 2rem; }
 .xl th, .xl td { border: 1px solid #9aa; padding: .2rem .5rem; }
 .xl .title td { font-weight: 700; text-align: center; }
 @media print { .mock-banner, header, .actions, .no-print { display: none !important; } }
+.s-REPAIRED { background: #0f766e; } .s-CREDITED { background: #a16207; } .s-PARTLY_SETTLED { background: #0369a1; }
+.tiles .num { font-size: clamp(1.3rem, 2.2vw, 2rem); }

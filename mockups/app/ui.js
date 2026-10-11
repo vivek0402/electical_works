@@ -57,7 +57,7 @@ function start() {
 /* ------------------------------ Home: the three systems ------------------------------ */
 function renderHome() {
   if (isTech()) return go("#cmp/mine");
-  const fresh = sum(ITEMS, i => totalBalance(i.code, "FRESH"));
+  const fresh = sum(ITEMS.filter(i => i.unit === "NOS"), i => totalBalance(i.code, "FRESH"));
   const low = ITEMS.filter(i => i.reorder > 0 && totalBalance(i.code, "FRESH") <= i.reorder).length;
   const atOffice = pieces.filter(p => IN_LEDGER.includes(p.status)).length;
   const withWipro = pieces.filter(p => p.status === "SENT_TO_WIPRO").length;
@@ -90,7 +90,7 @@ function lineEditor(id, o) {
   editors[id].o = o;
   const extra = (o.extra || []).map(k => `<th>${EXTRA[k][0]}</th>`).join("");
   return `<div class="table-wrap"><table class="lines"><thead><tr><th>#</th><th>Item code</th><th>Item</th>
-      ${o.avail ? `<th class="num">Available</th>` : ""}<th>Qty (NOS)</th>${extra}<th></th></tr></thead>
+      ${o.avail ? `<th class="num">Available</th>` : ""}<th>Qty</th>${extra}<th></th></tr></thead>
       <tbody id="${id}"></tbody></table></div>
     <button type="button" class="secondary outline small" onclick="edAdd('${id}')">+ Add another item</button>`;
 }
@@ -108,7 +108,8 @@ function edRender(id) {
         (r.via ? `<br><span class="muted">you typed ${esc(r.via)} → ${esc(r.item.code)}</span>` : "");
       if (where) {
         const have = balance(r.item.code, where.loc, where.bucket), short = Number(l.qty) > have;
-        avail = `<td data-label="Available" class="num ${short ? "bad" : ""}">${have} NOS${short ? `<br><small>Only ${have} NOS at ${esc(where.loc)}</small>` : ""}</td>`;
+        const u = r.item.unit;
+        avail = `<td data-label="Available" class="num ${short ? "bad" : ""}">${have} ${u}${short ? `<br><small>Only ${have} ${u} at ${esc(where.loc)}</small>` : ""}</td>`;
       }
     } else if (l.text.trim()) {
       info = `<span class="bad">Not found.</span> ` +
@@ -121,7 +122,7 @@ function edRender(id) {
       <td class="wide" data-label="Item ${n + 1}"><input list="itemlist" value="${esc(l.text)}" placeholder="Type code…" style="min-width:14rem"
         onchange="edSet('${id}',${n},'text',this.value)"></td>
       <td class="wide">${info}</td>${avail}
-      <td data-label="Qty (NOS)"><input class="qty-in" type="number" min="1" value="${esc(l.qty)}"
+      <td data-label="Qty${r.item ? ` (${r.item.unit})` : ""}"><input class="qty-in" type="number" min="1" value="${esc(l.qty)}"
         oninput="edSet('${id}',${n},'qty',this.value,true)" onchange="edSoon('${id}')"></td>${extra}
       <td>${ed.lines.length > 1 ? `<button type="button" class="small secondary outline" onclick="edRemove('${id}',${n})" title="Remove">✕</button>` : ""}</td></tr>`;
   }).join("");
@@ -135,13 +136,16 @@ function edCreate(id, n) {
     <label>Code <input id="ni-code" value="${esc(norm(editors[id].lines[n].text))}"></label>
     <label>Type <select id="ni-type">${opts(Object.entries(TYPE_LABEL), "DRIVER")}</select></label>
     <label>Description <input id="ni-desc" placeholder="e.g. 24W driver 500mA"></label>
+    <div class="fields"><label>Unit <select id="ni-unit">${opts(UNITS, "NOS")}</select></label>
+      <label>Brand <input id="ni-brand" value="Wipro"></label></div>
     <footer class="actions"><button class="secondary" onclick="closeDlg()">Cancel</button>
       <button onclick="edCreateSave('${id}',${n})">Create item</button></footer>`);
 }
 function edCreateSave(id, n) {
   const code = norm(document.getElementById("ni-code").value);
   if (!code || lookup(code).item) return alert("That code is empty or already exists.");
-  ITEMS.push({ code, type: document.getElementById("ni-type").value, desc: document.getElementById("ni-desc").value || "(new item)", reorder: 0, aliases: [] });
+  ITEMS.push({ code, type: document.getElementById("ni-type").value, desc: document.getElementById("ni-desc").value || "(new item)", reorder: 0, aliases: [],
+    unit: document.getElementById("ni-unit").value, brand: document.getElementById("ni-brand").value || "Wipro" });
   document.getElementById("itemlist").insertAdjacentHTML("beforeend", `<option value="${esc(code)}">`);
   editors[id].lines[n].text = code; closeDlg(); edRender(id);
 }

@@ -14,7 +14,8 @@ const entryRows = list => list.map(e => `<tr class="${isReversed(e) ? "reversed"
   <td>${entryLink(e.no)}</td><td>${e.date}</td><td>${entryBadge(e)} ${esc(entryWhat(e))}
   ${DOC[e.type].system ? ` <span class="muted">(defective)</span>` : ""}</td>
   <td>${esc(uniq(e.lines.map(l => l.loc)).join(" → "))}</td><td class="num">${e.lines.length}</td>
-  <td class="num">${entryQty(e)} NOS</td><td>${esc(e.party || e.ref || "")}</td><td>${esc(e.by)}</td></tr>`).join("");
+  <td class="num">${entryQty(e)} ${uniq(e.lines.map(l => unitOf(l.code))).length === 1 ? unitOf(e.lines[0].code) : ""}</td>
+  <td>${esc(e.party || e.ref || "")}</td><td>${esc(e.by)}</td></tr>`).join("");
 
 ROUTES.stock = () => {
   if (isTech()) return go("#stock/list");
@@ -27,8 +28,8 @@ ROUTES.stock = () => {
       <a href="#stock/list" role="button" class="contrast">📋 Current stock<small>Fresh · defective · low</small></a>
     </div>
     <div class="tiles">
-      <a href="#stock/list"><article><div class="num">${sum(ITEMS, i => totalBalance(i.code, "FRESH"))}</div>NOS fresh in stock</article></a>
-      <a href="#stock/list/DEFECTIVE"><article><div class="num">${sum(ITEMS, i => totalBalance(i.code, "DEFECTIVE"))}</div>NOS defective at office</article></a>
+      <a href="#stock/list"><article><div class="num">${stockTotals("FRESH")}</div>fresh in stock</article></a>
+      <a href="#stock/list/DEFECTIVE"><article><div class="num">${stockTotals("DEFECTIVE")}</div>defective at office</article></a>
       <a href="#stock/list/low"><article><div class="num ${low.length ? "bad" : ""}">${low.length}</div>items at / below reorder level</article></a>
       <a href="#stock/register"><article><div class="num">${entries.filter(e => e.date === today()).length}</div>entries today</article></a>
     </div>
@@ -43,12 +44,13 @@ function stockForm(mode, prefill) {
   if (isTech()) return go("#stock/list");
   const fresh = !stForm || stForm.mode !== mode || prefill !== undefined;
   if (fresh) stForm = { mode, type: { in: "RECEIVED_FROM_WIPRO", out: "ISSUED_TO_COMPLAINT", transfer: "TRANSFER" }[mode],
-    date: today(), loc: "Vizag Office", to: "TV Shop", ref: "", party: "", note: "" };
+    date: today(), loc: "Vizag Office", to: "TV Shop", ref: "", party: "", note: "", supplier: "" };
   const f = stForm, d = DOC[f.type], isIn = d.dir === "IN", isOut = d.dir === "OUT", isMove = d.dir === "MOVE";
   const choices = isMove ? "" : Object.entries(DOC).filter(([, x]) => x.dir === d.dir && !x.system).map(([t, x]) =>
     `<label><input type="radio" name="type" value="${t}" ${t === f.type ? "checked" : ""} onchange="stSet('type',this.value)">
       <strong>${x.label}</strong><small>${x.hint}</small></label>`).join("");
-  const refLabel = { RECEIVED_FROM_WIPRO: "Wipro DC / invoice no.", OPENING: "Reference (e.g. count sheet)" }[f.type];
+  const refLabel = { RECEIVED_FROM_WIPRO: "Wipro DC / invoice no.", RECEIVED_FROM_SUPPLIER: "Supplier bill no.",
+    OPENING: "Reference (e.g. count sheet)" }[f.type];
   const openCmp = complaints.filter(c => c.status !== "CLOSED");
   view().innerHTML = `
     <h1>${isIn ? "⬇ Stock IN" : isOut ? "⬆ Stock OUT" : "⇄ Transfer"} <span class="muted">(fresh stock)</span></h1>
@@ -57,12 +59,17 @@ function stockForm(mode, prefill) {
       <label>Date <input value="${f.date}" onchange="stSet('date',this.value,true)" placeholder="DD-MM-YYYY"></label>
       <label>${isIn ? "Into location" : "From location"} <select onchange="stSet('loc',this.value)">${opts(LOCATIONS, f.loc)}</select></label>
       ${isMove ? `<label>To location <select onchange="stSet('to',this.value)">${opts(LOCATIONS, f.to)}</select></label>` : ""}
+      ${f.type === "RECEIVED_FROM_SUPPLIER" ? `<label>Supplier <input list="suppliers" value="${esc(f.supplier)}" placeholder="e.g. Sri Sai Electricals"
+        onchange="stSet('supplier',this.value,true)"></label>` : ""}
       ${refLabel ? `<label>${refLabel} <input value="${esc(f.ref)}" onchange="stSet('ref',this.value,true)"></label>` : ""}
       ${f.type === "ISSUED_TO_COMPLAINT" ? `<label>For complaint (optional) <select onchange="stSet('party',this.value,true)">
         <option value="">— not for a complaint —</option>${opts(openCmp.map(c => [c.ticket, `${c.ticket} · ${c.customer}`]), f.party)}</select></label>` : ""}
       ${f.type === "SCRAPPED" || isMove ? `<label>${f.type === "SCRAPPED" ? "Reason (required)" : "Note"}
         <input value="${esc(f.note)}" onchange="stSet('note',this.value,true)"></label>` : ""}
     </div>
+    <datalist id="suppliers">${uniq(entries.filter(e => e.type === "RECEIVED_FROM_SUPPLIER").map(e => e.supplier)).map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+    ${f.type === "RECEIVED_FROM_WIPRO" ? `<p class="muted">Enter exactly what Wipro sent: new stock, replacements (even a different item), extra pieces.
+      After saving you can match replacements to the defective pieces you sent.</p>` : ""}
     <h3>Items</h3>
     ${lineEditor("st-lines", { reset: fresh, prefill, create: isIn, extra: isIn ? ["batch", "pkd"] : [],
       avail: isIn ? null : () => ({ loc: stForm.loc, bucket: "FRESH" }) })}
@@ -80,6 +87,7 @@ function stSave() {
   const f = stForm, d = DOC[f.type];
   if (!/^\d{2}-\d{2}-\d{4}$/.test(f.date)) return formError("st-error", "Date must be DD-MM-YYYY.");
   if (f.type === "SCRAPPED" && !f.note.trim()) return formError("st-error", "Please give a reason for scrapping.");
+  if (f.type === "RECEIVED_FROM_SUPPLIER" && !f.supplier.trim()) return formError("st-error", "Enter the supplier's name.");
   if (d.dir === "MOVE" && f.loc === f.to) return formError("st-error", "Choose two different locations.");
   const r = edCollect("st-lines"); if (r.error) return formError("st-error", r.error);
   const lines = r.lines.flatMap(l => {
@@ -88,9 +96,13 @@ function stSave() {
       : [{ ...base, loc: f.loc, qty: -l.qty }, { ...base, loc: f.to, qty: l.qty }];
   });
   const c = complaint(f.party);
-  const e = { type: f.type, date: f.date, ref: f.ref || (c ? c.ticket : ""), party: c ? `${c.customer} · ${c.ticket}` : "", note: f.note, lines };
+  const supplier = f.type === "RECEIVED_FROM_SUPPLIER" ? f.supplier.trim() : f.type === "RECEIVED_FROM_WIPRO" ? "Wipro" : "";
+  const e = { type: f.type, date: f.date, ref: f.ref || (c ? c.ticket : ""), supplier,
+    party: c ? `${c.customer} · ${c.ticket}` : supplier && supplier !== "Wipro" ? supplier : "", note: f.note, lines };
   const err = post(e); if (err) return formError("st-error", err + " Nothing was saved.");
-  setFlash(`Saved <strong>${e.no}</strong>: ${r.lines.length} line(s), ${entryQty(e)} NOS. Stock updated.`);
+  const waiting = pieces.filter(p => p.status === "SENT_TO_WIPRO").length;
+  setFlash(`Saved <strong>${e.no}</strong>: ${r.lines.length} line(s). Stock updated.` + (e.type === "RECEIVED_FROM_WIPRO" && waiting
+    ? `<br>♻ ${waiting} defective piece(s) are with Wipro. Are any of these replacements? <a href="#def/match/${e.no}"><strong>Match to defectives →</strong></a>` : ""));
   stForm = null; go(`#stock/entry/${e.no}`);
 }
 ROUTES["stock/in"] = a => stockForm("in", a);
@@ -113,8 +125,14 @@ ROUTES["stock/entry"] = no => {
       ${e.lines.map(l => `<tr><td>${codeLink(l.code)}</td><td>${l.loc}</td><td>${bucketName(l.bucket)}</td>
         <td class="num good">${l.qty > 0 ? l.qty : ""}</td><td class="num bad">${l.qty < 0 ? -l.qty : ""}</td>
         <td>${esc(l.batch || "")}</td><td>${esc(l.pkd || "")}</td></tr>`).join("")}</tbody></table></div>
+    ${e.type === "RECEIVED_FROM_WIPRO" && !e.reverses && e.purpose !== "REPAIR" && !isTech() ? (() => {
+      const cap = capacity(e.no), free = sum(Object.values(cap), x => x), used = pieces.filter(p => p.replacement === e.no).length;
+      return `<article>♻ <strong>Replacements:</strong> ${used} defective piece(s) matched to this receipt; ${free} unit(s) not matched (kept as new stock).
+        ${free && pieces.some(p => p.status === "SENT_TO_WIPRO") ? `<a href="#def/match/${e.no}" role="button" class="btn-def small">Match to defectives</a>` : ""}</article>`; })() : ""}
+    ${e.purpose === "REPAIR" ? `<p class="muted">Repaired pieces returned by Wipro.</p>` : ""}
     ${linked.length ? `<p>♻ Linked defective pieces: ${linked.slice(0, 12).map(p => `<a class="code" href="#def/piece/${p.tag}">${p.tag}</a>`).join(", ")}
       ${linked.length > 12 ? `and ${linked.length - 12} more` : ""}</p>` : ""}
+    ${e.supplier && e.supplier !== "Wipro" ? `<p>Supplier: <strong>${esc(e.supplier)}</strong></p>` : ""}
     <div class="actions">
       <a href="#stock/register" role="button" class="secondary outline">← Register</a>
       ${!undoneBy && !e.reverses && !DOC[e.type].system && !isTech() ? `<button class="secondary" onclick="askUndo('${e.no}')">Undo this entry…</button>` : ""}
@@ -158,14 +176,14 @@ ROUTES["stock/list"] = arg => {
       <label>Search <input type="search" value="${esc(s.q)}" placeholder="code, old spelling or description" onchange="stockView.q=this.value;route()"></label>
       <button class="secondary" onclick="exportPreview()">⬇ Export to Excel</button>
     </div>
-    <p class="muted">${rows.length} rows · ${sum(rows, r => r.q)} NOS ${s.low ? "· items at or below reorder level (all locations)" : ""}
+    <p class="muted">${rows.length} rows · ${unitTotals(rows)} ${s.low ? "· items at or below reorder level (all locations)" : ""}
       ${s.bucket === "DEFECTIVE" ? "· each defective is tracked as a piece in ② Defective pieces" : ""}</p>
     <div class="table-wrap"><table class="striped"><thead><tr><th>S.NO</th><th>FITTING CODE</th><th>DRIVER CODE</th><th>PCB CODE</th>
       <th class="num">QUANTITY</th><th>${s.low ? "REORDER AT" : "LOCATION"}</th><th></th></tr></thead><tbody>
       ${rows.map((r, n) => { const cells = ["", "", ""]; cells[sheetCol(r.i.type)] = codeLink(r.i.code);
         const low = s.bucket === "FRESH" && r.i.reorder > 0 && r.q <= r.i.reorder;
-        return `<tr><td>${n + 1}</td>${cells.map(c => `<td>${c}</td>`).join("")}<td class="num ${low ? "bad" : ""}">${r.q} NOS</td>
-          <td>${s.low ? r.i.reorder + " NOS" : r.loc}</td><td>${s.bucket === "DEFECTIVE"
+        return `<tr><td>${n + 1}</td>${cells.map(c => `<td>${c}</td>`).join("")}<td class="num ${low ? "bad" : ""}">${r.q} ${r.i.unit}</td>
+          <td>${s.low ? r.i.reorder + " " + r.i.unit : r.loc}</td><td>${s.bucket === "DEFECTIVE"
             ? `<a href="#def/pieces/${encodeURIComponent(r.i.code)}" class="small">Pieces</a>`
             : isTech() ? "" : `<a href="#stock/out/${encodeURIComponent(r.i.code)}">OUT</a> · <a href="#stock/in/${encodeURIComponent(r.i.code)}">IN</a>`}</td></tr>`;
       }).join("") || `<tr><td colspan="7">Nothing here.</td></tr>`}</tbody></table></div>`;
@@ -175,7 +193,7 @@ function exportPreview() {
   const rows = ITEMS.map(i => ({ i, q: s.loc ? balance(i.code, s.loc, s.bucket) : totalBalance(i.code, s.bucket) })).filter(r => r.q > 0).slice(0, 8);
   const head = def ? ["S.NO", "FITTING CODE", "BATCH CODE", "DRIVER CODE", "PCB CODE", "QUANTITY"] : ["S.NO", "FITTING CODE", "BATCH CODE", "PKDT", "DRIVER CODE", "PCB CODE", "QUANTITY"];
   const body = rows.map((r, n) => { const c = ["", "", ""]; c[sheetCol(r.i.type)] = esc(r.i.code);
-    return `<tr><td>${n + 1}</td><td>${c[0]}</td><td></td>${def ? "" : "<td></td>"}<td>${c[1]}</td><td>${c[2]}</td><td>${r.q}NOS</td></tr>`; }).join("");
+    return `<tr><td>${n + 1}</td><td>${c[0]}</td><td></td>${def ? "" : "<td></td>"}<td>${c[1]}</td><td>${c[2]}</td><td>${r.q}${r.i.unit}</td></tr>`; }).join("");
   openDlg(`<header><strong>Excel export preview</strong></header>
     <p class="muted">Downloads <code>${def ? "Defective" : "Fresh"}_List_${s.loc || "All"}_${today()}.xlsx</code> in your sheet layout.</p>
     <div class="table-wrap"><table class="xl"><tr class="title"><td colspan="${head.length}">${def ? "Date : " + today() + "  Defective List" : (s.loc || "All locations") + " Fresh List · " + today()}</td></tr>
@@ -193,7 +211,7 @@ ROUTES["stock/item"] = code => {
   }
   const byStatus = Object.keys(PIECE_STATUS).map(s => [s, pieces.filter(p => p.code === code && p.status === s).length]).filter(x => x[1]);
   view().innerHTML = `<h1 class="code">${esc(i.code)}</h1>
-    <p>${esc(TYPE_LABEL[i.type])} · ${esc(i.desc)} · Brand Wipro · Reorder at ${i.reorder} NOS
+    <p>${esc(TYPE_LABEL[i.type])} · ${esc(i.desc)} · Brand ${esc(i.brand)} · Unit ${i.unit} · Reorder at ${i.reorder} ${i.unit}
       ${i.aliases.length ? `<br><span class="muted">Also written as: ${i.aliases.map(esc).join(", ")}</span>` : ""}</p>
     ${isTech() ? "" : `<div class="actions" style="margin-bottom:1rem">
       <a href="#stock/in/${encodeURIComponent(code)}" role="button" class="btn-in">⬇ Stock IN</a>
