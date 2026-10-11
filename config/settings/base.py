@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "pgtrigger",
     "apps.core",
     "apps.accounts",
+    "apps.inventory",
 ]
 
 MIDDLEWARE = [
