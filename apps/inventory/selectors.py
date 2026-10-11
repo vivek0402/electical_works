@@ -3,10 +3,11 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Exists, F, OuterRef, Sum
+from django.db.models import Exists, F, OuterRef, Q, Sum
 from django.db.models.functions import Coalesce
 
 from .models import EntryKind, Item, Location, StockBalance, StockEntry, StockLine
+from .services import item_search_q
 
 
 def balance_map():
@@ -98,3 +99,68 @@ def entries_with_lines(queryset):
 
 def recent_entries(limit=8):
     return list(entries_with_lines(StockEntry.objects.order_by("-entry_date", "-id"))[:limit])
+
+
+def _filtered_items(f):
+    items = Item.objects.select_related("spare_type", "company", "fitting_type")
+    if getattr(f, "spare_type", None):
+        items = items.filter(spare_type=f.spare_type)
+    if getattr(f, "company", None):
+        items = items.filter(company=f.company)
+    match = item_search_q(getattr(f, "q", ""))
+    if match is not None:
+        items = items.filter(match).distinct()
+    return items
+
+
+def current_stock_rows(f):
+    """(rows, locations). Row: {item, per_loc: {location_id: qty}, total, low}. Hides items with no stock."""
+    locations = [f.location] if f.location else list(Location.objects.filter(is_active=True))
+    bal = balance_map()
+    rows = []
+    for item in _filtered_items(f).filter(is_active=True):
+        per_loc = {place.pk: bal.get((item.pk, place.pk), 0) for place in Location.objects.all()}
+        total = sum(per_loc.values())
+        low = is_low(item, total)
+        shown = per_loc.get(f.location.pk, 0) != 0 if f.location else (total != 0 or f.low)
+        if shown and (low or not f.low):
+            rows.append({"item": item, "per_loc": per_loc, "total": total, "low": low})
+    return rows, locations
+
+
+def low_stock_rows():
+    rows, _ = current_stock_rows(
+        type("F", (), {"location": None, "spare_type": None, "company": None, "q": "", "low": True})()
+    )
+    for row in rows:
+        row["short_by"] = max(0, row["item"].reorder_level - row["total"])
+    return rows
+
+
+def movement_rows(f):
+    """One row per ledger line in the date range: {entry, line, undone}. Newest first."""
+    undone = StockEntry.objects.filter(reverses=OuterRef("entry_id"))
+    lines = (
+        StockLine.objects.filter(entry__entry_date__gte=f.date_from, entry__entry_date__lte=f.date_to)
+        .select_related(
+            "entry", "entry__created_by", "entry__reverses", "entry__reversed_by", "item", "location"
+        )
+        .annotate(undone=Exists(undone))
+        .order_by("-entry__entry_date", "-entry_id", "id")
+    )
+    if f.kind:
+        lines = lines.filter(entry__kind=f.kind)
+    if f.location:
+        lines = lines.filter(location=f.location)
+    if f.item:
+        lines = lines.filter(item=f.item)
+    if f.q:
+        lines = lines.filter(
+            Q(item__code__icontains=f.q)
+            | Q(entry__party__icontains=f.q)
+            | Q(entry__ref__icontains=f.q)
+            | Q(entry__number__icontains=f.q)
+        )
+    return [
+        {"entry": line.entry, "line": line, "undone": line.undone, "n": n} for n, line in enumerate(lines)
+    ]

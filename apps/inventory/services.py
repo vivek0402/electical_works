@@ -384,14 +384,11 @@ def save_item(*, data, item=None) -> Item:
     return item
 
 
-def search_items(text, limit=8, active_only=False):
-    """Items matching a code, other spelling, description or cat ref (typo-tolerant on codes).
-
-    Best matches first: exact code or spelling, then codes starting with the text, then the rest.
-    """
+def item_search_q(text):
+    """Q matching a code, other spelling, description or cat ref. None if text is too short."""
     raw, code, key = (text or "").strip(), normalise_code(text), search_key(text)
     if len(raw) < 2:
-        return []
+        return None
     match = (
         Q(code__icontains=code)
         | Q(description__icontains=raw)
@@ -400,6 +397,18 @@ def search_items(text, limit=8, active_only=False):
     )
     if len(key) > 2:
         match |= Q(search_key__contains=key) | Q(aliases__search_key__contains=key)
+    return match
+
+
+def search_items(text, limit=8, active_only=False):
+    """Items matching a code, other spelling, description or cat ref (typo-tolerant on codes).
+
+    Best matches first: exact code or spelling, then codes starting with the text, then the rest.
+    """
+    code = normalise_code(text)
+    match = item_search_q(text)
+    if match is None:
+        return []
     items = Item.objects.filter(match)
     if active_only:
         items = items.filter(is_active=True)

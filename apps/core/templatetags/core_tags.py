@@ -1,5 +1,5 @@
 from django import template
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 register = template.Library()
@@ -49,3 +49,28 @@ def entry_locations(entry):
 @register.filter
 def get_item(mapping, key):
     return mapping.get(key, 0) if mapping else 0
+
+
+@register.inclusion_tag("core/_sort_th.html", takes_context=True)
+def sort_th(context, key, label, num=False):
+    """Column header that sorts by `key`; clicking again flips the direction."""
+    table = context["table"]
+    active = table["sort"] == key
+    new_dir = "desc" if active and table["dir"] == "asc" else "asc"
+    return {
+        "href": url_with(context, sort=key, dir=new_dir, page=None),
+        "label": label,
+        "num": num,
+        "cls": table["dir"] if active else "",
+    }
+
+
+@register.simple_tag(takes_context=True)
+def hidden_params(context, exclude=""):
+    """Hidden inputs for the current GET params (minus `exclude`), so a small form keeps the other filters."""
+    skip = set(exclude.split(","))
+    return format_html_join(
+        "",
+        '<input type="hidden" name="{}" value="{}">',
+        ((k, v) for k, v in context["request"].GET.items() if k not in skip),
+    )

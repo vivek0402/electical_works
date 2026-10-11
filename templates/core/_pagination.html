@@ -1,0 +1,20 @@
+{% load core_tags %}
+<div class="card-footer d-flex align-items-center flex-wrap gap-2">
+  <p class="m-0 text-secondary">Showing {% if table.total %}{{ table.page.start_index }}–{{ table.page.end_index }}{% else %}0{% endif %} of {{ table.total }}</p>
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <form method="get" class="m-0">{% hidden_params "size,page" %}
+      <select name="size" class="form-select form-select-sm w-auto" onchange="this.form.submit()" aria-label="Rows per page">
+        {% for s in table.sizes %}<option value="{{ s }}" {% if s == table.size %}selected{% endif %}>{{ s }} / page</option>{% endfor %}
+      </select></form>
+    {% if table.page.paginator.num_pages > 1 %}
+    <ul class="pagination m-0">
+      <li class="page-item {% if not table.page.has_previous %}disabled{% endif %}"><a class="page-link" href="{% if table.page.has_previous %}{% url_with page=table.page.previous_page_number %}{% else %}#{% endif %}" aria-label="Previous"><i class="ti ti-chevron-left"></i></a></li>
+      {% for n in table.page.paginator.page_range %}
+        {% if n == table.page.number %}<li class="page-item active"><span class="page-link">{{ n }}</span></li>
+        {% elif n == 1 or n == table.page.paginator.num_pages or n|add:"-1" == table.page.number or n|add:"1" == table.page.number %}<li class="page-item"><a class="page-link" href="{% url_with page=n %}">{{ n }}</a></li>
+        {% elif n|add:"-2" == table.page.number or n|add:"2" == table.page.number %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {% if not table.page.has_next %}disabled{% endif %}"><a class="page-link" href="{% if table.page.has_next %}{% url_with page=table.page.next_page_number %}{% else %}#{% endif %}" aria-label="Next"><i class="ti ti-chevron-right"></i></a></li>
+    </ul>{% endif %}
+  </div>
+</div>

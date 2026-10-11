@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load core_tags %}
+{% block title %}Stock movements{% endblock %}
+{% block pretitle %}Reports{% endblock %}
+{% block page_title %}Stock movements{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-from">From date</label><input id="m-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-to">To date</label><input id="m-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-kind">Type</label><select id="m-kind" name="kind" class="form-select" onchange="this.form.submit()"><option value="">All types</option>
+      {% for v, label in kinds %}<option value="{{ v }}" {% if f.kind == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-loc">Location</label><select id="m-loc" name="location" class="form-select" onchange="this.form.submit()"><option value="">All locations</option>
+      {% for p in all_locations %}<option value="{{ p.pk }}" {% if f.location == p %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="m-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+      <input id="m-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Item, supplier, customer, ref"></div></div>
+  </form></div>
+  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+    <thead><tr>{% sort_th "date" "Date" %}{% sort_th "no" "Entry" %}{% sort_th "kind" "Type" %}{% sort_th "code" "Item code" %}<th>Description</th>{% sort_th "loc" "Location" %}
+      {% sort_th "in" "In" True %}{% sort_th "out" "Out" True %}<th>Unit</th>{% sort_th "party" "Supplier / issued to" %}<th>Ref</th>{% sort_th "by" "By" %}</tr></thead>
+    <tbody>{% for r in table.page %}<tr class="{% if r.undone %}undone{% endif %}">
+      <td class="nowrap">{{ r.entry.entry_date|date }}</td><td class="code">{{ r.entry.number }}</td><td class="keep"><span class="badge badge-k k-{{ r.entry.kind }}">{{ r.entry.get_kind_display }}</span>{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td>
+      <td><span class="code">{{ r.line.item.code }}</span></td><td>{{ r.line.item.description }}</td><td>{{ r.line.location.name }}</td>
+      <td class="num">{% if r.line.qty > 0 %}<span class="qty-in">+{{ r.line.qty }}</span>{% endif %}</td>
+      <td class="num">{% if r.line.qty < 0 %}<span class="qty-out">−{{ r.line.qty|stringformat:"d"|slice:"1:" }}</span>{% endif %}</td>
+      <td>{{ r.line.item.unit }}</td><td>{{ r.entry.party|default:r.entry.get_reason_display }}</td><td>{{ r.entry.ref }}</td><td>{{ r.entry.created_by.first_name|default:r.entry.created_by.username }}</td></tr>
+    {% empty %}<tr><td colspan="12" class="text-center text-secondary py-4">No movements in this period.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "core/_pagination.html" %}
+</div>
+<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Struck-through rows were undone; an "Undo" entry reverses them.</p>
+{% endblock %}
