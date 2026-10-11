@@ -7,8 +7,8 @@ from functools import reduce
 from operator import or_
 
 from django.core.exceptions import ValidationError
-from django.db import connection, transaction
-from django.db.models import Q, Sum
+from django.db import IntegrityError, connection, transaction
+from django.db.models import Case, IntegerField, Min, Q, Sum, Value, When
 from django.utils import timezone
 
 from .models import (
@@ -293,8 +293,12 @@ class ItemError(ValidationError):
     """An item rule was broken. The message is safe to show to staff as-is."""
 
 
+ITEM_WRITE_LOCK = 724_018_001  # arbitrary fixed bigint: serialises all item writes
+MAX_CODE_LENGTH = 80
+
+
 def find_item_by_code(text, exclude=None):
-    """Exact code, then a stored other spelling, then a look-alike code (O/0, I/1, hyphens, leading zeros)."""
+    """Exact code, a stored other spelling, then a look-alike code (O/0, I/1, hyphens, leading zeros)."""
     code, key = normalise_code(text), search_key(text)
     if not code:
         return None
@@ -303,63 +307,88 @@ def find_item_by_code(text, exclude=None):
     hit = items.filter(code=code).first()
     if hit:
         return hit
-    alias = aliases.filter(alias=code).select_related("item").first() or (
-        aliases.filter(search_key=key).select_related("item").first() if key else None
-    )
+    alias = aliases.filter(alias=code).select_related("item").first()
     if alias:
         return alias.item
-    return items.filter(search_key=key).first() if key else None
+    if not key:
+        return None
+    hit = items.filter(search_key=key).first()
+    if hit:
+        return hit
+    alias = aliases.filter(search_key=key).select_related("item").first()
+    return alias.item if alias else None
 
 
 @transaction.atomic
 def save_item(*, data, item=None) -> Item:
-    """Create (item=None) or update an item from cleaned form data. Raises ItemError (friendly message)."""
+    """Create (item=None) or replace an item's fields from cleaned form data. Raises ItemError.
+
+    `data` is a full replace: every key is required (code, spare_type, company, description, cat_ref,
+    fitting_type, wattage_w, current_ma, unit, reorder_level, aliases, is_active). A missing key raises
+    KeyError on purpose, so a partial dict can never silently reset fields or drop aliases.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(%s)", [ITEM_WRITE_LOCK])
     code = normalise_code(data["code"])
     if not code:
         raise ItemError("Item code is required.")
+    if len(code) > MAX_CODE_LENGTH:
+        raise ItemError(f"Item code is too long (max {MAX_CODE_LENGTH} characters).")
     if not search_key(code):
         raise ItemError("Item code must contain at least one letter or number.")
     clash = find_item_by_code(code, exclude=item)
     if clash:
-        raise ItemError(
-            f"{code} already exists."
-            if clash.code == code
-            else f"{code} looks the same as {clash.code}. Use that item instead."
-        )
+        if clash.code == code:
+            raise ItemError(f"{code} already exists.")
+        msg = f"{code} looks the same as {clash.code}. Use that item instead."
+        if not clash.is_active:
+            msg += " (It is inactive; reactivate it.)"
+        raise ItemError(msg)
     if item and item.code != code and item.lines.exists():
         raise ItemError(
             "This item already has stock entries, so its code can't be changed. "
             "Add the new spelling under 'Other spellings'."
         )
     aliases = []
-    for raw in data.get("aliases", []):
+    for raw in data["aliases"]:
         alias = normalise_code(raw)
         if not alias or alias == code or alias in aliases:
             continue
+        if len(alias) > MAX_CODE_LENGTH:
+            raise ItemError(f"Other spelling {alias} is too long (max {MAX_CODE_LENGTH} characters).")
         if not search_key(alias):
             raise ItemError(f"Other spelling {alias} must contain at least one letter or number.")
         owner = find_item_by_code(alias, exclude=item)
-        if owner and owner.code != code:
+        if owner:
             raise ItemError(f"Other spelling {alias} belongs to {owner.code}.")
         aliases.append(alias)
     item = item or Item()
     item.code, item.search_key = code, search_key(code)
     item.spare_type, item.company = data["spare_type"], data["company"]
-    item.description = (data.get("description") or "").strip()
-    item.cat_ref = normalise_code(data.get("cat_ref"))
-    item.fitting_type = data.get("fitting_type")
-    item.wattage_w, item.current_ma = data.get("wattage_w"), data.get("current_ma")
+    item.description = (data["description"] or "").strip()
+    item.cat_ref = normalise_code(data["cat_ref"])
+    item.fitting_type = data["fitting_type"]
+    item.wattage_w, item.current_ma = data["wattage_w"], data["current_ma"]
     item.unit = data["unit"]
-    item.reorder_level = data.get("reorder_level") or 0
-    item.is_active = data.get("is_active", True)
-    item.save()
-    item.aliases.all().delete()
-    ItemAlias.objects.bulk_create(ItemAlias(item=item, alias=a, search_key=search_key(a)) for a in aliases)
+    item.reorder_level = data["reorder_level"] or 0
+    item.is_active = data["is_active"]
+    try:
+        with transaction.atomic():
+            item.save()
+            item.aliases.all().delete()
+            ItemAlias.objects.bulk_create(
+                ItemAlias(item=item, alias=a, search_key=search_key(a)) for a in aliases
+            )
+    except IntegrityError as exc:
+        raise ItemError(f"{code} already exists.") from exc
     return item
 
 
 def search_items(text, limit=8, active_only=False):
-    """Items matching any code, other spelling, description or fitting cat ref (typo-tolerant on codes)."""
+    """Items matching a code, other spelling, description or cat ref (typo-tolerant on codes).
+
+    Best matches first: exact code or spelling, then codes starting with the text, then the rest.
+    """
     raw, code, key = (text or "").strip(), normalise_code(text), search_key(text)
     if len(raw) < 2:
         return []
@@ -374,4 +403,15 @@ def search_items(text, limit=8, active_only=False):
     items = Item.objects.filter(match)
     if active_only:
         items = items.filter(is_active=True)
-    return list(items.select_related("spare_type", "company").distinct().order_by("code")[:limit])
+    rank = Min(
+        Case(
+            When(code=code, then=Value(0)),
+            When(aliases__alias=code, then=Value(0)),
+            When(code__startswith=code, then=Value(1)),
+            default=Value(2),
+            output_field=IntegerField(),
+        )
+    )
+    return list(
+        items.select_related("spare_type", "company").annotate(rank=rank).order_by("rank", "code")[:limit]
+    )
