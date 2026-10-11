@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% load core_tags %}
+{% block title %}{{ item.code }}{% endblock %}
+{% block pretitle %}{{ item.spare_type.name }} · {{ item.company.name }}{% endblock %}
+{% block page_title %}<span class="code">{{ item.code }}</span>{% if low %} <span class="badge bg-red-lt ms-2">Low stock</span>{% endif %}{% endblock %}
+{% block actions %}
+  {% if nav_urls.stock_in %}<a href="{{ nav_urls.stock_in }}?item={{ item.pk }}" class="btn btn-in"><i class="ti ti-package-import"></i> Stock IN</a>{% endif %}
+  {% if nav_urls.stock_out %}<a href="{{ nav_urls.stock_out }}?item={{ item.pk }}" class="btn btn-out"><i class="ti ti-package-export"></i> Stock OUT</a>{% endif %}
+  <a href="{% url 'item_edit' item.pk %}" class="btn btn-outline-secondary"><i class="ti ti-edit"></i> Edit</a>
+{% endblock %}
+{% block content %}
+<div class="row row-cards">
+  <div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title">Details</h3></div><div class="card-body"><div class="datagrid">
+    {% if item.description %}<div class="datagrid-item"><div class="datagrid-title">Description</div><div class="datagrid-content">{{ item.description }}</div></div>{% endif %}
+    <div class="datagrid-item"><div class="datagrid-title">Spare type</div><div class="datagrid-content">{{ item.spare_type.name }}</div></div>
+    {% if item.cat_ref and item.cat_ref != item.code %}<div class="datagrid-item"><div class="datagrid-title">Used in fitting</div><div class="datagrid-content code">{{ item.cat_ref }}</div></div>{% endif %}
+    {% if item.fitting_type %}<div class="datagrid-item"><div class="datagrid-title">Fitting type</div><div class="datagrid-content">{{ item.fitting_type.name }}</div></div>{% endif %}
+    {% if item.wattage_w %}<div class="datagrid-item"><div class="datagrid-title">Wattage</div><div class="datagrid-content">{{ item.wattage_w }} W</div></div>{% endif %}
+    {% if item.current_ma %}<div class="datagrid-item"><div class="datagrid-title">Current</div><div class="datagrid-content">{{ item.current_ma }} mA</div></div>{% endif %}
+    <div class="datagrid-item"><div class="datagrid-title">Company</div><div class="datagrid-content">{{ item.company.name }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Unit</div><div class="datagrid-content">{{ item.unit }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Reorder level</div><div class="datagrid-content">{{ item.reorder_level }} {{ item.unit }}</div></div>
+    {% with al=item.aliases.all %}{% if al %}<div class="datagrid-item"><div class="datagrid-title">Other spellings</div><div class="datagrid-content">{{ al|join:", " }}</div></div>{% endif %}{% endwith %}
+    <div class="datagrid-item"><div class="datagrid-title">Status</div><div class="datagrid-content">{% if item.is_active %}<span class="badge bg-green-lt">Active</span>{% else %}<span class="badge bg-secondary-lt">Inactive</span>{% endif %}</div></div>
+  </div></div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">Stock by location</h3></div><div class="list-group list-group-flush">
+    {% for p, q in per_loc %}<div class="list-group-item d-flex"><span>{{ p.name }}</span><span class="ms-auto fw-bold">{{ q|qty }} <span class="text-secondary fw-normal">{{ item.unit }}</span></span></div>{% endfor %}
+    <div class="list-group-item d-flex bg-light"><b>Total</b><span class="ms-auto fw-bold">{{ total }} {{ item.unit }}</span></div></div></div></div>
+  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Movement history</h3>{% block export_history %}{% endblock %}</div>
+    <div class="card-body border-bottom py-3"><form method="get" class="row g-2">
+      <div class="col-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="h-from">From date</label><input id="h-from" type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+      <div class="col-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="h-to">To date</label><input id="h-to" type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+      <div class="col-12 col-lg-3"><label class="form-label small text-secondary mb-1" for="h-loc">Location</label><select id="h-loc" name="location" class="form-select" onchange="this.form.submit()"><option value="">All locations</option>
+        {% for p in all_locations %}<option value="{{ p.pk }}" {% if location == p %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div></form></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+      <thead><tr><th>Date</th><th>Entry</th><th>Type</th><th>Location</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance at location</th><th>Supplier / issued to</th><th>Ref</th><th>By</th></tr></thead>
+      <tbody>{% for r in history %}<tr class="{% if r.undone %}undone{% endif %}"><td class="nowrap">{{ r.entry.entry_date|date }}</td><td class="code">{{ r.entry.number }}</td>
+        <td class="keep"><span class="badge badge-k k-{{ r.entry.kind }}">{{ r.entry.get_kind_display }}</span>{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td><td>{{ r.line.location.name }}</td>
+        <td class="num">{% if r.line.qty > 0 %}<span class="qty-in">+{{ r.line.qty }}</span>{% endif %}</td>
+        <td class="num">{% if r.line.qty < 0 %}<span class="qty-out">−{{ r.line.qty|stringformat:"d"|slice:"1:" }}</span>{% endif %}</td>
+        <td class="num"><b>{{ r.after }}</b></td><td>{{ r.entry.party|default:r.entry.get_reason_display }}</td><td>{{ r.entry.ref }}</td><td>{{ r.entry.created_by.first_name|default:r.entry.created_by.username }}</td></tr>
+      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No movements in this period.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</div>
+{% endblock %}

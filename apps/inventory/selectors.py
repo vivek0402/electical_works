@@ -172,3 +172,48 @@ def movement_rows(f):
     return [
         {"entry": line.entry, "line": line, "undone": line.undone, "n": n} for n, line in enumerate(lines)
     ]
+
+
+def item_rows(f):
+    """Items list rows: {item, total, low}."""
+    items = _filtered_items(f).prefetch_related("aliases")
+    if f.fitting_type:
+        items = items.filter(fitting_type=f.fitting_type)
+    if f.status:
+        items = items.filter(is_active=f.status == "1")
+    totals = item_totals()
+    return [{"item": i, "total": totals.get(i.pk, 0), "low": is_low(i, totals.get(i.pk, 0))} for i in items]
+
+
+def item_history(item, date_from, date_to, location=None):
+    """Lines for one item, newest first, each with the running balance at its location after that line."""
+    undone = StockEntry.objects.filter(reverses=OuterRef("entry_id"))
+    lines = (
+        StockLine.objects.filter(item=item)
+        .select_related("entry", "entry__created_by", "location")
+        .annotate(undone=Exists(undone))
+        .order_by("entry__entry_date", "entry_id", "id")
+    )
+    running, rows = defaultdict(int), []
+    for line in lines:
+        running[line.location_id] += line.qty
+        in_range = date_from <= line.entry.entry_date <= date_to
+        if in_range and (location is None or line.location_id == location.pk):
+            rows.append(
+                {"entry": line.entry, "line": line, "after": running[line.location_id], "undone": line.undone}
+            )
+    return list(reversed(rows))
+
+
+def picker_option(item):
+    """Data the searchable item picker needs (also used by the global search)."""
+    return {
+        "id": item.pk,
+        "code": item.code,
+        "type": item.spare_type.name,
+        "desc": item.description,
+        "cat": item.cat_ref,
+        "company": item.company.name,
+        "unit": item.unit,
+        "aliases": [a.alias for a in item.aliases.all()],
+    }

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% load core_tags %}
+{% block title %}Items{% endblock %}
+{% block pretitle %}Setup{% endblock %}
+{% block page_title %}Items{% endblock %}
+{% block actions %}<a href="{% url 'item_new' %}" class="btn btn-primary"><i class="ti ti-plus"></i> Add item</a>{% block export_button %}{% endblock %}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">
+    <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="i-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+      <input id="i-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Code, old spelling, description, fitting"></div></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="i-type">Spare type</label><select id="i-type" name="spare_type" class="form-select" onchange="this.form.submit()"><option value="">All</option>
+      {% for t in spare_types %}<option value="{{ t.pk }}" {% if f.spare_type == t %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="i-co">Company</label><select id="i-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All</option>
+      {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="i-ft">Fitting type</label><select id="i-ft" name="fitting_type" class="form-select" onchange="this.form.submit()"><option value="">All</option>
+      {% for t in fitting_types %}<option value="{{ t.pk }}" {% if f.fitting_type == t %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="i-st">Status</label><select id="i-st" name="status" class="form-select" onchange="this.form.submit()">
+      <option value="1" {% if f.status == "1" %}selected{% endif %}>Active</option><option value="0" {% if f.status == "0" %}selected{% endif %}>Inactive</option><option value="" {% if f.status == "" %}selected{% endif %}>All</option></select></div>
+  </form></div>
+  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+    <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}{% sort_th "desc" "Description" %}{% sort_th "cat" "Product cat ref" %}{% sort_th "watt" "W" True %}
+      {% sort_th "company" "Company" %}{% sort_th "unit" "Unit" %}{% sort_th "reorder" "Reorder at" True %}{% sort_th "stock" "In stock" True %}<th></th></tr></thead>
+    <tbody>{% for r in table.page %}<tr>
+      <td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a>{% with al=r.item.aliases.all %}{% if al %}<div class="text-secondary small">also: {{ al|join:", " }}</div>{% endif %}{% endwith %}</td>
+      <td>{{ r.item.spare_type.name }}</td><td>{{ r.item.description }}</td><td><span class="code">{{ r.item.cat_ref }}</span><div class="text-secondary small">{{ r.item.fitting_type.name|default:"" }}</div></td>
+      <td class="num">{{ r.item.wattage_w|default_if_none:"" }}</td><td>{{ r.item.company.name }}</td><td>{{ r.item.unit }}</td><td class="num">{{ r.item.reorder_level }}</td>
+      <td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }}</span>{% else %}{{ r.total }}{% endif %}</td>
+      <td><a href="{% url 'item_edit' r.item.pk %}" class="btn btn-sm btn-ghost-primary"><i class="ti ti-edit"></i> Edit</a></td></tr>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No items match.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "core/_pagination.html" %}
+</div>
+{% endblock %}

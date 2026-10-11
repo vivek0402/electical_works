@@ -70,6 +70,15 @@ def movement_filters(params, today):
     )
 
 
+def history_filters(params, today):
+    """(date_from, date_to, location) for an item card's history; bad dates fall back, reversed dates swap."""
+    date_from = _date(params.get("date_from"), today - timedelta(days=30))
+    date_to = _date(params.get("date_to"), today)
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+    return date_from, date_to, _obj(Location, params.get("location"))
+
+
 @dataclass
 class ItemFilters:
     q: str

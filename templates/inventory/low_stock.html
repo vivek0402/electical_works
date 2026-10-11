@@ -8,7 +8,7 @@
 <div class="card"><div class="table-responsive"><table class="table table-vcenter card-table table-striped">
   <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}<th>Description</th><th>Company</th>
     {% for p in locations %}<th class="num">{{ p.name }}</th>{% endfor %}{% sort_th "total" "Total" True %}{% sort_th "reorder" "Reorder at" True %}{% sort_th "short" "Short by" True %}</tr></thead>
-  <tbody>{% for r in table.page %}<tr><td><span class="code">{{ r.item.code }}</span></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
+  <tbody>{% for r in table.page %}<tr><td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
     <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
     <td class="text-truncate" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
     {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}</td>{% endfor %}

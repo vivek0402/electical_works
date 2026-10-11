@@ -25,7 +25,7 @@
       {% for p in locations %}{% sort_th p.sort_key p.name True %}{% endfor %}
       {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
-      <td><span class="code">{{ r.item.code }}</span></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
+      <td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
       <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
       <td class="text-truncate" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
       {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}{% if f.location %} <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endfor %}
