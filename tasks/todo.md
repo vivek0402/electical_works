@@ -30,7 +30,7 @@ Confirmed decisions:
 ### Step B: build (after approval)
 Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed with subagent-driven development: one implementer per task, then a spec review and a code-quality review. Local tests use the pgserver Postgres 16 (scratchpad `pgdata2`).
 - [x] Task 1 Skeleton: a36dfd1 + review fixes a4e3e7d (3 tests pass; spec ✅ quality ✅)
-- [ ] Task 2 Accounts, roles, login, static, admin
+- [x] Task 2 Accounts, roles, login, static, admin: fd14283 + review fixes 516425c (16 tests; spec ✅ quality ✅)
 - [ ] Task 3 Masters, Item, code normalisation
 - [ ] Task 4 Ledger models + posting services
 - [ ] Task 5 Item services
