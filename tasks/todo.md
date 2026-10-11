@@ -31,7 +31,7 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [ ] 2.8 `import_legacy --review` → `data/legacy/import_review.xlsx`
 - [ ] 2.9 `import_legacy --apply <reviewed.xlsx> [--dry-run]` (idempotent; doc ref derived from the sheet's title date, e.g. `LEGACY-2026-05-25`) + summary
 - [ ] 2.10 Importer tests on fixture xlsx built from the real messy rows (fake phones) + re-run idempotency
-- [ ] 2.11a **Mockup** `mockups/stock-lists.html` (Fresh/Defective lists + Excel export preview), approved by the user ⛔ gate for 2.11
+- [ ] 2.11a **Mockup** `mockups/stock-app.html`: Stock IN / Stock OUT / Transfer entry, Undo (reversal), Current stock (Fresh/Defective/Low), Item card with in/out history, Register. Needs user approval ⛔ gate for every stock screen. (v1 `stock-lists.html` was rejected: it showed reports only, not data entry.)
 - [ ] 2.11 Fresh List / Defective List views (tables2 + filter, paginated) + Excel export in their layouts
 - [ ] 2.12 View tests: role access, filters, export layout
 - [ ] 2.12a `make demo`: seed users + import the sample files with strong merges auto-approved (dev only), so the app is demoable in one command

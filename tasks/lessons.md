@@ -9,3 +9,7 @@ Read at the start of every session. Each entry: the pattern I got wrong, then th
 ## 2026-10-11 — Always build mocks (standing rule from the user)
 - **Pattern:** I went straight from plan to implementation for user-facing work.
 - **Rule:** (1) Before building any screen, make a clickable HTML mockup in `mockups/` (fake data, no backend, same Pico styling as the app) and get the user's approval. Only then build the real view. (2) Every feature ships with realistic demo data loaded by `make demo`, so the app is always demoable without real client data.
+
+## 2026-10-11 — Mocked a report instead of the core workflow
+- **Pattern:** My first mockup showed only the read-only Fresh/Defective lists (the Excel replacement). The user corrected me: this is a stock management system where users **enter stock IN and OUT** and track it.
+- **Rule:** Mock and build the primary *data-entry* workflow first (what users do every day: stock in, stock out, transfer, undo), then the tracking views (current stock, item history, register). Reports and exports come last. Before any mockup, write down the 3–5 actions a user performs daily and make sure each one is clickable in the mockup.
