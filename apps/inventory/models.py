@@ -1,20 +1,32 @@
+import re
+
 from django.db import models
 from django.db.models import F, Q
-from django.db.models.functions import Upper
+from django.db.models.functions import Lower, Upper
+
+from .normalise import normalise_code
+from .normalise import search_key as make_search_key
 
 
 class Master(models.Model):
     """Simple named list managed by admins. Deactivate, never delete, once used."""
 
-    name = models.CharField(max_length=80, unique=True)
+    name = models.CharField(max_length=80)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         abstract = True
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(Lower("name"), name="%(app_label)s_%(class)s_name_ci_unique"),
+        ]
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.name = re.sub(r"\s+", " ", self.name or "").strip()
+        super().save(*args, **kwargs)
 
 
 class Location(Master):
@@ -48,7 +60,7 @@ class Item(models.Model):
     """A spare (driver, PCB, lens, complete fitting, wire...) with its own code and parent fitting."""
 
     code = models.CharField(max_length=80, unique=True)
-    search_key = models.CharField(max_length=80, db_index=True)
+    search_key = models.CharField(max_length=80, db_index=True, editable=False)
     spare_type = models.ForeignKey(SpareType, on_delete=models.PROTECT)
     description = models.CharField(max_length=200, blank=True)
     cat_ref = models.CharField("used in fitting (product cat ref)", max_length=80, blank=True)
@@ -68,10 +80,16 @@ class Item(models.Model):
             models.CheckConstraint(
                 condition=Q(code=Upper(F("code"))) & ~Q(code=""), name="item_code_normalised"
             ),
+            models.CheckConstraint(condition=~Q(search_key=""), name="item_search_key_not_empty"),
         ]
 
     def __str__(self):
         return self.code
+
+    def save(self, *args, **kwargs):
+        self.code = normalise_code(self.code)
+        self.search_key = make_search_key(self.code)
+        super().save(*args, **kwargs)
 
 
 class ItemAlias(models.Model):
@@ -79,11 +97,22 @@ class ItemAlias(models.Model):
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="aliases")
     alias = models.CharField(max_length=80, unique=True)
-    search_key = models.CharField(max_length=80, db_index=True)
+    search_key = models.CharField(max_length=80, db_index=True, editable=False)
 
     class Meta:
         ordering = ["alias"]
         verbose_name_plural = "item aliases"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(alias=Upper(F("alias"))) & ~Q(alias=""), name="alias_normalised"
+            ),
+            models.CheckConstraint(condition=~Q(search_key=""), name="alias_search_key_not_empty"),
+        ]
 
     def __str__(self):
         return self.alias
+
+    def save(self, *args, **kwargs):
+        self.alias = normalise_code(self.alias)
+        self.search_key = make_search_key(self.alias)
+        super().save(*args, **kwargs)
