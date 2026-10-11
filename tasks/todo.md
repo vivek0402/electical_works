@@ -28,7 +28,19 @@ Confirmed decisions:
 - [x] Walkthrough passes (desktop + phone, zero JS errors), now also covering global search, column sorting, paging and the phone menu
 
 ### Step B: build (after approval)
-- [ ] B1 Setup · B2 Masters · B3 Stock engine · B4 Screens · B5 Exports · B6 Demo data (details in the plan)
+Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed with subagent-driven development: one implementer per task, then a spec review and a code-quality review. Local tests use the pgserver Postgres 16 (scratchpad `pgdata2`).
+- [x] Task 1 Skeleton: a36dfd1 + review fixes a4e3e7d (3 tests pass; spec ✅ quality ✅)
+- [ ] Task 2 Accounts, roles, login, static, admin
+- [ ] Task 3 Masters, Item, code normalisation
+- [ ] Task 4 Ledger models + posting services
+- [ ] Task 5 Item services
+- [ ] Task 6 Layout + dashboard
+- [ ] Task 7 Current stock / movements / low stock lists
+- [ ] Task 8 Items list, form, item card
+- [ ] Task 9 Entry forms, entry detail, undo
+- [ ] Task 10 Excel exports
+- [ ] Task 11 Masters page, global search, permission sweep
+- [ ] Task 12 Demo data, e2e walkthrough, docs
 
 ### Step A result (2026-10-11): mockup ready, waiting for the user's approval ⛔
 - Open: http://localhost:8080/mockups/stock/ (run `python -m http.server 8080` from the repo root). Sample exports are in `mockups/stock/exports/`.
