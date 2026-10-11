@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: svkml
+      POSTGRES_USER: svkml
+      POSTGRES_PASSWORD: svkml
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U svkml -d svkml"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  web:
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "true"
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://svkml:svkml@db:5432/svkml
+      COVERAGE_FILE: /tmp/.coverage
+      PYTEST_ADDOPTS: -p no:cacheprovider
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:

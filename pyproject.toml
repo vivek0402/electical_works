@@ -1,0 +1,41 @@
+[project]
+name = "svkml"
+version = "0.1.0"
+description = "SVKML Electrical Works: stock management"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django==5.2.18",
+    "psycopg[binary]==3.3.6",
+    "django-environ==0.14.0",
+    "django-pgtrigger==4.17.0",
+    "django-unfold==0.108.0",
+    "xlsxwriter==3.2.9",
+    "gunicorn==26.2.0",
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-django==4.14.0",
+    "pytest-cov==7.1.0",
+    "openpyxl==3.1.5",
+    "ruff==0.17.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["**/migrations/*", "mockups/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
