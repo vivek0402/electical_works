@@ -203,6 +203,12 @@ class StockEntry(models.Model):
             return self.get_reason_display()
         return f"Undo of {self.reverses.number}" if self.reverses_id else "Undo"
 
+    @property
+    def is_undone(self):
+        """True if an Undo entry reverses this one (uses the `undone_flag` annotation when present)."""
+        flag = getattr(self, "undone_flag", None)
+        return StockEntry.objects.filter(reverses=self).exists() if flag is None else flag
+
 
 class StockLine(models.Model):
     """Signed quantity of an item into (+) or out of (-) a location. Never edited."""

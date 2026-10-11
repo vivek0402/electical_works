@@ -53,6 +53,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.accounts.context_processors.roles",
+                "apps.inventory.context_processors.nav",
             ],
         },
     },
@@ -69,7 +70,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "/"  # the dashboard URL name does not exist until the inventory task
+LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
 # English UI, IST display, UTC storage, DD-MM-YYYY everywhere.

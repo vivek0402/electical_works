@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block pretitle %}Overview{% endblock %}
+{% block page_title %}Stock dashboard{% endblock %}
+{% block actions %}<span class="text-secondary align-self-center"><i class="ti ti-calendar"></i> {{ today|date }}</span>{% endblock %}
+{% block content %}
+<div class="row row-deck row-cards">
+  <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="row align-items-center">
+    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-box"></i></span></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.active_items }}</div><div class="text-secondary">Active items</div></div></div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="row align-items-center">
+    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-building-warehouse"></i></span></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.nos_in_stock }} NOS</div><div class="text-secondary">In stock (all locations)</div><div class="small text-secondary">other units shown per location</div></div></div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="row align-items-center">
+    <div class="col-auto"><span class="avatar {% if stats.low_count %}kpi-alert{% else %}kpi-ok{% endif %}"><i class="ti ti-alert-triangle"></i></span></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.low_count }}</div><div class="text-secondary">Low stock items</div><div class="small text-secondary">at or below reorder level</div></div></div></div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="row align-items-center">
+    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-arrows-exchange"></i></span></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.entries_week }}</div><div class="text-secondary">Entries this week</div><div class="small text-secondary">{{ stats.entries_today }} today</div></div></div></div></div></div>
+  <div class="col-12"><div class="card"><div class="card-body"><div class="row g-2 quick">
+    <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_in|default:'#' }}" class="btn btn-in w-100 flex-column"><i class="ti ti-package-import"></i> Stock IN<small>Material received</small></a></div>
+    <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_out|default:'#' }}" class="btn btn-out w-100 flex-column"><i class="ti ti-package-export"></i> Stock OUT<small>Material issued</small></a></div>
+    <div class="col-6 col-lg-3"><a href="{{ nav_urls.transfer|default:'#' }}" class="btn btn-quiet w-100 flex-column"><i class="ti ti-arrows-exchange"></i> Transfer<small>Between locations</small></a></div>
+    <div class="col-6 col-lg-3"><a href="{{ nav_urls.adjust|default:'#' }}" class="btn btn-quiet w-100 flex-column"><i class="ti ti-adjustments-horizontal"></i> Adjust<small>Correct a count</small></a></div>
+  </div></div></div></div>
+  <div class="col-lg-8"><div class="card"><div class="card-header"><div><h3 class="card-title">Stock IN vs OUT</h3>
+      <div class="card-subtitle">Quantity per week, last 5 weeks (items counted in NOS)</div></div>
+      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle"><i class="ti ti-table"></i> View as table</button></div></div>
+    <div class="card-body"><div id="chart-weekly" class="chart-box" role="img" aria-label="Bar chart of stock in and stock out per week"></div>
+      <table class="table table-sm" id="chart-table" hidden><thead><tr><th>Week</th><th class="num">Stock IN (NOS)</th><th class="num">Stock OUT (NOS)</th></tr></thead>
+        <tbody>{% for w in weeks %}<tr><td>{{ w.label }}</td><td class="num">{{ w.qty_in }}</td><td class="num">{{ w.qty_out }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">Stock by location</h3></div>
+    <div class="list-group list-group-flush">{% for place, units in locations %}
+      <div class="list-group-item d-flex align-items-center"><span class="avatar avatar-sm bg-secondary-lt me-3"><i class="ti ti-map-pin"></i></span>
+        <div class="flex-fill"><div class="fw-medium">{{ place.name }}</div><div class="text-secondary small">{% for u, q in units.items %}{{ q }} {{ u }}{% if not forloop.last %} · {% endif %}{% empty %}Empty{% endfor %}</div></div></div>
+    {% endfor %}</div></div></div>
+  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Recent entries</h3>
+    {% if nav_urls.movements %}<div class="card-actions"><a href="{{ nav_urls.movements }}" class="btn btn-sm btn-outline-primary">All movements <i class="ti ti-arrow-right"></i></a></div>{% endif %}</div>
+    {% include "inventory/_entries_table.html" with entries=recent %}</div></div>
+</div>
+{{ weeks_chart|json_script:"weeks-data" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'vendor/apexcharts.min.js' %}"></script><script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}
