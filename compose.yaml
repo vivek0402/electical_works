@@ -27,6 +27,9 @@ services:
         required: false
     environment:
       DATABASE_URL: postgres://svkml:svkml@db:5432/svkml
+      # Non-root container user may not own the bind mount (Linux hosts): keep test artefacts in /tmp.
+      COVERAGE_FILE: /tmp/.coverage
+      PYTEST_ADDOPTS: -p no:cacheprovider
     volumes:
       - .:/app
     ports:

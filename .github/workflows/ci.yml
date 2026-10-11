@@ -30,3 +30,20 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run python manage.py makemigrations --check --dry-run
       - run: uv run pytest --cov=apps --cov-report=term-missing
+
+  # Same flow a developer runs locally: proves Dockerfile, compose.yaml and Makefile work.
+  compose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: make up
+      - run: make migrate
+      - run: make seed
+      - run: make test
+      - name: healthz through the running web container
+        run: |
+          for i in $(seq 1 30); do curl -fsS http://localhost:8000/healthz && exit 0; sleep 2; done
+          docker compose logs web; exit 1
+      - if: always()
+        run: docker compose down -v
