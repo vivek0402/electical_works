@@ -21,9 +21,9 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [x] 1.15 **Verify:** `make up` → `make migrate seed` → `make test` green → log in as each role
 
 ## Phase 2: Items + legacy import + Fresh/Defective lists
-- [ ] 2.1 `Item`, `ItemAlias` (unique normalised code/alias, pg_trgm GIN index, item_type, is_active); admin
-- [ ] 2.2 `normalise_code()`, `search_key()`, `parse_qty()` + unit tests with every messy value
-- [ ] 2.3 `StockDocument`/`StockMovement`/`StockBalance` + constraints + pgtrigger Protect; `post_document()`; selectors; `rebuild_stock_balances`; full posting-core tests (incl. concurrency + DB-level immutability)
+- [x] 2.1 `Item`, `ItemAlias` (unique normalised code/alias, pg_trgm GIN index, item_type, is_active); admin
+- [x] 2.2 `normalise_code()`, `search_key()`, `parse_qty()` + unit tests with every messy value
+- [x] 2.3 `StockDocument`/`StockMovement`/`StockBalance` + constraints + pgtrigger Protect; `post_document()`; selectors; `rebuild_stock_balances`; full posting-core tests (incl. concurrency + DB-level immutability)
 - [ ] 2.4 Parsers: header-row detection, 3 file readers → row dicts with source refs
 - [ ] 2.5 Type inference (column + prefix rules + generic keywords), conflicts recorded
 - [ ] 2.6 Clustering: strong (same search_key) + weak (rapidfuzz ≥ 90, same type); `/` rows → Alternatives
@@ -55,3 +55,8 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - Live walkthrough: /healthz 200; anonymous / → /login/; admin/office/ramu/apparao each log in and see their role; only admin sees and opens /admin/ (others → 302); a wrong password shows a friendly error; vendored static files return 200.
 - Root-cause fixes: `.gitattributes` forces LF (git autocrlf would have broken scripts in containers); vendored JS/CSS are excluded from pre-commit.
 - Docker verification is done in CI (repo github.com/vivek0402/electical_works, private). The `compose` job runs `make up → migrate → seed → test`: 17 passed, healthz ok. The `test` job is green too. A local Docker Desktop install is still recommended for day-to-day dev, but no longer blocks anything.
+
+### Phase 2 progress (2026-10-11): 2.1–2.3 done
+- CI on postgres:16: 80 passed. Coverage: services 98%, normalise 100%, models 95%. The Postgres log shows every DB guard firing in its test (code check, unique opening ref, pgtrigger append-only, non-negative balance).
+- `search_key` is a stored generated column (SQL twin of `normalise.search_key`); a parity test keeps the two in sync.
+- Local test runs use CI, because the throwaway Windows Postgres lacks pg_trgm. Docker Desktop would give a local loop.
