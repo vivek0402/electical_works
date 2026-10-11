@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-IN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MOCKUP · Stock Management · SVKML</title>
+  <link rel="stylesheet" href="vendor/pico.min.css">
+  <link rel="stylesheet" href="vendor/tom-select.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="mock-banner">MOCKUP: demo data in your browser, nothing is saved (reload resets it).</div>
+  <header class="topbar">
+    <div class="container-fluid bar">
+      <a href="#dash" class="brand">SVKML <span>Stock</span></a>
+      <button type="button" class="menu-btn" aria-controls="nav" aria-expanded="false"
+        onclick="const o=document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',o)">☰ Menu</button>
+      <nav id="nav" aria-label="Main">
+        <a href="#dash">Dashboard</a>
+        <span class="sep" aria-hidden="true"></span>
+        <a href="#in" class="nav-in">⬇ Stock IN</a>
+        <a href="#out" class="nav-out">⬆ Stock OUT</a>
+        <a href="#transfer">⇄ Transfer</a>
+        <a href="#adjust">± Adjust</a>
+        <span class="sep" aria-hidden="true"></span>
+        <a href="#stock">Current stock</a>
+        <a href="#items">Items</a>
+        <a href="#moves">Movements</a>
+        <a href="#low">Low stock</a>
+        <a href="#masters">Masters</a>
+      </nav>
+      <span class="who">👤 Office</span>
+    </div>
+  </header>
+  <main class="container" id="view"><p aria-busy="true">Loading…</p></main>
+  <dialog id="dlg"><article id="dlg-body"></article></dialog>
+  <script src="vendor/tom-select.complete.min.js"></script>
+  <script src="data.js"></script>
+  <script src="forms.js"></script>
+  <script src="screens.js"></script>
+</body>
+</html>
