@@ -37,7 +37,8 @@ def fill_line(page, tbody, n, code, qty, extra=None):
     row.locator(".qty-in").dispatch_event("change")
     page.wait_for_timeout(50)
     for i, val in enumerate(extra or []):
-        inp = page.locator(f"#{tbody} tr").nth(n).locator("td[data-label] input:not(.qty-in):not([list])").nth(i)
+        extras = "td[data-label] input:not(.qty-in):not([list])"
+        inp = page.locator(f"#{tbody} tr").nth(n).locator(extras).nth(i)
         inp.fill(val)
         inp.dispatch_event("change")
 
@@ -68,7 +69,7 @@ with sync_playwright() as p:
     ticket = page.url.split("/")[-1]
     shot(page, "a2-complaint-filed")
 
-    # 2. Ramu's phone view: the complaint is in "My complaints"; the defectives system is hidden from him.
+    # 2. Ramu's view: the complaint is in "My complaints"; the defectives system is hidden.
     page.select_option("#who", "Ramu")
     page.wait_for_url("**#cmp/mine")
     assert ticket in page.inner_text("#view")
@@ -156,9 +157,16 @@ with sync_playwright() as p:
     assert state(page, f"complaint('{ticket}').status") == "CLOSED"
     shot(page, "a9-complaint-closed")
 
-    for h, n in [("#def", "b1-def-dashboard"), ("#def/reports", "b2-def-reports"), ("#cmp", "b3-cmp-list"),
-                 ("#cmp/report", "b4-ap-pending"), (f"#def/piece/{tags[0]}", "b5-piece"), ("#stock", "b6-stock"),
-                 ("#stock/item/EIO6006", "b7-item")]:
+    screens = [
+        ("#def", "b1-def-dashboard"),
+        ("#def/reports", "b2-def-reports"),
+        ("#cmp", "b3-cmp-list"),
+        ("#cmp/report", "b4-ap-pending"),
+        (f"#def/piece/{tags[0]}", "b5-piece"),
+        ("#stock", "b6-stock"),
+        ("#stock/item/EIO6006", "b7-item"),
+    ]
+    for h, n in screens:
         page.goto(URL + h)
         page.wait_for_timeout(100)
         shot(page, n)
