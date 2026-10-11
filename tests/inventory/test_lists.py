@@ -71,3 +71,56 @@ def test_movements_filter_kind(office_client, stock):
 def test_low_stock(office_client, stock):
     html = office_client.get("/low-stock/").content.decode()
     assert "EIO6006" in html and "LG78-150-700" not in html and "Short by" in html
+
+
+@pytest.mark.parametrize("url", ["/stock/?q=ab%00", "/movements/?q=%00", "/stock/?q=%00%00x"])
+def test_nul_in_search_is_safe(office_client, stock, url):
+    assert office_client.get(url).status_code == 200
+
+
+def _query_count(client, url):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    with CaptureQueriesContext(connection) as ctx:
+        assert client.get(url).status_code == 200
+    return len(ctx)
+
+
+@pytest.mark.parametrize("url", ["/stock/", "/low-stock/", "/stock/?size=50"])
+def test_list_queries_do_not_grow_with_items(office_client, office_user, url):
+    def add(n, start):
+        for i in range(start, start + n):
+            it = make_item(f"BULK{i:03d}", reorder=100, spare_type="Lens")
+            post_entry(kind=EntryKind.IN, entry_date=TODAY, user=office_user, lines=[Line(it, loc(), 5)])
+
+    add(5, 0)
+    few = _query_count(office_client, url)
+    add(25, 5)
+    assert _query_count(office_client, url) <= few
+
+
+def test_inactive_location_with_stock_gets_a_column(office_client, office_user):
+    item = make_item("OLDLOC", reorder=0)
+    gone = loc("Svkml")
+    post_entry(kind=EntryKind.IN, entry_date=TODAY, user=office_user, lines=[Line(item, gone, 7)])
+    gone.is_active = False
+    gone.save()
+    html = office_client.get("/stock/").content.decode()
+    assert "Svkml" in html and "OLDLOC" in html
+    assert "<b>7</b>" in html
+
+
+def test_inactive_empty_location_has_no_column(office_client, office_user):
+    gone = loc("Svkml")
+    gone.is_active = False
+    gone.save()
+    item = make_item("ONLYMAIN")
+    post_entry(kind=EntryKind.IN, entry_date=TODAY, user=office_user, lines=[Line(item, loc(), 2)])
+    assert "Svkml" not in office_client.get("/stock/").content.decode()
+
+
+def test_movements_reversed_dates_are_swapped(office_client, stock):
+    a = TODAY.isoformat()
+    b = (TODAY - datetime.timedelta(days=60)).isoformat()
+    assert "IN-0001" in office_client.get(f"/movements/?date_from={a}&date_to={b}").content.decode()

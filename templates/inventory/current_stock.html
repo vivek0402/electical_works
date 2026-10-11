@@ -21,17 +21,16 @@
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="low" value="1" {% if f.low %}checked{% endif %} onchange="this.form.submit()"><span class="form-check-label">Only low stock</span></label></div>
   </form></div>
   <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
-    <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}{% sort_th "desc" "Description" %}<th>Used in (fitting)</th>{% sort_th "company" "Company" %}
+    <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}{% sort_th "desc" "Description" %}{% sort_th "company" "Company" %}
       {% for p in locations %}{% sort_th p.sort_key p.name True %}{% endfor %}
-      {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}{% sort_th "unit" "Unit" %}</tr></thead>
+      {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
-      <td><span class="code">{{ r.item.code }}</span></td><td>{{ r.item.spare_type.name }}</td><td>{{ r.item.description }}</td>
-      <td>{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<span class="code">{{ r.item.cat_ref }}</span><div class="text-secondary small">{{ r.item.fitting_type.name|default:"" }}</div>{% else %}{{ r.item.fitting_type.name|default:"" }}{% endif %}</td>
-      <td>{{ r.item.company.name }}</td>
-      {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}</td>{% endfor %}
-      {% if not f.location %}<td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }}</span>{% else %}<b>{{ r.total }}</b>{% endif %}</td>{% endif %}
-      <td>{{ r.item.unit }}</td></tr>
-    {% empty %}<tr><td colspan="12" class="text-center text-secondary py-4">Nothing matches these filters.</td></tr>{% endfor %}</tbody>
+      <td><span class="code">{{ r.item.code }}</span></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
+      <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
+      <td class="text-truncate" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
+      {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}{% if f.location %} <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endfor %}
+      {% if not f.location %}<td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }} {{ r.item.unit }}</span>{% else %}<b>{{ r.total }}</b> <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endif %}</tr>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing matches these filters.</td></tr>{% endfor %}</tbody>
   </table></div>
   {% include "core/_pagination.html" %}
 </div>

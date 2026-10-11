@@ -61,7 +61,7 @@ def current_stock(request):
 
 @role_required(OFFICE)
 def low_stock(request):
-    rows = selectors.low_stock_rows()
+    rows, locations = selectors.low_stock_rows()
     sorters = {
         "code": lambda r: r["item"].code,
         "type": lambda r: r["item"].spare_type.name,
@@ -73,7 +73,7 @@ def low_stock(request):
     return render(
         request,
         "inventory/low_stock.html",
-        {"table": table, "locations": Location.objects.filter(is_active=True)},
+        {"table": table, "locations": locations},
     )
 
 
@@ -82,7 +82,7 @@ def movements(request):
     f = movement_filters(request.GET, timezone.localdate())
     rows = selectors.movement_rows(f)
     sorters = {
-        "date": lambda r: r["n"],
+        "date": lambda r: -r["n"],
         "no": lambda r: r["entry"].number,
         "kind": lambda r: r["entry"].kind,
         "code": lambda r: r["line"].item.code,
@@ -92,7 +92,7 @@ def movements(request):
         "party": lambda r: r["entry"].party,
         "by": lambda r: r["entry"].created_by.username,
     }
-    table = sort_and_page(request, rows, sorters, "date", "asc")
+    table = sort_and_page(request, rows, sorters, "date", "desc")
     return render(
         request,
         "inventory/movements.html",

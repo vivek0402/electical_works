@@ -23,7 +23,7 @@
       <td class="num">{% if r.line.qty > 0 %}<span class="qty-in">+{{ r.line.qty }}</span>{% endif %}</td>
       <td class="num">{% if r.line.qty < 0 %}<span class="qty-out">−{{ r.line.qty|stringformat:"d"|slice:"1:" }}</span>{% endif %}</td>
       <td>{{ r.line.item.unit }}</td><td>{{ r.entry.party|default:r.entry.get_reason_display }}</td><td>{{ r.entry.ref }}</td><td>{{ r.entry.created_by.first_name|default:r.entry.created_by.username }}</td></tr>
-    {% empty %}<tr><td colspan="12" class="text-center text-secondary py-4">No movements in this period.</td></tr>{% endfor %}</tbody>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No movements in this period.</td></tr>{% endfor %}</tbody>
   </table></div>
   {% include "core/_pagination.html" %}
 </div>

@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models import Exists, F, OuterRef, Q, Sum
 from django.db.models.functions import Coalesce
 
+from .filters import StockFilters
 from .models import EntryKind, Item, Location, StockBalance, StockEntry, StockLine
 from .services import item_search_q
 
@@ -113,13 +114,20 @@ def _filtered_items(f):
     return items
 
 
+def stock_locations(bal):
+    """Active locations, plus any inactive location that still holds stock."""
+    held = {loc_id for (_, loc_id), qty in bal.items() if qty}
+    return list(Location.objects.filter(Q(is_active=True) | Q(pk__in=held)))
+
+
 def current_stock_rows(f):
     """(rows, locations). Row: {item, per_loc: {location_id: qty}, total, low}. Hides items with no stock."""
-    locations = [f.location] if f.location else list(Location.objects.filter(is_active=True))
     bal = balance_map()
+    locations = [f.location] if f.location else stock_locations(bal)
+    all_ids = [place.pk for place in Location.objects.all()]
     rows = []
     for item in _filtered_items(f).filter(is_active=True):
-        per_loc = {place.pk: bal.get((item.pk, place.pk), 0) for place in Location.objects.all()}
+        per_loc = {pk: bal.get((item.pk, pk), 0) for pk in all_ids}
         total = sum(per_loc.values())
         low = is_low(item, total)
         shown = per_loc.get(f.location.pk, 0) != 0 if f.location else (total != 0 or f.low)
@@ -129,12 +137,12 @@ def current_stock_rows(f):
 
 
 def low_stock_rows():
-    rows, _ = current_stock_rows(
-        type("F", (), {"location": None, "spare_type": None, "company": None, "q": "", "low": True})()
-    )
+    """(rows, locations) for items at or below their reorder level, with short_by."""
+    f = StockFilters(location=None, spare_type=None, company=None, q="", low=True)
+    rows, locations = current_stock_rows(f)
     for row in rows:
         row["short_by"] = max(0, row["item"].reorder_level - row["total"])
-    return rows
+    return rows, locations
 
 
 def movement_rows(f):

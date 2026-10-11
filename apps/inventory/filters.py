@@ -6,6 +6,11 @@ from datetime import date, timedelta
 from .models import Company, EntryKind, FittingType, Item, Location, SpareType
 
 
+def _text(value):
+    """Strip NUL bytes (Postgres rejects them) and surrounding spaces."""
+    return (value or "").replace(chr(0), "").strip()
+
+
 def _obj(model, value):
     try:
         return model.objects.get(pk=int(value)) if value else None
@@ -34,7 +39,7 @@ def stock_filters(params):
         _obj(Location, params.get("location")),
         _obj(SpareType, params.get("spare_type")),
         _obj(Company, params.get("company")),
-        params.get("q", "").strip(),
+        _text(params.get("q")),
         params.get("low") == "1",
     )
 
@@ -51,12 +56,16 @@ class MovementFilters:
 
 def movement_filters(params, today):
     kind = params.get("kind", "")
+    date_from = _date(params.get("date_from"), today - timedelta(days=30))
+    date_to = _date(params.get("date_to"), today)
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
     return MovementFilters(
-        _date(params.get("date_from"), today - timedelta(days=30)),
-        _date(params.get("date_to"), today),
+        date_from,
+        date_to,
         kind if kind in EntryKind.values else "",
         _obj(Location, params.get("location")),
-        params.get("q", "").strip(),
+        _text(params.get("q")),
         _obj(Item, params.get("item")),
     )
 
@@ -73,7 +82,7 @@ class ItemFilters:
 def item_filters(params):
     status = params.get("status", "1")
     return ItemFilters(
-        params.get("q", "").strip(),
+        _text(params.get("q")),
         _obj(SpareType, params.get("spare_type")),
         _obj(Company, params.get("company")),
         _obj(FittingType, params.get("fitting_type")),
