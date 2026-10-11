@@ -44,7 +44,7 @@ def report(filename, title, filters, columns, rows, low_col=None, widths=None):
     wb.set_properties({"title": title, "company": "SVKML Electrical Works", "author": "SVKML Stock"})
     ws = wb.add_worksheet(title[:31])
     f = {
-        "company": wb.add_format({"bold": True, "font_size": 15, "font_color": "#0F3B5F"}),
+        "company": wb.add_format({"bold": True, "font_size": 15, "font_color": "#0F2744"}),
         "title": wb.add_format({"bold": True, "font_size": 12}),
         "meta": wb.add_format({"italic": True, "font_color": "#555555", "font_size": 9}),
         "text": wb.add_format({"valign": "top", "text_wrap": False}),

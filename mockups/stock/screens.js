@@ -19,18 +19,18 @@ ROUTES.dash = () => {
   const week = byDateDesc(DB.entries).filter(e => e.date > addDays(today(), -7));
   setHeader("Overview", "Stock dashboard", `<span class="text-secondary me-2 align-self-center">${icon("calendar")} ${fmt(today())}</span>`);
   const kpi = (ic, color, value, label, sub, href) => `<div class="col-sm-6 col-lg-3"><a class="card card-sm card-link" href="${href}"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="bg-${color} text-white avatar">${icon(ic)}</span></div>
+    <div class="col-auto"><span class="avatar kpi-${color}">${icon(ic)}</span></div>
     <div class="col"><div class="font-weight-medium fs-3">${value}</div><div class="text-secondary">${label}</div>${sub ? `<div class="small text-secondary">${sub}</div>` : ""}</div></div></div></a></div>`;
   view().innerHTML = `<div class="row row-deck row-cards">
-    ${kpi("box", "blue", DB.items.filter(i => i.active).length, "Active items", `${DB.spareTypes.length} spare types`, "#items")}
-    ${kpi("building-warehouse", "azure", nosTotal.toLocaleString("en-IN") + " NOS", "In stock (all locations)", "plus wire in MTR, ties in PKT", "#stock")}
-    ${kpi("alert-triangle", low.length ? "red" : "green", low.length, "Low stock items", "at or below reorder level", "#low")}
-    ${kpi("arrows-exchange", "purple", week.length, "Entries this week", `${DB.entries.filter(e => e.date === today()).length} today`, "#moves")}
+    ${kpi("box", "brand", DB.items.filter(i => i.active).length, "Active items", `${DB.spareTypes.length} spare types`, "#items")}
+    ${kpi("building-warehouse", "brand", nosTotal.toLocaleString("en-IN") + " NOS", "In stock (all locations)", "plus wire in MTR, ties in PKT", "#stock")}
+    ${kpi("alert-triangle", low.length ? "alert" : "ok", low.length, "Low stock items", "at or below reorder level", "#low")}
+    ${kpi("arrows-exchange", "brand", week.length, "Entries this week", `${DB.entries.filter(e => e.date === today()).length} today`, "#moves")}
     <div class="col-12"><div class="card"><div class="card-body"><div class="row g-2 quick">
       <div class="col-6 col-lg-3"><a href="#in" class="btn btn-in w-100 flex-column">${icon("package-import")} Stock IN<small>Material received</small></a></div>
       <div class="col-6 col-lg-3"><a href="#out" class="btn btn-out w-100 flex-column">${icon("package-export")} Stock OUT<small>Material issued</small></a></div>
-      <div class="col-6 col-lg-3"><a href="#transfer" class="btn btn-secondary w-100 flex-column">${icon("arrows-exchange")} Transfer<small>Between locations</small></a></div>
-      <div class="col-6 col-lg-3"><a href="#adjust" class="btn btn-purple w-100 flex-column">${icon("adjustments-horizontal")} Adjust<small>Correct a count</small></a></div>
+      <div class="col-6 col-lg-3"><a href="#transfer" class="btn btn-quiet w-100 flex-column">${icon("arrows-exchange")} Transfer<small>Between locations</small></a></div>
+      <div class="col-6 col-lg-3"><a href="#adjust" class="btn btn-quiet w-100 flex-column">${icon("adjustments-horizontal")} Adjust<small>Correct a count</small></a></div>
     </div></div></div></div>
     <div class="col-lg-8"><div class="card"><div class="card-header"><div><h3 class="card-title">Stock IN vs OUT</h3>
         <div class="card-subtitle">Quantity per week, last 5 weeks (items counted in NOS)</div></div>
@@ -78,7 +78,7 @@ function drawWeeklyChart() {
   new ApexCharts(el, {
     chart: { type: "bar", height: 260, toolbar: { show: false }, fontFamily: "inherit", animations: { enabled: false } },
     series: [{ name: "Stock IN", data: data.map(d => d.in) }, { name: "Stock OUT", data: data.map(d => d.out) }],
-    colors: ["#2a78d6", "#eb6834"],
+    colors: ["#2a78d6", "#eb6834"], // CVD-validated categorical pair (chart marks; buttons use deeper AA shades)
     plotOptions: { bar: { columnWidth: "45%", borderRadius: 4, borderRadiusApplication: "end" } },
     stroke: { show: true, width: 2, colors: ["#ffffff"] },
     dataLabels: { enabled: false },

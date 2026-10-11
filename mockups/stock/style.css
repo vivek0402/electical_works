@@ -68,3 +68,38 @@ th.sort-asc::after { content: "↑"; opacity: .9; } th.sort-desc::after { conten
 .lines-table .ts-dropdown { min-width: 22rem; }
 /* Icon spacing inside buttons and titles */
 .btn > .ti, .page-title > .ti, .card-title > .ti, .alert .ti, .dropdown-item > .ti { margin-right: .35rem; }
+
+/* ===== Colour palette: Navy & Amber (chosen by the user 2026-10-11; see DESIGN.md) =====
+   All text/background pairs checked for WCAG AA (>= 4.5:1). IN/OUT buttons use deeper shades of the
+   CVD-validated chart pair so white text passes AA: IN #2268c0 (5.5:1), OUT #c2410c (5.2:1). */
+.btn-in { --tblr-btn-bg: #2268c0; --tblr-btn-border-color: #2268c0; --tblr-btn-hover-bg: #1b56a0; --tblr-btn-hover-border-color: #1b56a0; }
+.btn-out { --tblr-btn-bg: #c2410c; --tblr-btn-border-color: #c2410c; --tblr-btn-hover-bg: #a3360a; --tblr-btn-hover-border-color: #a3360a; }
+
+:root {
+  --brand-sidebar: #0f2744; --brand-sidebar-text: #c9d6e8; --brand-sidebar-muted: #8ea3bf; --brand-sidebar-active: rgba(255,255,255,.10);
+  --brand-mark-bg: #f5b301; --brand-mark-fg: #0f2744;
+  --tblr-primary: #1f5fbf; --tblr-primary-rgb: 31, 95, 191; --tblr-primary-darken: #1a51a3; --tblr-primary-lt: #e8eef8;
+  --tblr-link-color: #1f5fbf; --tblr-link-color-rgb: 31, 95, 191; --tblr-link-hover-color: #1a51a3;
+  --tblr-body-bg: #f4f6fa; --tblr-bg-surface-secondary: #f4f6fa;
+}
+.navbar-vertical { background: var(--brand-sidebar) !important; }
+.navbar-vertical .nav-link, .navbar-vertical .navbar-brand, .navbar-vertical .brand-sub { color: var(--brand-sidebar-text) !important; }
+.navbar-vertical .nav-link .nav-link-icon { color: var(--brand-sidebar-muted); }
+.navbar-vertical .nav-section { color: var(--brand-sidebar-muted); }
+.navbar-vertical .nav-link.active { background: var(--brand-sidebar-active); font-weight: 600; }
+.brand-mark { background: var(--brand-mark-bg); color: var(--brand-mark-fg); }
+.btn-primary { --tblr-btn-bg: var(--tblr-primary); --tblr-btn-border-color: var(--tblr-primary); --tblr-btn-hover-bg: var(--tblr-primary-darken); --tblr-btn-hover-border-color: var(--tblr-primary-darken); }
+.btn-outline-primary { --tblr-btn-color: var(--tblr-primary); --tblr-btn-border-color: var(--tblr-primary); --tblr-btn-hover-bg: var(--tblr-primary); --tblr-btn-hover-border-color: var(--tblr-primary); }
+.page-item.active .page-link { background: var(--tblr-primary); border-color: var(--tblr-primary); }
+.form-selectgroup-input:checked + .form-selectgroup-label { border-color: var(--tblr-primary); color: var(--tblr-primary); background: var(--tblr-primary-lt); }
+
+/* Restraint: colour means something (blue = IN, orange = OUT, red = needs attention); everything else is quiet. */
+.kpi-brand { background: var(--tblr-primary-lt); color: var(--tblr-primary); }
+.kpi-alert { background: #fde8e8; color: #b42318; }
+.kpi-ok { background: #e7f6ec; color: #1e7e34; }
+.btn-quiet { --tblr-btn-bg: #fff; --tblr-btn-color: #1f2937; --tblr-btn-border-color: #d5dbe3; --tblr-btn-hover-bg: var(--tblr-primary-lt); --tblr-btn-hover-color: var(--tblr-primary); --tblr-btn-hover-border-color: var(--tblr-primary); }
+.btn-quiet .ti { color: var(--tblr-primary); }
+.k-ADJ { background: rgba(71,85,105,.12); color: #334155; }
+.k-REV { background: #fde8e8; color: #b42318; }
+.bell-count { font-size: .65rem; min-width: 1.1rem; height: 1.1rem; padding: 0 .3rem; line-height: 1.1rem; top: .15rem; right: .1rem; }
+.bell-count:empty { display: none; }

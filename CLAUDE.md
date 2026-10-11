@@ -19,3 +19,9 @@ SVKML Electrical Works (Wipro Lighting service partner, Visakhapatnam). We are b
 - UI kit: **Tabler 1.6.1 + Tabler Icons 3.49.0** (vendored, no build step), **Tom Select 2.6.2** with its Bootstrap 5 CSS for searchable selects, ApexCharts (bundled with Tabler) for charts. The Django admin back-office will use **django-unfold**.
 - IN/OUT colours are a colour-blind-safe validated pair: blue `#2a78d6` (IN) and orange `#eb6834` (OUT). Green and orange failed the CVD check.
 - Gotchas found while building: Tabler needs `data-bs-navbar-position="vertical"` on `<html>`, and the top bar must sit inside `.page-wrapper`, otherwise the sidebar or top bar is hidden. Tom Select needs its own `tom-select.bootstrap5.css` underneath `tabler-vendors.css`.
+
+## Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All colours, spacing and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.

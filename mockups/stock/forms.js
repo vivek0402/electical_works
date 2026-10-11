@@ -178,8 +178,8 @@ function entryForm(mode, prefill) {
   const meta = {
     in: ["Stock", "Stock IN", "Material received at a location", "package-import", "btn-in"],
     out: ["Stock", "Stock OUT", "Material given out from a location", "package-export", "btn-out"],
-    trf: ["Stock", "Transfer stock", "Move stock from one location to another", "arrows-exchange", "btn-secondary"],
-    adj: ["Stock", "Adjust stock count", "Correct the system count after a physical check", "adjustments-horizontal", "btn-purple"],
+    trf: ["Stock", "Transfer stock", "Move stock from one location to another", "arrows-exchange", "btn-primary"],
+    adj: ["Stock", "Adjust stock count", "Correct the system count after a physical check", "adjustments-horizontal", "btn-primary"],
   }[mode];
   setHeader(meta[0], `${icon(meta[3])} ${meta[1]}`);
   const details = {
