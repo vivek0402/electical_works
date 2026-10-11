@@ -58,7 +58,7 @@
       <div class="col-auto ms-auto d-print-none"><div class="btn-list">{% block actions %}{% endblock %}</div></div>
     </div></div></div>
     <div class="page-body"><div class="container-xl">
-      {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible" role="alert">{{ message }}<a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>{% endfor %}
+      {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">{{ message }}<a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>{% endfor %}
       {% block content %}{% endblock %}
     </div></div>
   </div>

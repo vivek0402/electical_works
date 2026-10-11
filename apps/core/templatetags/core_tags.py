@@ -1,5 +1,6 @@
 from django import template
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -19,7 +20,7 @@ def url_with(context, **changes):
 @register.filter
 def qty(value):
     """Zero shows as a faint 0 so real numbers stand out."""
-    return value if value else format_html('<span class="zero">0</span>')
+    return value if value else mark_safe('<span class="zero">0</span>')
 
 
 @register.filter

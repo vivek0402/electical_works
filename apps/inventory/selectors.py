@@ -3,7 +3,8 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Exists, OuterRef, Sum
+from django.db.models import Exists, F, OuterRef, Sum
+from django.db.models.functions import Coalesce
 
 from .models import EntryKind, Item, Location, StockBalance, StockEntry, StockLine
 
@@ -35,6 +36,16 @@ def low_stock_items():
     ]
 
 
+def low_stock_count():
+    """Number of active items at or below their reorder level, in one query."""
+    return (
+        Item.objects.filter(is_active=True, reorder_level__gt=0)
+        .annotate(t=Coalesce(Sum("balances__qty"), 0))
+        .filter(t__lte=F("reorder_level"))
+        .count()
+    )
+
+
 def location_unit_totals():
     """[(location, {unit: qty})] for the 'Stock by location' card."""
     totals = defaultdict(lambda: defaultdict(int))
@@ -48,7 +59,7 @@ def dashboard_stats(today):
     return {
         "active_items": Item.objects.filter(is_active=True).count(),
         "nos_in_stock": nos,
-        "low_count": len(low_stock_items()),
+        "low_count": low_stock_count(),
         "entries_week": StockEntry.objects.filter(entry_date__gt=today - timedelta(days=7)).count(),
         "entries_today": StockEntry.objects.filter(entry_date=today).count(),
     }

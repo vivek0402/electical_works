@@ -16,7 +16,7 @@
     <div class="col"><div class="fw-medium fs-3">{{ stats.low_count }}</div><div class="text-secondary">Low stock items</div><div class="small text-secondary">at or below reorder level</div></div></div></div></div></div>
   <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-arrows-exchange"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.entries_week }}</div><div class="text-secondary">Entries this week</div><div class="small text-secondary">{{ stats.entries_today }} today</div></div></div></div></div></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.entries_week }}</div><div class="text-secondary">Entries, last 7 days</div><div class="small text-secondary">{{ stats.entries_today }} today</div></div></div></div></div></div>
   <div class="col-12"><div class="card"><div class="card-body"><div class="row g-2 quick">
     <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_in|default:'#' }}" class="btn btn-in w-100 flex-column"><i class="ti ti-package-import"></i> Stock IN<small>Material received</small></a></div>
     <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_out|default:'#' }}" class="btn btn-out w-100 flex-column"><i class="ti ti-package-export"></i> Stock OUT<small>Material issued</small></a></div>
@@ -25,7 +25,7 @@
   </div></div></div></div>
   <div class="col-lg-8"><div class="card"><div class="card-header"><div><h3 class="card-title">Stock IN vs OUT</h3>
       <div class="card-subtitle">Quantity per week, last 5 weeks (items counted in NOS)</div></div>
-      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle"><i class="ti ti-table"></i> View as table</button></div></div>
+      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle" aria-pressed="false" aria-controls="chart-table"><i class="ti ti-table"></i> View as table</button></div></div>
     <div class="card-body"><div id="chart-weekly" class="chart-box" role="img" aria-label="Bar chart of stock in and stock out per week"></div>
       <table class="table table-sm" id="chart-table" hidden><thead><tr><th>Week</th><th class="num">Stock IN (NOS)</th><th class="num">Stock OUT (NOS)</th></tr></thead>
         <tbody>{% for w in weeks %}<tr><td>{{ w.label }}</td><td class="num">{{ w.qty_in }}</td><td class="num">{{ w.qty_out }}</td></tr>{% endfor %}</tbody></table></div></div></div>

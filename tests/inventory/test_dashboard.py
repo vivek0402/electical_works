@@ -63,3 +63,64 @@ def test_dashboard_page(office_client, stocked):
 
 def test_dashboard_requires_login(client):
     assert client.get("/").status_code == 302
+
+
+# --- low-stock count, weekly boundaries, undone label ---------------------------------------------
+from datetime import timedelta  # noqa: E402
+
+from apps.inventory.selectors import low_stock_count, low_stock_items  # noqa: E402
+from apps.inventory.services import undo_entry  # noqa: E402
+
+
+def test_low_stock_count_matches_list(office_user):
+    low = make_item("LOW1", reorder=5)
+    fine = make_item("FINE1", reorder=5)
+    make_item("NOBAL", reorder=3)  # no balance row: 0 <= 3, low
+    make_item("NOREORDER", reorder=0)  # reorder 0: never low
+    gone = make_item("GONE", reorder=9)
+    gone.is_active = False
+    gone.save()
+    post_entry(
+        kind=EntryKind.IN,
+        entry_date=TODAY,
+        user=office_user,
+        lines=[Line(low, loc(), 5), Line(fine, loc(), 6)],
+    )
+    assert low_stock_count() == len(low_stock_items()) == 2
+
+
+def test_weekly_in_out_excludes_undone_and_respects_boundaries(office_user):
+    a = make_item("WK1")
+    e_new = post_entry(
+        kind=EntryKind.IN, entry_date=TODAY - timedelta(days=6), lines=[Line(a, loc(), 4)], user=office_user
+    )
+    post_entry(
+        kind=EntryKind.IN, entry_date=TODAY - timedelta(days=7), lines=[Line(a, loc(), 3)], user=office_user
+    )
+    undone = post_entry(kind=EntryKind.IN, entry_date=TODAY, lines=[Line(a, loc(), 50)], user=office_user)
+    undo_entry(entry=undone, reason="mistake", user=office_user)
+    weeks = weekly_in_out(TODAY)
+    assert weeks[-1]["qty_in"] == 4  # day -6 is in the current window, undone 50 excluded
+    assert weeks[-2]["qty_in"] == 3  # day -7 is in the previous window
+    assert e_new.pk
+
+
+def test_undone_badge_in_table(office_client, office_user):
+    a = make_item("UND1")
+    e = post_entry(kind=EntryKind.IN, entry_date=TODAY, lines=[Line(a, loc(), 4)], user=office_user)
+    undo_entry(entry=e, reason="oops", user=office_user)
+    html = office_client.get("/").content.decode()
+    assert "Undone" in html and 'class="undone"' in html
+
+
+def test_dashboard_query_count(office_client, office_user, django_assert_max_num_queries):
+    a, b = make_item("Q1"), make_item("Q2")
+    for _ in range(20):
+        post_entry(
+            kind=EntryKind.IN,
+            entry_date=TODAY,
+            lines=[Line(a, loc(), 2), Line(b, loc(), 1)],
+            user=office_user,
+        )
+    with django_assert_max_num_queries(20):
+        assert office_client.get("/").status_code == 200

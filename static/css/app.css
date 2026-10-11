@@ -50,7 +50,7 @@
 .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nowrap { white-space: nowrap; }
 .zero { color: var(--tblr-gray-300); }
-tr.undone td { text-decoration: line-through; opacity: .5; }
+tr.undone td:not(.keep) { text-decoration: line-through; opacity: .5; }
 th a.sort { color: inherit; text-decoration: none; }
 th a.sort::after { content: "↕"; opacity: .3; margin-left: .3rem; font-size: .75rem; }
 th a.sort.asc::after { content: "↑"; opacity: .9; } th a.sort.desc::after { content: "↓"; opacity: .9; }

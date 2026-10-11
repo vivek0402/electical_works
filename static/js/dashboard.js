@@ -19,6 +19,7 @@
   const table = document.getElementById("chart-table"), btn = document.getElementById("chart-toggle");
   btn.addEventListener("click", () => {
     table.hidden = !table.hidden; el.hidden = !table.hidden;
+    btn.setAttribute("aria-pressed", String(!table.hidden));
     btn.innerHTML = table.hidden ? '<i class="ti ti-table"></i> View as table' : '<i class="ti ti-chart-bar"></i> View as chart';
   });
 })();

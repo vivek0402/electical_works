@@ -1,6 +1,7 @@
 from django.urls import NoReverseMatch, reverse
+from django.utils.functional import SimpleLazyObject
 
-from .selectors import low_stock_items
+from .selectors import low_stock_count
 
 # (section, [(url_name, label, tabler icon, icon css class, admin_only)])
 NAV = [
@@ -67,4 +68,4 @@ def nav(request):
         )
         for title, entries in NAV
     ]
-    return {"nav_sections": sections, "nav_urls": urls, "nav_low_count": len(low_stock_items())}
+    return {"nav_sections": sections, "nav_urls": urls, "nav_low_count": SimpleLazyObject(low_stock_count)}
