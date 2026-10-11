@@ -16,9 +16,8 @@ htmlcov/
 /media/
 /staticfiles/
 
-# Client data (contains customer names + phone numbers) — never commit
-data/legacy/*.xlsx
-data/legacy/*.xls
+# Generated import review workbooks
+data/legacy/import_review*.xlsx
 
 # Editors / OS
 .vscode/

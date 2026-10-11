@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Spares inventory (fresh + defective, multi-location), Wipro defective returns, and service complaints for SVKML Electrical Works, Visakhapatnam (a Wipro Lighting service partner). It replaces three Excel files (in `data/legacy/`, gitignored because they hold customer PII).
+Spares inventory (fresh + defective, multi-location), Wipro defective returns, and service complaints for SVKML Electrical Works, Visakhapatnam (a Wipro Lighting service partner). It replaces three Excel files. Samples are in `data/legacy/`: they are **reference + demo data, not the production dataset**. They are committed to this private repo and contain real customer contacts, so never make the repo public. The importer must stay generic: nothing is hardcoded to these specific rows.
 
 ## Session start
 1. Read `tasks/lessons.md`, then `tasks/todo.md`.

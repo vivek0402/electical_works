@@ -9,16 +9,16 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [x] 1.3 `pyproject.toml` + `uv.lock` with pinned deps; ruff + pytest config
 - [x] 1.4 `config/` settings split base/dev/prod/test (django-environ); Asia/Kolkata, DD-MM-YYYY; `.env.example`
 - [x] 1.5 Apps under `apps/`: core, accounts, inventory, complaints, defectives, legacy_import, reports
-- [ ] 1.6 `Dockerfile` (python 3.12-slim, uv, non-root) + `compose.yaml` (web + db postgres:16, healthcheck) — *written; build unverified until Docker Desktop is installed*
+- [x] 1.6 `Dockerfile` (python 3.12-slim, uv, non-root) + `compose.yaml` (web + db postgres:16, healthcheck)
 - [x] 1.7 `Location` model + admin; data migration seeding Svkml, Vizag Office, TV Shop, Kartika Class
 - [x] 1.8 Roles: Groups ADMIN/OFFICE/TECHNICIAN + permissions (synced after every migrate); `role_required`; `Profile.home_location`
 - [x] 1.9 `seed_demo` command: admin, office user, technicians Ramu and Apparao (passwords from env, idempotent)
 - [x] 1.10 Login/logout, base layout (Pico, big tap targets, role nav), `/healthz`
 - [x] 1.11 Django Admin branding + Location/User admin
-- [ ] 1.12 Makefile: up, down, migrate, seed, test, lint, shell, import-review, import-apply — *written; needs Docker + make to verify*
-- [ ] 1.13 pre-commit (ruff) + GitHub Actions CI (postgres:16 service, ruff, pytest) — *pre-commit passes; CI runs on first push (no remote yet)*
+- [x] 1.12 Makefile: up, down, migrate, seed, test, lint, shell (import-review/apply targets used from Phase 2)
+- [x] 1.13 pre-commit (ruff) + GitHub Actions CI: `test` job (postgres:16 service) + `compose` job (make up/migrate/seed/test + healthz)
 - [x] 1.14 Tests: seed idempotent, groups exist, role gating, login flow, healthz
-- [ ] 1.15 **Verify:** `make up` → `make migrate seed` → `make test` green → log in as each role
+- [x] 1.15 **Verify:** `make up` → `make migrate seed` → `make test` green → log in as each role
 
 ## Phase 2: Items + legacy import + Fresh/Defective lists
 - [ ] 2.1 `Item`, `ItemAlias` (unique normalised code/alias, pg_trgm GIN index, item_type, is_active); admin
@@ -29,11 +29,15 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [ ] 2.6 Clustering: strong (same search_key) + weak (rapidfuzz ≥ 90, same type); `/` rows → Alternatives
 - [ ] 2.7 Complaint parsing (review only): visits, mixed dates, status precedence, phones, cities, customer/site split
 - [ ] 2.8 `import_legacy --review` → `data/legacy/import_review.xlsx`
-- [ ] 2.9 `import_legacy --apply <reviewed.xlsx> [--dry-run]` (idempotent, ref `LEGACY-2026-05-25`) + summary
+- [ ] 2.9 `import_legacy --apply <reviewed.xlsx> [--dry-run]` (idempotent; doc ref derived from the sheet's title date, e.g. `LEGACY-2026-05-25`) + summary
 - [ ] 2.10 Importer tests on fixture xlsx built from the real messy rows (fake phones) + re-run idempotency
 - [ ] 2.11 Fresh List / Defective List views (tables2 + filter, paginated) + Excel export in their layouts
 - [ ] 2.12 View tests: role access, filters, export layout
-- [ ] 2.13 **Verify:** review on real files → apply → lists in browser; totals reconcile with the sheet sums
+- [ ] 2.13 **Verify + demo data:** review on the sample files → apply in dev (`make demo`) → lists in the browser; totals reconcile with the sheet sums
+
+## Decisions (2026-10-11)
+- The Excel files are reference + demo data, not the production dataset. Build a generic importer (any file in these layouts) and load the samples as demo data. Samples are committed to the private repo.
+- Repo: github.com/vivek0402/electical_works (private). CI: `test` + `compose` jobs.
 
 ## OPEN QUESTIONS (defaults in use until answered)
 | Question | Blocks | Default |
@@ -46,8 +50,8 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 | "material at office": MATERIAL_TO_CHECK or AWAITING_MATERIAL? | Phase 4 load | MATERIAL_TO_CHECK |
 
 ## Review
-### Phase 1 (2026-10-11): code complete, Docker verification pending
+### Phase 1 (2026-10-11): DONE
 - Evidence (run against a disposable Postgres 16.2, because Docker isn't installed yet): `pytest` 17 passed with 96% coverage; `ruff` clean; `manage.py check` clean; `makemigrations --check` shows no changes; `check --deploy` leaves 1 deliberate warning (HSTS preload, decide in Phase 6); the location seed migration reverses cleanly; `seed_demo` re-run is idempotent.
 - Live walkthrough: /healthz 200; anonymous / → /login/; admin/office/ramu/apparao each log in and see their role; only admin sees and opens /admin/ (others → 302); a wrong password shows a friendly error; vendored static files return 200.
 - Root-cause fixes: `.gitattributes` forces LF (git autocrlf would have broken scripts in containers); vendored JS/CSS are excluded from pre-commit.
-- Left: 1.6/1.12/1.15 need Docker Desktop + make; 1.13 CI needs a GitHub remote.
+- Docker verification is done in CI (repo github.com/vivek0402/electical_works, private). The `compose` job runs `make up → migrate → seed → test`: 17 passed, healthz ok. The `test` job is green too. A local Docker Desktop install is still recommended for day-to-day dev, but no longer blocks anything.
