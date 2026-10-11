@@ -20,22 +20,40 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [x] 1.14 Tests: seed idempotent, groups exist, role gating, login flow, healthz
 - [x] 1.15 **Verify:** `make up` → `make migrate seed` → `make test` green → log in as each role
 
-## Phase 2: Items + legacy import + Fresh/Defective lists
+## Three systems (approved 2026-10-11): Stock · Defective Pieces · Complaints, one app, linked
+Plan file: see "Approved plan" at the top of this file (same path, updated 2026-10-11).
+
+### Step M: Clickable mockup of all 3 systems ⛔ approval gate for every real screen
+- [x] M.1 `mockups/app/` shell: index.html, core.js (data, ledger, lookup, router, helpers), three-tile home, role switch (Office/Ramu)
+- [x] M.2 System 1 Stock screens moved from stock-app.html; defective options handed to System 2
+- [x] M.3 System 2 Defective pieces: dashboard, bulk record (N tagged pieces), pieces list/detail timeline, return batches (Wipro print, mark sent, per-piece result, receive replacement), move pieces, reports
+- [x] M.4 System 3 Complaints: list with status tabs + ageing, new complaint, detail + status stepper + close reason, add visit (parts used + defectives collected), technician "My complaints", AP Pending report
+- [x] M.5 Seed from sample sheets (18 complaints with fake phones, pieces from the defective list); delete stock-app.html
+- [x] M.6 Playwright walkthrough of the cross-system flow (desktop + phone, zero JS errors, defective invariant after every step) → serve at localhost:8080/mockups/app/ for review
+
+### Phase 2: item master + ledger core (done on `phase-2`)
 - [x] 2.1 `Item`, `ItemAlias` (unique normalised code/alias, pg_trgm GIN index, item_type, is_active); admin
 - [x] 2.2 `normalise_code()`, `search_key()`, `parse_qty()` + unit tests with every messy value
-- [x] 2.3 `StockDocument`/`StockMovement`/`StockBalance` + constraints + pgtrigger Protect; `post_document()`; selectors; `rebuild_stock_balances`; full posting-core tests (incl. concurrency + DB-level immutability)
-- [ ] 2.4 Parsers: header-row detection, 3 file readers → row dicts with source refs
-- [ ] 2.5 Type inference (column + prefix rules + generic keywords), conflicts recorded
-- [ ] 2.6 Clustering: strong (same search_key) + weak (rapidfuzz ≥ 90, same type); `/` rows → Alternatives
-- [ ] 2.7 Complaint parsing (review only): visits, mixed dates, status precedence, phones, cities, customer/site split
-- [ ] 2.8 `import_legacy --review` → `data/legacy/import_review.xlsx`
-- [ ] 2.9 `import_legacy --apply <reviewed.xlsx> [--dry-run]` (idempotent; doc ref derived from the sheet's title date, e.g. `LEGACY-2026-05-25`) + summary
-- [ ] 2.10 Importer tests on fixture xlsx built from the real messy rows (fake phones) + re-run idempotency
-- [ ] 2.11a **Mockup** `mockups/stock-app.html`: Stock IN / Stock OUT / Transfer entry, Undo (reversal), Current stock (Fresh/Defective/Low), Item card with in/out history, Register. Needs user approval ⛔ gate for every stock screen. (v1 `stock-lists.html` was rejected: it showed reports only, not data entry.)
-- [ ] 2.11 Fresh List / Defective List views (tables2 + filter, paginated) + Excel export in their layouts
-- [ ] 2.12 View tests: role access, filters, export layout
-- [ ] 2.12a `make demo`: seed users + import the sample files with strong merges auto-approved (dev only), so the app is demoable in one command
-- [ ] 2.13 **Verify + demo data:** review on the sample files → apply in dev (`make demo`) → lists in the browser; totals reconcile with the sheet sums
+- [x] 2.3 `StockDocument`/`StockMovement`/`StockBalance` + constraints + pgtrigger Protect; `post_document()`; `rebuild_stock_balances`; full posting-core tests (incl. concurrency + DB-level immutability)
+
+### Phase 2A: Stock system screens (after mockup approval)
+- [ ] Stock IN / OUT / Transfer / Undo views on existing services (HTMX line rows, item picker with alias + trigram search, create-item inline)
+- [ ] Current stock (Fresh / Defective / Low) + Excel export in their layout; item card with history; register
+- [ ] `make demo` seeds demo entries; view + permission tests
+
+### Phase 2B: Legacy loader (sample sheets → demo data)
+- [ ] Parsers (header-row detection), type inference (column + prefix rules), clustering (strong/weak), complaint parsing
+- [ ] `import_legacy --review` → import_review.xlsx; `--apply` (idempotent; ref from sheet title date); opening defectives become pieces (after Phase 3 models)
+- [ ] Importer tests on the messy sample rows
+
+### Phase 3: Defective Pieces system
+- [ ] DefectivePiece, DefectiveEvent, ReturnBatch; transitions map; bulk record; move pieces; Wipro print/export; outcomes + replacement link; reports
+- [ ] Invariant check: DEFECTIVE qty == pieces AT_OFFICE + IN_RETURN_BATCH (command + tests)
+
+### Phase 4: Complaints system
+- [ ] Customer/Site, Complaint, Visit, Event; filing; visits issue stock + create pieces; guarded statuses + closure; technician view; AP Pending report + export; legacy complaints import
+
+### Phase 5: Dashboard + hardening · Phase 6: Go-live (as in the original brief)
 
 ## Decisions (2026-10-11)
 - **Always build mocks** (user rule): a clickable UI mockup is approved before each screen is built, and every feature ships demo data via `make demo`. This applies to every later phase.
@@ -63,3 +81,7 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - CI on postgres:16: 80 passed. Coverage: services 98%, normalise 100%, models 95%. The Postgres log shows every DB guard firing in its test (code check, unique opening ref, pgtrigger append-only, non-negative balance).
 - `search_key` is a stored generated column (SQL twin of `normalise.search_key`); a parity test keeps the two in sync.
 - Local test runs use CI, because the throwaway Windows Postgres lacks pg_trgm. Docker Desktop would give a local loop.
+
+### Step M (2026-10-11): 3-system mockup built, waiting for approval ⛔
+- `mockups/app/` (index.html, core.js, ui.js, stock.js, defectives.js, complaints.js, mockup.css), served at http://localhost:8080/mockups/app/
+- Evidence: `mockups/walkthrough.py` (Playwright, desktop + phone) passes with zero JS errors. Flow: file complaint (bad phone warns) → technician visit (an over-issue is refused, nothing saved; then 2 parts issued + 2 tagged pieces collected) → return batch → Wipro list → sent → 1 replaced (fresh +1, linked) + 1 rejected → batch SETTLED → close refused without reason, accepted with one. Defective invariant holds after every step.

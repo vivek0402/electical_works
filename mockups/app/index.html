@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MOCKUP · SVKML Electrical Works</title>
+  <!-- Same CSS as the real app, so the mockup looks like the product will. -->
+  <link rel="stylesheet" href="../../static/vendor/pico.min.css">
+  <link rel="stylesheet" href="../../static/css/app.css">
+  <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+  <div class="mock-banner">MOCKUP: fake data in your browser, nothing is saved (reload resets it).
+    Switch user at the top right to see the technician's view.</div>
+
+  <header class="container-fluid topbar">
+    <nav>
+      <ul>
+        <li><a href="#home" class="brand"><strong>SVKML</strong></a></li>
+        <li class="systems" id="systems"></li>
+      </ul>
+      <ul>
+        <li><label class="who">User
+          <select id="who" onchange="switchUser(this.value)">
+            <option value="Office">Office (office staff)</option>
+            <option value="Admin">Admin</option>
+            <option value="Ramu">Ramu (technician)</option>
+            <option value="Apparao">Apparao (technician)</option>
+          </select></label></li>
+      </ul>
+    </nav>
+    <nav class="subnav" id="subnav"></nav>
+  </header>
+
+  <main class="container" id="view"></main>
+  <datalist id="itemlist"></datalist>
+  <dialog id="dlg"><article id="dlg-body"></article></dialog>
+
+  <script src="core.js"></script>
+  <script src="ui.js"></script>
+  <script src="stock.js"></script>
+  <script src="defectives.js"></script>
+  <script src="complaints.js"></script>
+  <script>start();</script>
+</body>
+</html>
