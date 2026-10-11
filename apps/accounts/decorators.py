@@ -9,6 +9,9 @@ from .roles import has_role
 def role_required(*roles):
     """Only logged-in users holding one of `roles` (ADMIN always passes)."""
 
+    if not roles:
+        raise ValueError("role_required() needs at least one role")
+
     def decorator(view):
         @wraps(view)
         @login_required

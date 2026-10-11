@@ -1,6 +1,8 @@
 import os
 
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
@@ -17,12 +19,18 @@ class Command(BaseCommand):
         password = os.environ.get("SEED_PASSWORD")
         if not password:
             raise CommandError("Set SEED_PASSWORD in the environment (.env) before seeding.")
+        try:
+            validate_password(password)
+        except ValidationError as exc:
+            raise CommandError("SEED_PASSWORD is too weak: " + " ".join(exc.messages)) from exc
         sync_role_groups()
         for username, first_name, role, superuser in SEED_USERS:
-            user, created = User.objects.get_or_create(username=username, defaults={"first_name": first_name})
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={"first_name": first_name, "is_staff": superuser, "is_superuser": superuser},
+            )
             if created:
                 user.set_password(password)
-            user.is_staff = user.is_superuser = superuser
-            user.save()
+                user.save()
             user.groups.add(Group.objects.get(name=role))
             self.stdout.write(f"{username:<8} {role:<7} {'created' if created else 'exists'}")

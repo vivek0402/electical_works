@@ -30,3 +30,20 @@ def has_role(user, *roles):
     """True if the user holds any of `roles`. ADMIN may do everything."""
     held = user_roles(user)
     return ADMIN in held or bool(held.intersection(roles))
+
+
+def sync_staff_flag(sender, instance, action, reverse, pk_set, **kwargs):
+    """Keep User.is_staff == (in the ADMIN group or superuser), so ADMIN members can enter /admin/."""
+    if action not in ("post_add", "post_remove", "post_clear"):
+        return
+    if reverse:  # instance is a Group; pk_set holds user ids (empty on clear: re-check all staff)
+        from django.contrib.auth.models import User
+
+        users = User.objects.filter(pk__in=pk_set) if pk_set else User.objects.filter(is_staff=True)
+    else:
+        users = [instance]
+    for user in users:
+        wanted = user.is_superuser or user.groups.filter(name=ADMIN).exists()
+        if user.is_staff != wanted:
+            user.is_staff = wanted
+            user.save(update_fields=["is_staff"])

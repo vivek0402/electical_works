@@ -15,9 +15,11 @@
       {% if form.non_field_errors %}<div class="alert alert-danger" role="alert"><i class="ti ti-alert-circle"></i> Wrong username or password. Please try again.</div>{% endif %}
       <form method="post" autocomplete="off" novalidate>{% csrf_token %}
         <div class="mb-3"><label class="form-label" for="id_username">Username</label>
-          <input id="id_username" name="username" class="form-control" autocomplete="username" autocapitalize="none" required autofocus value="{{ form.username.value|default:'' }}"></div>
+          <input id="id_username" name="username" class="form-control{% if form.username.errors %} is-invalid{% endif %}" autocomplete="username" autocapitalize="none" required autofocus value="{{ form.username.value|default:'' }}">
+          {% for e in form.username.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
         <div class="mb-3"><label class="form-label" for="id_password">Password</label>
-          <input id="id_password" type="password" name="password" class="form-control" autocomplete="current-password" required></div>
+          <input id="id_password" type="password" name="password" class="form-control{% if form.password.errors %} is-invalid{% endif %}" autocomplete="current-password" required>
+          {% for e in form.password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
         <input type="hidden" name="next" value="{{ next }}">
         <button type="submit" class="btn btn-primary w-100">Sign in</button>
       </form>
