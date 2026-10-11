@@ -14,6 +14,7 @@ DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 INSTALLED_APPS = [
+    "unfold",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -23,6 +24,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "pgtrigger",
     "apps.core",
+    "apps.accounts",
 ]
 
 MIDDLEWARE = [
@@ -49,6 +51,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.accounts.context_processors.roles",
             ],
         },
     },
@@ -65,7 +68,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "dashboard"
+LOGIN_REDIRECT_URL = "/"  # the dashboard URL name does not exist until the inventory task
 LOGOUT_REDIRECT_URL = "login"
 
 # English UI, IST display, UTC storage, DD-MM-YYYY everywhere.

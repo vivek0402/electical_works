@@ -1,0 +1,27 @@
+{% load static %}<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · SVKML Stock</title>
+  <link rel="stylesheet" href="{% static 'vendor/tabler.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/tabler-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="page page-center login-wrap"><div class="container container-tight py-4">
+    <div class="text-center mb-4"><span class="brand justify-content-center"><span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Stock</span></span></div>
+    <div class="card card-md"><div class="card-body">
+      <h2 class="h2 text-center mb-4">Sign in to your account</h2>
+      {% if form.non_field_errors %}<div class="alert alert-danger" role="alert"><i class="ti ti-alert-circle"></i> Wrong username or password. Please try again.</div>{% endif %}
+      <form method="post" autocomplete="off" novalidate>{% csrf_token %}
+        <div class="mb-3"><label class="form-label" for="id_username">Username</label>
+          <input id="id_username" name="username" class="form-control" autocomplete="username" autocapitalize="none" required autofocus value="{{ form.username.value|default:'' }}"></div>
+        <div class="mb-3"><label class="form-label" for="id_password">Password</label>
+          <input id="id_password" type="password" name="password" class="form-control" autocomplete="current-password" required></div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-primary w-100">Sign in</button>
+      </form>
+    </div></div>
+  </div></div>
+</body>
+</html>
