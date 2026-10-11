@@ -1,5 +1,0 @@
-# LF everywhere: files run inside Linux containers (shell scripts, Makefile, Dockerfile).
-* text=auto eol=lf
-*.xlsx binary
-*.png binary
-*.jpg binary
