@@ -31,11 +31,14 @@ Tick an item only with evidence (tests pass, server runs, feature works end to e
 - [ ] 2.8 `import_legacy --review` → `data/legacy/import_review.xlsx`
 - [ ] 2.9 `import_legacy --apply <reviewed.xlsx> [--dry-run]` (idempotent; doc ref derived from the sheet's title date, e.g. `LEGACY-2026-05-25`) + summary
 - [ ] 2.10 Importer tests on fixture xlsx built from the real messy rows (fake phones) + re-run idempotency
+- [ ] 2.11a **Mockup** `mockups/stock-lists.html` (Fresh/Defective lists + Excel export preview), approved by the user ⛔ gate for 2.11
 - [ ] 2.11 Fresh List / Defective List views (tables2 + filter, paginated) + Excel export in their layouts
 - [ ] 2.12 View tests: role access, filters, export layout
+- [ ] 2.12a `make demo`: seed users + import the sample files with strong merges auto-approved (dev only), so the app is demoable in one command
 - [ ] 2.13 **Verify + demo data:** review on the sample files → apply in dev (`make demo`) → lists in the browser; totals reconcile with the sheet sums
 
 ## Decisions (2026-10-11)
+- **Always build mocks** (user rule): a clickable UI mockup is approved before each screen is built, and every feature ships demo data via `make demo`. This applies to every later phase.
 - The Excel files are reference + demo data, not the production dataset. Build a generic importer (any file in these layouts) and load the samples as demo data. Samples are committed to the private repo.
 - Repo: github.com/vivek0402/electical_works (private). CI: `test` + `compose` jobs.
 

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MOCKUP · Fresh / Defective List · SVKML</title>
+  <!-- Same CSS as the real app, so the mockup looks exactly like the product will. -->
+  <link rel="stylesheet" href="../static/vendor/pico.min.css">
+  <link rel="stylesheet" href="../static/css/app.css">
+  <style>
+    .mock-banner { background:#fff3cd; color:#664d03; padding:.5rem 1rem; text-align:center; font-weight:600; }
+    .tabs { display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .tabs button { flex:1 1 12rem; }
+    .tabs button[aria-current="page"] { box-shadow: inset 0 -4px 0 var(--pico-primary); }
+    .filters { display:grid; grid-template-columns: 1fr 1fr 2fr auto; gap:.75rem; align-items:end; }
+    .filters label { margin:0; }
+    @media (max-width: 768px) { .filters { grid-template-columns: 1fr 1fr; } .filters .search, .filters .export { grid-column: 1 / -1; } }
+    .summary { display:flex; gap:1rem; flex-wrap:wrap; margin:.75rem 0; color:var(--pico-muted-color); }
+    .summary strong { color:var(--pico-color); }
+    .table-wrap { overflow-x:auto; }
+    table.sheet { font-variant-numeric: tabular-nums; }
+    table.sheet th { white-space:nowrap; background:var(--pico-table-row-stripped-background-color); }
+    table.sheet td.qty { text-align:right; font-weight:600; white-space:nowrap; }
+    table.sheet td.code a { font-family: ui-monospace, Consolas, monospace; font-weight:600; white-space:nowrap; }
+    table.sheet td.empty { color:var(--pico-muted-color); }
+    .low { color: var(--pico-del-color); }
+    .pager { display:flex; gap:.5rem; justify-content:center; align-items:center; }
+    .pager button { min-height:2.5rem; padding:.25rem 1rem; }
+    .note { font-size:.85rem; color:var(--pico-muted-color); }
+    .xl { border:1px solid #9aa; font-family: Calibri, Arial, sans-serif; font-size:.85rem; }
+    .xl th, .xl td { border:1px solid #9aa; padding:.2rem .5rem; }
+    .xl .title td { font-weight:700; text-align:center; border:none; }
+    dialog article { max-width: 60rem; }
+    details.notes { margin-top:2rem; }
+  </style>
+</head>
+<body>
+  <div class="mock-banner">MOCKUP: fake data, not connected to the database. Click around to check layout and flow.</div>
+
+  <header class="container-fluid topbar">
+    <nav>
+      <ul><li><a href="#" class="brand"><strong>SVKML</strong></a></li></ul>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#" aria-current="page">Stock lists</a></li>
+        <li><a href="#">Admin</a></li>
+        <li><button class="secondary outline">Logout (Office)</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="tabs" role="tablist">
+      <button id="tab-fresh" aria-current="page" onclick="setBucket('FRESH')">Fresh List</button>
+      <button id="tab-defective" class="secondary" onclick="setBucket('DEFECTIVE')">Defective List</button>
+    </div>
+
+    <h1 id="page-title">Fresh List</h1>
+
+    <form class="filters" onsubmit="return false">
+      <label>Location
+        <select id="f-location" onchange="render(1)">
+          <option value="">All locations</option>
+          <option>Vizag Office</option><option>Svkml</option><option>TV Shop</option><option>Kartika Class</option>
+        </select>
+      </label>
+      <label>Type
+        <select id="f-type" onchange="render(1)">
+          <option value="">All types</option>
+          <option value="FITTING">Fitting</option><option value="DRIVER">Driver</option>
+          <option value="PCB">PCB / LED module</option><option value="OTHER">Lens / other</option>
+        </select>
+      </label>
+      <label class="search">Search code
+        <input id="f-q" type="search" placeholder="e.g. EIO6006 or 18watt" oninput="render(1)">
+      </label>
+      <button type="button" class="export" onclick="document.getElementById('export').showModal()">⬇ Export to Excel</button>
+    </form>
+
+    <div class="summary">
+      <span><strong id="s-items">0</strong> items</span>
+      <span><strong id="s-qty">0</strong> NOS in total</span>
+      <span id="s-where">All locations</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="sheet striped">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <button class="secondary outline" onclick="render(page-1)">‹ Prev</button>
+      <span id="pageinfo"></span>
+      <button class="secondary outline" onclick="render(page+1)">Next ›</button>
+    </div>
+
+    <p class="note">Tap an item code to open its item card with full movement history (item card mockup comes with Phase 3).</p>
+
+    <details class="notes">
+      <summary>Design notes for review</summary>
+      <ul>
+        <li><strong>Same columns as your Excel.</strong> Fresh: S.NO, FITTING CODE, BATCH CODE, PKDT, DRIVER CODE, PCB CODE, QUANTITY. Defective: the same, without PKDT.</li>
+        <li><strong>One code per row, placed by item type.</strong> Drivers go in DRIVER CODE and PCBs/LED modules in PCB CODE. Fittings and other items (LENS, BULCK HEAD, ISENSE controller and switch) go in FITTING CODE. <em>Please confirm the "others in FITTING CODE" rule.</em></li>
+        <li><strong>On phones</strong> the five sparse code columns collapse into one CODE column with type (and location) underneath, beside QUANTITY; the export always uses the full Excel layout.</li>
+        <li><strong>"All locations"</strong> adds a LOCATION column, with one row per item per location. Pick one location to see exactly that store's sheet.</li>
+        <li>Batch code and PKD are blank today, as in the sheets. They fill in once receipts and defectives start capturing them.</li>
+        <li>Quantity shows <span class="low">red</span> when it is at or below the item's reorder level (Fresh List only).</li>
+        <li><strong>Export</strong> downloads exactly the rows on screen (with the current filters) in the Excel layout shown in the preview.</li>
+      </ul>
+    </details>
+  </main>
+
+  <dialog id="export">
+    <article>
+      <header><strong id="x-title">Excel export preview</strong></header>
+      <p class="note">This is what the downloaded <code id="x-file"></code> looks like. Column widths and bold headers match your sheet.</p>
+      <div class="table-wrap"><table class="xl" id="x-table"></table></div>
+      <footer>
+        <button class="secondary" onclick="document.getElementById('export').close()">Close</button>
+        <button onclick="alert('In the real app this downloads the .xlsx file.')">Download .xlsx</button>
+      </footer>
+    </article>
+  </dialog>
+
+<script>
+// Fake data built from codes in the client's 25-5-2026 sample sheets.
+const FRESH = [
+  ["LR05-200-168-1050","DRIVER",34,"Vizag Office",10],["LG78-150-700","DRIVER",20,"Vizag Office",5],
+  ["LG76-150-700FH","DRIVER",42,"Vizag Office",10],["LG75-150-215-70E","DRIVER",18,"Vizag Office",5],
+  ["LG76-200-700F","DRIVER",57,"Vizag Office",10],["LE04-71-XXX-57-XX","FITTING",4,"Vizag Office",2],
+  ["LG83-072-103-0700","DRIVER",41,"Vizag Office",10],["LG79-60-36-1500ST","DRIVER",12,"Vizag Office",5],
+  ["LF40-192-060-57-HE","FITTING",3,"Vizag Office",2],["LG66-036-036-900S","DRIVER",12,"Svkml",5],
+  ["LG30-018-054-0300","DRIVER",29,"Vizag Office",10],["BULCK HEAD","ACCESSORY",12,"TV Shop",0],
+  ["15WATT (190MA)","DRIVER",7,"Vizag Office",10],["12WATT (180MA)","DRIVER",6,"Kartika Class",5],
+  ["EIO6185","PCB",4,"Vizag Office",5],["BH28353S8P27V10W","PCB",7,"Vizag Office",0],
+  ["EIO9326","PCB",33,"Vizag Office",10],["EIO6006","PCB",18,"Vizag Office",10],
+  ["EIO8437","PCB",9,"Svkml",5],["WPWG-5050-15SIP","PCB",4,"Vizag Office",5],
+  ["FTS-KC-60-57K","PCB",250,"Vizag Office",50],["LL20-111-XXX-65-NE3","FITTING",1,"Vizag Office",0],
+  ["LF20-102-060-57-G3","FITTING",20,"TV Shop",5],["LR22-781-XXX-57-XX","FITTING",15,"Vizag Office",5],
+  ["15WATT DRIVERS","DRIVER",18,"Vizag Office",10],["LG66-060-048-1150E","DRIVER",14,"Kartika Class",5],
+  ["EIO6006","PCB",3,"TV Shop",0],["LG26-048-0720","DRIVER",4,"Vizag Office",5],
+];
+const DEFECTIVE = [
+  ["LH21-100/120-46-23-S2P","PCB",22,"Vizag Office"],["LENS","LENS",22,"Vizag Office"],
+  ["LG75-075-107-70E","DRIVER",1,"Vizag Office"],["WPWG-5050-15SIP","PCB",26,"Vizag Office"],
+  ["EIO6006","PCB",7,"Vizag Office"],["EIO9326","PCB",30,"Vizag Office"],
+  ["LG30-018-054-0300","DRIVER",66,"Vizag Office"],["LG66-040-078-480IT","DRIVER",103,"Vizag Office"],
+  ["18WATT DRIVERS","DRIVER",52,"Vizag Office"],["15WATT DRIVERS","DRIVER",34,"Vizag Office"],
+  ["LG75-150-215-70E","DRIVER",49,"Vizag Office"],["LE04-571-XXX-57-XX","FITTING",4,"Vizag Office"],
+  ["LG26-048-0720","DRIVER",13,"Vizag Office"],["R1103-092-PA","DRIVER",8,"Vizag Office"],
+  ["LF40-192-060-57-HE","FITTING",2,"Vizag Office"],["LL20-281-XXX-65AL1","FITTING",110,"Vizag Office"],
+  ["ISENSE DALI CONTROLLER (WCS-IS-DA4)","CONTROLLER",5,"Svkml"],["ISENSE 8BUTTON SWITCH","SWITCH",6,"Svkml"],
+  ["EIO8437","PCB",1,"TV Shop"],["LG66-036-036-900S","DRIVER",14,"Vizag Office"],
+];
+const PER_PAGE = 15;
+let bucket = "FRESH", page = 1;
+
+const column = t => t === "DRIVER" ? "driver" : t === "PCB" ? "pcb" : "fitting";
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+function rows() {
+  const loc = document.getElementById("f-location").value;
+  const type = document.getElementById("f-type").value;
+  const q = document.getElementById("f-q").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+  return (bucket === "FRESH" ? FRESH : DEFECTIVE).filter(r =>
+    (!loc || r[3] === loc) &&
+    (!type || (type === "OTHER" ? !["FITTING","DRIVER","PCB"].includes(r[1]) : r[1] === type)) &&
+    (!q || r[0].toUpperCase().replace(/[^A-Z0-9]/g,"").includes(q)));
+}
+
+function headers(allLocations) {
+  const h = ["S.NO","FITTING CODE","BATCH CODE"];
+  if (bucket === "FRESH") h.push("PKDT");
+  h.push("DRIVER CODE","PCB CODE","QUANTITY");
+  if (allLocations) h.push("LOCATION");
+  return h;
+}
+const SHEET_ONLY = ["FITTING CODE","BATCH CODE","PKDT","DRIVER CODE","PCB CODE"];
+function headerRow(allLocations) {
+  // Phones get one CODE column + TYPE instead of the five sparse sheet columns.
+  return headers(allLocations).map(h =>
+    h === "FITTING CODE" ? `<th class="m-only">CODE</th><th class="d-only">${h}</th>`
+    : `<th class="${SHEET_ONLY.includes(h) || h === "S.NO" || h === "LOCATION" ? "d-only" : ""}">${h}</th>`).join("");
+}
+
+function cells(r, i, allLocations, forExcel) {
+  const col = column(r[1]);
+  const code = c => col === c ? (forExcel ? esc(r[0]) : `<a href="#" onclick="alert('Item card for ${esc(r[0])} opens here (Phase 3).');return false">${esc(r[0])}</a>`) : "";
+  const low = bucket === "FRESH" && r[4] && r[2] <= r[4];
+  if (forExcel) {
+    const x = [`<td>${i}</td>`, `<td>${code("fitting")}</td>`, `<td></td>`];
+    if (bucket === "FRESH") x.push(`<td></td>`);
+    x.push(`<td>${code("driver")}</td>`, `<td>${code("pcb")}</td>`, `<td>${r[2]} NOS</td>`);
+    if (allLocations) x.push(`<td>${r[3]}</td>`);
+    return x.join("");
+  }
+  const out = [`<td class="d-only">${i}</td>`,
+    `<td class="code m-only">${code(col)}<br><small class="note">${r[1][0] + r[1].slice(1).toLowerCase()}${allLocations ? " · " + r[3] : ""}</small></td>`,
+    `<td class="code d-only">${code("fitting")}</td>`, `<td class="empty d-only"></td>`];
+  if (bucket === "FRESH") out.push(`<td class="empty d-only"></td>`);
+  out.push(`<td class="code d-only">${code("driver")}</td>`, `<td class="code d-only">${code("pcb")}</td>`,
+           `<td class="qty ${low && !forExcel ? "low" : ""}">${r[2]} NOS</td>`);
+  if (allLocations) out.push(`<td class="d-only">${r[3]}</td>`);
+  return out.join("");
+}
+
+function render(p) {
+  const data = rows(), all = !document.getElementById("f-location").value;
+  const pages = Math.max(1, Math.ceil(data.length / PER_PAGE));
+  page = Math.min(Math.max(1, p), pages);
+  document.getElementById("thead").innerHTML = "<tr>" + headerRow(all) + "</tr>";
+  const slice = data.slice((page-1)*PER_PAGE, page*PER_PAGE);
+  document.getElementById("tbody").innerHTML = slice.length
+    ? slice.map((r, i) => `<tr>${cells(r, (page-1)*PER_PAGE + i + 1, all)}</tr>`).join("")
+    : `<tr><td colspan="9">No items match these filters.</td></tr>`;
+  document.getElementById("pageinfo").textContent = `Page ${page} of ${pages}`;
+  document.getElementById("s-items").textContent = data.length;
+  document.getElementById("s-qty").textContent = data.reduce((a, r) => a + r[2], 0);
+  document.getElementById("s-where").textContent = document.getElementById("f-location").value || "All locations";
+  renderExport(data, all);
+}
+
+function renderExport(data, all) {
+  const today = "11-10-2026", loc = document.getElementById("f-location").value || "All locations";
+  const h = headers(all);
+  let title = bucket === "FRESH" ? `${loc} Fresh List · ${today}` : `Date: ${today} Wipro Defective List`;
+  document.getElementById("x-title").textContent = "Excel export preview: " + (bucket === "FRESH" ? "Fresh List" : "Defective List");
+  document.getElementById("x-file").textContent = (bucket === "FRESH" ? "Fresh_List_" : "Wipro_Defective_List_") + today + ".xlsx";
+  let html = `<tr class="title"><td colspan="${h.length}">${title}</td></tr>`;
+  if (bucket === "DEFECTIVE") html += `<tr class="title"><td colspan="${h.length}">DEFECTIVE MATERIAL IN ${loc.toUpperCase()}</td></tr>`;
+  html += "<tr>" + h.map(x => `<th>${x}</th>`).join("") + "</tr>";
+  html += data.slice(0, 6).map((r, i) => `<tr>${cells(r, i+1, all, true)}</tr>`).join("");
+  html += `<tr><td colspan="${h.length}" class="note">… ${Math.max(0, data.length-6)} more rows</td></tr>`;
+  document.getElementById("x-table").innerHTML = html;
+}
+
+function setBucket(b) {
+  bucket = b;
+  document.getElementById("page-title").textContent = b === "FRESH" ? "Fresh List" : "Defective List";
+  document.getElementById("tab-fresh").className = b === "FRESH" ? "" : "secondary";
+  document.getElementById("tab-defective").className = b === "DEFECTIVE" ? "" : "secondary";
+  document.getElementById("tab-fresh").toggleAttribute("aria-current", b === "FRESH");
+  document.getElementById("tab-defective").toggleAttribute("aria-current", b === "DEFECTIVE");
+  render(1);
+}
+render(1);
+</script>
+</body>
+</html>

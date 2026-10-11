@@ -6,6 +6,7 @@ Spares inventory (fresh + defective, multi-location), Wipro defective returns, a
 1. Read `tasks/lessons.md`, then `tasks/todo.md`.
 2. Approved plan: `C:\Users\vivek\.claude\plans\pasted-content-id-3f22-0-your-jazzy-pancake.md`.
 3. Workflow: plan anything with 3+ steps first (research prior art in a subagent), wait for approval, tick todo items only with evidence. After any user correction, add a rule to `tasks/lessons.md`.
+4. **Always build mocks:** every screen gets a clickable HTML mockup in `mockups/` (fake data, app styling) approved by the user *before* the real view is built, and every feature ships demo data loaded by `make demo`.
 
 ## Stack
 - Python 3.12, Django 5.2 LTS, PostgreSQL 16, Django templates + HTMX 2.0.4 + Pico CSS 2.0.6 (vendored in `static/vendor/`, no build step).

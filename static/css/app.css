@@ -10,6 +10,14 @@ button, [role="button"], input[type="submit"] {
 }
 
 .topbar { border-bottom: 1px solid var(--pico-muted-border-color); }
+.topbar nav, .topbar nav ul { flex-wrap: wrap; }
+
+/* Excel-like sheets: full columns on desktop, compact on phones. */
+.m-only { display: none; }
+@media (max-width: 768px) {
+  .d-only { display: none; }
+  .m-only { display: table-cell; }
+}
 .topbar nav ul:last-child li { padding-block: 0.25rem; }
 .brand { font-size: 1.25rem; }
 form.inline { margin: 0; }
