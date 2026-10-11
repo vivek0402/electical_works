@@ -10,8 +10,22 @@ ROLES = (ADMIN, OFFICE, TECHNICIAN)
 # Model permissions granted to each role ("app_label.codename"). ADMIN gets every permission.
 # Extend this as each phase adds models; `sync_role_groups` re-applies it after every migrate.
 ROLE_PERMISSIONS = {
-    OFFICE: ["inventory.view_location"],
-    TECHNICIAN: ["inventory.view_location"],
+    OFFICE: [
+        "inventory.view_location",
+        "inventory.view_item",
+        "inventory.add_item",
+        "inventory.change_item",
+        "inventory.view_itemalias",
+        "inventory.add_itemalias",
+        "inventory.view_stockdocument",
+        "inventory.view_stockmovement",
+        "inventory.view_stockbalance",
+    ],
+    TECHNICIAN: [
+        "inventory.view_location",
+        "inventory.view_item",
+        "inventory.view_stockbalance",
+    ],
 }
 
 
