@@ -24,6 +24,7 @@ services:
       - path: .env
         required: false
     environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
       DATABASE_URL: postgres://svkml:svkml@db:5432/svkml
       COVERAGE_FILE: /tmp/.coverage
       PYTEST_ADDOPTS: -p no:cacheprovider

@@ -1,11 +1,17 @@
+import os
+
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F403
-from .base import SECRET_KEY, STORAGES, env
+from .base import ALLOWED_HOSTS, SECRET_KEY, STORAGES, env
 
 DEBUG = False
 if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY must be set in production.")
+if "DATABASE_URL" not in os.environ:
+    raise ImproperlyConfigured("DATABASE_URL must be set in production.")
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured("ALLOWED_HOSTS must be set in production.")
 
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
