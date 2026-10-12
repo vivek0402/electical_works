@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -11,7 +12,7 @@ from apps.core.tables import sort_and_page
 from . import selectors
 from .filters import _text, history_filters, item_filters, movement_filters, stock_filters
 from .forms import ItemForm
-from .models import Company, EntryKind, FittingType, Item, Location, SpareType
+from .models import Company, EntryKind, FittingType, Item, Location, SpareType, StockBalance
 from .normalise import normalise_code
 from .services import ItemError, find_item_by_code, save_item
 
@@ -156,7 +157,7 @@ def item_new(request):
 @role_required(OFFICE)
 def item_edit(request, pk):
     item = get_object_or_404(Item, pk=pk)
-    form = ItemForm(request.POST or None, initial=ItemForm.initial_from(item))
+    form = ItemForm(request.POST or None, initial=ItemForm.initial_from(item), item=item)
     if request.method == "POST" and form.is_valid():
         try:
             item = save_item(item=item, data=form.cleaned_data)
@@ -172,9 +173,9 @@ def item_edit(request, pk):
 def item_detail(request, pk):
     item = get_object_or_404(Item.objects.select_related("spare_type", "company", "fitting_type"), pk=pk)
     date_from, date_to, location = history_filters(request.GET, timezone.localdate())
-    bal = selectors.balance_map()
-    places = selectors.stock_locations(bal)
-    per_loc = [(p, bal.get((item.pk, p.pk), 0)) for p in places]
+    held = dict(StockBalance.objects.filter(item=item).values_list("location_id", "qty"))
+    places = list(Location.objects.filter(Q(is_active=True) | Q(pk__in=[k for k, q in held.items() if q])))
+    per_loc = [(p, held.get(p.pk, 0)) for p in places]
     total = sum(q for _, q in per_loc)
     return render(
         request,
@@ -197,12 +198,15 @@ def item_detail(request, pk):
 @require_POST
 def item_quick_create(request):
     """Create an item from the Stock IN form modal; returns JSON for the item picker."""
-    form = ItemForm(request.POST)
+    form = ItemForm(request.POST, prefix="qi")
     if not form.is_valid():
-        first = next(iter(form.errors.values()))[0]
-        return JsonResponse({"ok": False, "error": first})
+        name, errs = next(iter(form.errors.items()))
+        label = form.fields[name].label or name.replace("_", " ").capitalize()
+        return JsonResponse(
+            {"ok": False, "error": f"{label}: {errs[0]}", "errors": form.errors.get_json_data()}
+        )
     try:
-        item = save_item(data=form.cleaned_data)
+        item = save_item(data={**form.cleaned_data, "is_active": True})
     except ItemError as exc:
         return JsonResponse({"ok": False, "error": exc.message})
     return JsonResponse({"ok": True, "item": selectors.picker_option(item)})

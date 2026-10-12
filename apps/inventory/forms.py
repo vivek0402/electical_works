@@ -1,22 +1,30 @@
 from django import forms
+from django.conf import settings
+from django.db.models import Q
 
 from .models import Company, FittingType, SpareType, Unit
 
 
 class TablerFormMixin:
-    """Give every widget Tabler classes; mark invalid fields."""
+    """Give every widget Tabler classes; mark invalid fields once the form has been cleaned."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            css = (
-                "form-select"
-                if isinstance(field.widget, forms.Select)
-                else ("form-check-input" if isinstance(field.widget, forms.CheckboxInput) else "form-control")
-            )
-            if self.errors.get(name):
-                css += " is-invalid"
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Select):
+                css = "form-select"
+            elif isinstance(field.widget, forms.CheckboxInput):
+                css = "form-check-input"
+            else:
+                css = "form-control"
             field.widget.attrs["class"] = css
+
+    def full_clean(self):
+        super().full_clean()
+        for name in self.errors:
+            widget = self.fields[name].widget if name in self.fields else None
+            if widget is not None:
+                widget.attrs["class"] = widget.attrs.get("class", "") + " is-invalid"
 
 
 class ItemForm(TablerFormMixin, forms.Form):
@@ -38,7 +46,7 @@ class ItemForm(TablerFormMixin, forms.Form):
         max_length=80,
         required=False,
         label="Used in fitting (Product Cat Ref)",
-        widget=forms.TextInput(attrs={"placeholder": "e.g. LF40-192-060-57-HE", "list": "cat-refs"}),
+        widget=forms.TextInput(attrs={"placeholder": "e.g. LF40-192-060-57-HE", "list": "it-cat-refs"}),
     )
     fitting_type = forms.ModelChoiceField(
         FittingType.objects.filter(is_active=True), required=False, empty_label="None"
@@ -53,6 +61,22 @@ class ItemForm(TablerFormMixin, forms.Form):
         widget=forms.TextInput(attrs={"placeholder": "e.g. EI08437, EIO-8437"}),
     )
     is_active = forms.BooleanField(required=False, initial=True, label="Active")
+
+    def __init__(self, *args, item=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # An item whose master was deactivated later must stay editable.
+        if item is not None:
+            for name, model, fk in (
+                ("spare_type", SpareType, item.spare_type_id),
+                ("company", Company, item.company_id),
+                ("fitting_type", FittingType, item.fitting_type_id),
+            ):
+                self.fields[name].queryset = model.objects.filter(Q(is_active=True) | Q(pk=fk))
+        self.fields["cat_ref"].widget.attrs["list"] = f"{self.prefix or 'it'}-cat-refs"
+        if not self.is_bound and not self.initial.get("company"):
+            default = Company.objects.filter(name=settings.DEFAULT_COMPANY, is_active=True).first()
+            if default:
+                self.fields["company"].initial = default.pk
 
     def clean_aliases(self):
         return [a.strip() for a in self.cleaned_data["aliases"].split(",") if a.strip()]

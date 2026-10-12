@@ -1,15 +1,18 @@
+{% with p=form.prefix|default:"it" %}
+{% if form.non_field_errors %}<div class="alert alert-danger" role="alert"><i class="ti ti-alert-circle"></i> {% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %} {% endif %}{% endfor %}</div>{% endif %}
 <div class="row g-3">
   <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.code.id_for_label }}">Item code</label>{{ form.code }}
-    <small class="form-hint" id="code-hint" data-url="{% url 'item_check_code' %}" data-original="{{ item.code|default:'' }}"></small>{{ form.code.errors }}</div>
-  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.spare_type.id_for_label }}">Spare type</label>{{ form.spare_type }}{{ form.spare_type.errors }}</div>
-  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.company.id_for_label }}">Company / brand</label>{{ form.company }}</div>
-  <div class="col-12"><label class="form-label" for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}</div>
-  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.cat_ref.id_for_label }}">Used in fitting (Product Cat Ref)</label>{{ form.cat_ref }}<small class="form-hint">The fitting this spare belongs to (optional).</small></div>
-  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.fitting_type.id_for_label }}">Fitting type</label>{{ form.fitting_type }}</div>
-  <div class="col-6 col-md-2"><label class="form-label" for="{{ form.wattage_w.id_for_label }}">Wattage</label><div class="input-group">{{ form.wattage_w }}<span class="input-group-text">W</span></div></div>
-  <div class="col-6 col-md-2"><label class="form-label" for="{{ form.current_ma.id_for_label }}">Current</label><div class="input-group">{{ form.current_ma }}<span class="input-group-text">mA</span></div></div>
-  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.unit.id_for_label }}">Unit</label>{{ form.unit }}</div>
-  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.reorder_level.id_for_label }}">Reorder level</label>{{ form.reorder_level }}<small class="form-hint">Warn when total stock falls to this.</small></div>
-  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.aliases.id_for_label }}">Other spellings of this code</label>{{ form.aliases }}<small class="form-hint">Comma separated. Searching any of these finds this item.</small></div>
+    <small class="form-hint" id="{{ p }}-code-hint" data-url="{% url 'item_check_code' %}" data-original="{{ item.code|default:'' }}"></small>{% for e in form.code.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.spare_type.id_for_label }}">Spare type</label>{{ form.spare_type }}{% for e in form.spare_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.company.id_for_label }}">Company / brand</label>{{ form.company }}{% for e in form.company.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12"><label class="form-label" for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}{% for e in form.description.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.cat_ref.id_for_label }}">Used in fitting (Product Cat Ref)</label>{{ form.cat_ref }}<small class="form-hint">The fitting this spare belongs to (optional).</small>{% for e in form.cat_ref.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.fitting_type.id_for_label }}">Fitting type</label>{{ form.fitting_type }}{% for e in form.fitting_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-6 col-md-2"><label class="form-label" for="{{ form.wattage_w.id_for_label }}">Wattage</label><div class="input-group">{{ form.wattage_w }}<span class="input-group-text">W</span></div>{% for e in form.wattage_w.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-6 col-md-2"><label class="form-label" for="{{ form.current_ma.id_for_label }}">Current</label><div class="input-group">{{ form.current_ma }}<span class="input-group-text">mA</span></div>{% for e in form.current_ma.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label required" for="{{ form.unit.id_for_label }}">Unit</label>{{ form.unit }}{% for e in form.unit.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.reorder_level.id_for_label }}">Reorder level</label>{{ form.reorder_level }}<small class="form-hint">Warn when total stock falls to this.</small>{% for e in form.reorder_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+  <div class="col-12 col-md-4"><label class="form-label" for="{{ form.aliases.id_for_label }}">Other spellings of this code</label>{{ form.aliases }}<small class="form-hint">Comma separated. Searching any of these finds this item.</small>{% for e in form.aliases.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
 </div>
-<datalist id="cat-refs">{% for c in cat_refs %}<option value="{{ c }}">{% endfor %}</datalist>
+<datalist id="{{ p }}-cat-refs">{% for c in cat_refs %}<option value="{{ c }}">{% endfor %}</datalist>
+{% endwith %}
