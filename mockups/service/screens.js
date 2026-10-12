@@ -1,4 +1,5 @@
-/* Screens in the Tabler admin layout: dashboard, current stock, items, item card, movements, entry, low stock, masters. */
+/* Screens in the Tabler admin layout: dashboard, current stock, items, item card, movements, entry, low stock, masters.
+   Good-stock figures (totals, low stock, KPIs, charts) use DB.locations only; the Defective store is shown separately. */
 
 const filterCol = (w, html) => `<div class="col-12 col-sm-6 col-lg-${w}">${html}</div>`;
 const fsel = (label, onchange, list, value, all) => `<label class="form-label small text-secondary mb-1">${label}</label>
@@ -17,6 +18,7 @@ ROUTES.dash = () => {
   const unitsAt = loc => { const t = {}; for (const i of DB.items) { const q = balance(i.code, loc); if (q) t[i.unit] = (t[i.unit] || 0) + q; } return t; };
   const nosTotal = sum(DB.locations, l => unitsAt(l).NOS || 0);
   const week = byDateDesc(DB.entries).filter(e => e.date > addDays(today(), -7));
+  const openC = DB.complaints.filter(isOpen), notAtt = openC.filter(c => c.status === "NOT_ATTENDED").length;
   setHeader("Overview", "Stock dashboard", `<span class="text-secondary me-2 align-self-center">${icon("calendar")} ${fmt(today())}</span>`);
   const kpi = (ic, color, value, label, sub, href) => `<div class="col-sm-6 col-lg-3"><a class="card card-sm card-link" href="${href}"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar kpi-${color}">${icon(ic)}</span></div>
@@ -26,6 +28,10 @@ ROUTES.dash = () => {
     ${kpi("building-warehouse", "brand", nosTotal.toLocaleString("en-IN") + " NOS", "In stock (all locations)", "plus wire in MTR, ties in PKT", "#stock")}
     ${kpi("alert-triangle", low.length ? "alert" : "ok", low.length, "Low stock items", "at or below reorder level", "#low")}
     ${kpi("arrows-exchange", "brand", week.length, "Entries this week", `${DB.entries.filter(e => e.date === today()).length} today`, "#moves")}
+    ${kpi("message-report", notAtt ? "alert" : "brand", openC.length, "Open complaints", notAtt ? `${notAtt} not attended yet` : "all attended", "#cdash")}
+    ${kpi("recycle", "brand", DB.pieces.filter(p => p.status === "IN_STORE").length, "Defective pieces in store", "not counted in stock above", "#ddash")}
+    ${kpi("truck-return", "brand", DB.pieces.filter(p => p.status === "SENT").length, "Pieces with companies", "sent, awaiting settlement", "#batches")}
+    ${kpi("clipboard-check", "brand", DB.visits.filter(v => v.date > addDays(today(), -7)).length, "Visits this week", "recorded on complaints", "#complaints/open")}
     <div class="col-12"><div class="card"><div class="card-body"><div class="row g-2 quick">
       <div class="col-6 col-lg-3"><a href="#in" class="btn btn-in w-100 flex-column">${icon("package-import")} Stock IN<small>Material received</small></a></div>
       <div class="col-6 col-lg-3"><a href="#out" class="btn btn-out w-100 flex-column">${icon("package-export")} Stock OUT<small>Material issued</small></a></div>
@@ -47,12 +53,15 @@ ROUTES.dash = () => {
   </div>`;
   setTimeout(drawWeeklyChart);
 };
+// Details text, with the complaint / return batch as a link instead of plain text.
+const whatHtml = e => { const src = e.complaint || e.batch, w = esc(entryWhat(e));
+  return src ? w.replace(src, entrySource(e)) : w; };
 function entryColumns() {
   return [
     { key: "no", label: "Entry", html: e => entryLink(e.no) },
     { key: "date", label: "Date", cls: "nowrap", html: e => fmt(e.date) },
     { key: "kind", label: "Type", html: kindBadge },
-    { key: "what", label: "Details", sort: entryWhat, html: e => esc(entryWhat(e)) },
+    { key: "what", label: "Details", sort: entryWhat, html: whatHtml },
     { key: "items", label: "Items", nosort: true, html: e => { const codes = uniq(e.lines.map(l => l.code));
       return codes.length === 1 ? `<span class="code">${esc(codes[0])}</span> × ${entryQty(e)}` : `${codes.length} items`; } },
     { key: "loc", label: "Location", sort: entryLocs, html: e => esc(entryLocs(e)) },
@@ -66,7 +75,7 @@ function weeklyData() {
   const weeks = [];
   for (let w = 4; w >= 0; w--) { const end = addDays(today(), -7 * w), start = addDays(end, -6); weeks.push({ start, end, in: 0, out: 0 }); }
   for (const e of DB.entries) if (e.kind === "IN" || e.kind === "OUT") for (const l of e.lines) {
-    if (unitOf(l.code) !== "NOS") continue;
+    if (unitOf(l.code) !== "NOS" || l.loc === DB.defStore) continue;   // good stock only
     const wk = weeks.find(x => e.date >= x.start && e.date <= x.end);
     if (wk) { if (l.qty > 0) wk.in += l.qty; else wk.out -= l.qty; }
   }
@@ -102,7 +111,7 @@ let sf = { loc: "", type: "", company: "", q: "", low: false };
 ROUTES.stock = arg => {
   if (arg !== undefined) { sf = { loc: DB.locations.includes(arg) ? arg : "", type: "", company: "", q: "", low: false }; resetPage("stock"); }
   const rows = DB.items.filter(i => i.active && (!sf.type || i.type === sf.type) && (!sf.company || i.company === sf.company) && matchItem(i, sf.q)
-    && (!sf.low || isLow(i)) && (sf.loc ? balance(i.code, sf.loc) !== 0 : total(i.code) !== 0 || sf.low));
+    && (!sf.low || isLow(i)) && (sf.loc ? balance(i.code, sf.loc) !== 0 : total(i.code) !== 0 || defQty(i.code) !== 0 || sf.low));
   const locs = sf.loc ? [sf.loc] : DB.locations;
   const set = (k, v) => `sf.${k}=${v};resetPage('stock');route()`;
   setHeader("Reports", "Current stock", exportBtn("Current_Stock.xlsx"));
@@ -115,14 +124,15 @@ ROUTES.stock = arg => {
         onchange="${set("low", "this.checked")}"><span class="form-check-label">Only low stock</span></label>`)}
     </div></div>
     ${dataTable("stock", { rows, sort: "code", columns: [
-      { key: "code", label: "Item code", html: i => codeLink(i.code) },
-      { key: "type", label: "Spare type" }, { key: "desc", label: "Description" },
+      { key: "code", label: "Item", html: i => `${codeLink(i.code)}<div class="small text-secondary">${esc(i.type)} · ${esc(i.desc)}</div>` },
       { key: "catRef", label: "Used in (fitting)", html: fittingHtml }, { key: "company", label: "Company" },
       ...locs.map(l => ({ key: "L:" + l, label: esc(l), num: true, sort: i => balance(i.code, l), html: i => qtyHtml(balance(i.code, l)) })),
       ...(sf.loc ? [] : [{ key: "total", label: "Total", num: true, sort: i => total(i.code),
-        html: i => isLow(i) ? `<span class="badge bg-red-lt">${total(i.code)}</span>` : `<b>${total(i.code)}</b>` }]),
-      { key: "unit", label: "Unit" }] })}
-  </div><p class="text-secondary small mt-2">${icon("info-circle")} Red total = at or below the item's reorder level.</p>`;
+        html: i => (isLow(i) ? `<span class="badge bg-red-lt">${total(i.code)}</span>` : `<b>${total(i.code)}</b>`) + ` <small class="text-secondary">${i.unit}</small>` }]),
+      { key: "def", label: `<span class="def-head">Defective store<small>not counted</small></span>`, num: true, cls: "col-def", sort: i => defQty(i.code),
+        html: i => defQty(i.code) ? `<a href="#pieces/item=${encodeURIComponent(i.code)}&status=IN_STORE" title="Open the pieces">${defQty(i.code)}</a>` : qtyHtml(0) }] })}
+  </div><p class="text-secondary small mt-2">${icon("info-circle")} Red total = at or below the item's reorder level.
+    The <b>Defective store</b> column shows failed pieces waiting to go back to the company. They are never part of the total.</p>`;
 };
 
 /* ---------- items ---------- */
@@ -197,12 +207,15 @@ ROUTES.item = code => {
     <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">Stock by location</h3></div>
       <div class="list-group list-group-flush">${DB.locations.map(l => `<div class="list-group-item d-flex"><span>${esc(l)}</span>
         <span class="ms-auto fw-bold">${qtyHtml(balance(code, l))} <span class="text-secondary fw-normal">${i.unit}</span></span></div>`).join("")}
-        <div class="list-group-item d-flex bg-light"><b>Total</b><span class="ms-auto fw-bold">${total(code)} ${i.unit}</span></div></div></div></div>
+        <div class="list-group-item d-flex bg-light"><b>Total (good stock)</b><span class="ms-auto fw-bold">${total(code)} ${i.unit}</span></div></div>
+      <div class="card-footer d-flex align-items-center">${icon("recycle", "me-2 text-secondary")}<span>Defective store: <b>${defQty(code)}</b> ${i.unit}
+        <span class="d-block small text-secondary">Failed pieces, not counted above</span></span>
+        ${defQty(code) ? `<a class="btn btn-sm btn-quiet ms-auto" href="#pieces/item=${encodeURIComponent(code)}&status=IN_STORE">${icon("tags")} Pieces</a>` : ""}</div></div></div>
     <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Movement history</h3>
       <div class="card-actions">${exportBtn("Stock_Movements.xlsx", "Export history")}</div></div>
       <div class="card-body border-bottom py-3"><div class="row g-2">
         ${filterCol(3, fdate("From date", hf.from, set("from")))}${filterCol(3, fdate("To date", hf.to, set("to")))}
-        ${filterCol(3, fsel("Location", set("loc"), DB.locations, hf.loc, "All locations"))}</div></div>
+        ${filterCol(3, fsel("Location", set("loc"), [...DB.locations, DB.defStore], hf.loc, "All locations"))}</div></div>
       ${dataTable("hist", { rows, sort: "n", dir: "desc", empty: "No movements in this period.", rowClass: r => undoneBy(r.e.no) ? "undone" : "", columns: [
         { key: "n", label: "Date", cls: "nowrap", sort: r => r.n, html: r => fmt(r.e.date) },
         { key: "no", label: "Entry", sort: r => r.e.no, html: r => entryLink(r.e.no) }, { key: "kind", label: "Type", sort: r => r.e.kind, html: r => kindBadge(r.e) },
@@ -222,27 +235,28 @@ ROUTES.moves = () => {
   const q = norm(mf.q), rows = [];
   byDateDesc(DB.entries).forEach((e, n) => {
     if (e.date < mf.from || e.date > mf.to || (mf.kind && e.kind !== mf.kind)) return;
-    for (const l of e.lines) if ((!mf.loc || l.loc === mf.loc) && (!q || [l.code, e.party, e.ref, e.no].join(" ").toUpperCase().includes(q))) rows.push({ e, l, n });
+    for (const l of e.lines) if ((!mf.loc || l.loc === mf.loc) && (!q || [l.code, e.party, e.ref, e.no, e.complaint, e.batch].join(" ").toUpperCase().includes(q))) rows.push({ e, l, n });
   });
   const set = k => `mf.${k}=this.value;resetPage('moves');route()`;
   setHeader("Reports", "Stock movements", exportBtn("Stock_Movements.xlsx"));
   view().innerHTML = `<div class="card"><div class="card-header"><div class="row g-2 w-100 align-items-end">
       ${filterCol(2, fdate("From date", mf.from, set("from")))}${filterCol(2, fdate("To date", mf.to, set("to")))}
       ${filterCol(2, fsel("Type", set("kind"), Object.entries(KIND), mf.kind, "All types"))}
-      ${filterCol(2, fsel("Location", set("loc"), DB.locations, mf.loc, "All locations"))}
-      ${filterCol(4, fsearch(mf.q, set("q"), "Item, supplier, customer, ref"))}</div></div>
+      ${filterCol(2, fsel("Location", set("loc"), [...DB.locations, DB.defStore], mf.loc, "All locations"))}
+      ${filterCol(4, fsearch(mf.q, set("q"), "Item, supplier, customer, ref, CMP / RB no."))}</div></div>
     ${dataTable("moves", { rows, sort: "date", dir: "asc", empty: "No movements in this period.", rowClass: r => undoneBy(r.e.no) ? "undone" : "", columns: [
       { key: "date", label: "Date", cls: "nowrap", sort: r => r.n, html: r => fmt(r.e.date) },
       { key: "no", label: "Entry", sort: r => r.e.no, html: r => entryLink(r.e.no) }, { key: "kind", label: "Type", sort: r => r.e.kind, html: r => kindBadge(r.e) },
-      { key: "code", label: "Item code", sort: r => r.l.code, html: r => codeLink(r.l.code) },
-      { key: "desc", label: "Description", sort: r => item(r.l.code).desc, html: r => esc(item(r.l.code).desc) },
-      { key: "loc", label: "Location", sort: r => r.l.loc, html: r => esc(r.l.loc) },
+      { key: "what", label: "Details", sort: r => entryWhat(r.e), html: r => whatHtml(r.e) },
+      { key: "code", label: "Item", sort: r => r.l.code, html: r => `${codeLink(r.l.code)}<div class="small text-secondary">${esc(item(r.l.code).desc)}</div>` },
+      { key: "loc", label: "Location", sort: r => r.l.loc, html: r => r.l.loc === DB.defStore ? `<span class="text-secondary">${icon("recycle")} ${esc(r.l.loc)}</span>` : esc(r.l.loc) },
       { key: "in", label: "In", num: true, sort: r => r.l.qty, html: r => r.l.qty > 0 ? `<span class="qty-in">+${r.l.qty}</span>` : "" },
       { key: "out", label: "Out", num: true, sort: r => -r.l.qty, html: r => r.l.qty < 0 ? `<span class="qty-out">−${-r.l.qty}</span>` : "" },
       { key: "unit", label: "Unit", nosort: true, html: r => unitOf(r.l.code) },
-      { key: "party", label: "Supplier / issued to", sort: r => r.e.party || "", html: r => esc(r.e.party || r.e.reason || "") },
-      { key: "ref", label: "Ref", sort: r => r.e.ref || "", html: r => esc(r.e.ref || "") }, { key: "by", label: "By", sort: r => r.e.by, html: r => esc(r.e.by) }] })}
-  </div><p class="text-secondary small mt-2">${icon("info-circle")} Struck-through rows were undone; an "Undo" entry reverses them.</p>`;
+      { key: "party", label: "Supplier / issued to", sort: r => r.e.party || "", html: r => esc(r.e.party || r.e.reason || "") + (r.e.ref && !r.e.complaint && !r.e.batch ? `<div class="small text-secondary">${esc(r.e.ref)}</div>` : "") },
+      { key: "by", label: "By", sort: r => r.e.by, html: r => esc(r.e.by) }] })}
+  </div><p class="text-secondary small mt-2">${icon("info-circle")} Struck-through rows were undone; an "Undo" entry reverses them.
+    Rows at the Defective store are failed pieces, not good stock.</p>`;
 };
 
 /* ---------- entry detail + undo ---------- */
@@ -252,13 +266,18 @@ ROUTES.entry = no => {
   const u = undoneBy(no);
   const fact = (k, v) => v ? `<div class="datagrid-item"><div class="datagrid-title">${k}</div><div class="datagrid-content">${v}</div></div>` : "";
   setHeader(`${KIND[e.kind]} · ${esc(entryWhat(e))}`, `<span class="code">${e.no}</span> ${kindBadge(e)}`,
-    `${!u && e.kind !== "REV" ? `<button class="btn btn-outline-danger" onclick="askUndo('${e.no}')">${icon("arrow-back-up")} Undo this entry</button>` : ""}
+    `${e.complaint ? `<a href="#complaint/${e.complaint}" class="btn btn-quiet">${icon("message-report")} Complaint ${e.complaint}</a>` : ""}
+     ${e.batch ? `<a href="#batch/${e.batch}" class="btn btn-quiet">${icon("truck-return")} Batch ${e.batch}</a>` : ""}
+     ${!u && e.kind !== "REV" && !isDefectiveEntry(e) ? `<button class="btn btn-outline-danger" onclick="askUndo('${e.no}')">${icon("arrow-back-up")} Undo this entry</button>` : ""}
      <a href="#moves" class="btn btn-outline-secondary">${icon("history")} All movements</a>`);
   view().innerHTML = `${u ? `<div class="alert alert-warning">${icon("arrow-back-up")} Undone by ${entryLink(u.no)} on ${fmt(u.date)}: ${esc(u.note)}</div>` : ""}
     ${e.reverses ? `<div class="alert alert-info">This entry reverses ${entryLink(e.reverses)}.</div>` : ""}
+    ${isDefectiveEntry(e) && !u ? `<div class="alert alert-info">${icon("info-circle")} This entry belongs to the defective pieces, so it can't be undone here. Use the
+      ${e.batch ? `return batch <a href="#batch/${e.batch}">${e.batch}</a>` : `<a href="#pieces">Defectives screens</a>`} instead.</div>` : ""}
     <div class="row row-cards"><div class="col-12"><div class="card"><div class="card-body"><div class="datagrid">
       ${fact("Date", fmt(e.date))}${fact(e.kind === "IN" ? "Received from" : e.kind === "OUT" ? "Issued to" : e.kind === "TRF" ? "Moved to" : "", esc(e.party || ""))}
-      ${fact("Location", esc(entryLocs(e)))}${fact("DC / ref no.", esc(e.ref || ""))}${fact("Reason", esc(e.reason || ""))}${fact("Remarks", esc(e.note || ""))}${fact("Entered by", esc(e.by))}
+      ${fact("Location", esc(entryLocs(e)))}${fact("Complaint", e.complaint ? entrySource(e) : "")}${fact("Return batch", e.batch ? `<a class="code" href="#batch/${e.batch}">${e.batch}</a>` : "")}
+      ${fact(e.batch ? "Docket / ref no." : "DC / ref no.", e.complaint ? "" : esc(e.ref || ""))}${fact("Reason", esc(e.reason || ""))}${fact("Remarks", esc(e.note || ""))}${fact("Entered by", esc(e.by))}
     </div></div></div></div>
     <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Items</h3></div>
       ${dataTable("entry-lines", { rows: e.lines, paging: false, columns: [
@@ -267,9 +286,18 @@ ROUTES.entry = no => {
         { key: "in", label: "In", num: true, sort: l => l.qty, html: l => l.qty > 0 ? `<span class="qty-in">+${l.qty}</span>` : "" },
         { key: "out", label: "Out", num: true, sort: l => -l.qty, html: l => l.qty < 0 ? `<span class="qty-out">−${-l.qty}</span>` : "" },
         { key: "unit", label: "Unit", nosort: true, html: l => unitOf(l.code) }, { key: "batch", label: "Batch code" }, { key: "pkd", label: "PKD", html: l => fmtMonth(l.pkd) }] })}
-    </div></div></div>
+    </div></div>${entryPieces(e)}</div>
     <p class="text-secondary small mt-3">${icon("lock")} Entries are never edited or deleted. "Undo" adds an opposite entry with a reason, so the history always shows what happened.</p>`;
 };
+// Defective pieces created or moved by this entry (collection, mark defective, dispatch, settlement, scrap).
+function entryPieces(e) {
+  const tags = uniq([...DB.pieces.filter(p => p.entry === e.no).map(p => p.tag),
+    ...DB.batches.flatMap(b => b.lines.filter(l => l.entry === e.no || b.dispatchEntry === e.no).map(l => l.tag))]);
+  if (!tags.length) return "";
+  return `<div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">${icon("tags")} Defective pieces</h3>
+    <span class="badge bg-secondary-lt ms-2">${tags.length}</span></div><div class="card-body"><div class="d-flex flex-wrap gap-2">${tags.map(t => { const p = piece(t);
+    return `<a class="chip chip-link" href="#piece/${t}"><span class="code">${t}</span> <span class="text-secondary">${esc(p.code)}</span> ${pBadge(p.status)}</a>`; }).join("")}</div></div></div></div>`;
+}
 function askUndo(no) {
   openModal(`<div class="modal-status bg-danger"></div><div class="modal-body text-center py-4">${icon("arrow-back-up")}
       <h3 class="mt-2">Undo ${no}?</h3><div class="text-secondary mb-3">This adds a new entry that reverses every line of ${no}.</div>
@@ -303,18 +331,26 @@ ROUTES.low = () => {
 /* ---------- masters ---------- */
 ROUTES.masters = () => {
   setHeader("Setup", "Masters", `<span class="badge bg-secondary-lt align-self-center">Admin only in the real app</span>`);
-  const box = (title, ic, listKey, ph) => `<div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon(ic)} ${title}</h3>
+  const box = (title, ic, listKey, ph, extra = "") => `<div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon(ic)} ${title}</h3>
       <span class="badge bg-secondary-lt ms-auto">${DB[listKey].length}</span></div>
-    <div class="list-group list-group-flush">${DB[listKey].map(x => `<div class="list-group-item">${esc(x)}</div>`).join("")}</div>
+    <div class="list-group list-group-flush">${DB[listKey].map(x => `<div class="list-group-item">${esc(x)}</div>`).join("")}${extra}</div>
     <div class="card-footer"><form class="input-group" onsubmit="event.preventDefault();addMaster('${listKey}',this.v)">
       <input name="v" class="form-control" placeholder="${ph}" required><button class="btn btn-primary">${icon("plus")} Add</button></form></div></div></div>`;
-  view().innerHTML = `<div class="row row-cards">${box("Locations", "map-pin", "locations", "New location")}${box("Companies / suppliers", "building-store", "companies", "New company")}
+  view().innerHTML = `<div class="row row-cards">${box("Locations", "map-pin", "locations", "New location",
+      `<div class="list-group-item d-flex align-items-center text-secondary">${icon("recycle", "me-2")}${esc(DB.defStore)}
+        <span class="badge st st-done ms-auto" title="Only the defectives screens post here. It can't be hidden or deleted.">${icon("lock")}System</span></div>`)}${box("Companies / suppliers", "building-store", "companies", "New company")}
     ${box("Fitting types", "bulb", "fittingTypes", "New fitting type")}${box("Spare types", "category", "spareTypes", "New spare type")}
+    ${box("Couriers", "truck", "couriers", "New courier")}${box("Not covered reasons", "ban", "notCoveredReasons", "New reason")}
+    <div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("adjustments")} Defaults</h3></div><div class="card-body">
+      <label class="form-label" for="m-defco">Default company on new complaints and items</label>
+      <select id="m-defco" class="form-select" onchange="setDefaultCompany(this.value)">${opt(DB.companies, DB.config.defaultCompany)}</select>
+      <small class="form-hint">Only a starting value. Every complaint, item and return batch can be for any company.</small></div></div></div>
     <div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("users")} Users</h3></div><div class="list-group list-group-flush">
       <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">AD</span> Admin <span class="text-secondary small d-block">Everything, incl. masters and users</span></div>
       <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">OF</span> Office <span class="text-secondary small d-block">Stock IN / OUT / transfer / adjust, items</span></div>
     </div></div></div></div>`;
 };
+function setDefaultCompany(v) { DB.config.defaultCompany = v; toast(`Default company: <b>${esc(v)}</b>.`); }
 function addMaster(listKey, input) {
   const v = input.value.trim();
   if (DB[listKey].some(x => x.toLowerCase() === v.toLowerCase())) { toast(`${esc(v)} already exists.`, "danger"); return; }
@@ -325,4 +361,3 @@ ROUTES.in = a => entryForm("in", a);
 ROUTES.out = a => entryForm("out", a);
 ROUTES.transfer = a => entryForm("trf", a);
 ROUTES.adjust = a => entryForm("adj", a);
-loadData().then(startApp);

@@ -245,8 +245,8 @@ function dispatchBatch(b, d) {
   if (!b.lines.length) return { error: "An empty batch can't be dispatched. Add pieces first." };
   if (!d.date) return { error: "Choose the dispatch date.", focus: "d-date" };
   if (d.date > today()) return { error: "The dispatch date can't be in the future.", focus: "d-date" };
-  if (!d.docket.trim()) return { error: "Enter the docket / LR number.", focus: "d-docket" };
   if (!d.courier) return { error: "Choose the courier.", focus: "d-courier" };
+  if (!d.docket.trim()) return { error: "Enter the docket / LR number.", focus: "d-docket" };
   const q = {};
   for (const l of b.lines) { const c = piece(l.tag).code; q[c] = (q[c] || 0) + 1; }
   const e = { kind: "OUT", subtype: "RETURN_TO_COMPANY", date: d.date, party: b.company, ref: d.docket.trim(), batch: b.no,

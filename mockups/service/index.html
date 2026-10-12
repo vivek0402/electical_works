@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MOCKUP · SVKML Stock</title>
+  <title>MOCKUP · SVKML Service</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="vendor/tabler.min.css">
   <link rel="stylesheet" href="vendor/tom-select.bootstrap5.min.css">
   <link rel="stylesheet" href="vendor/tabler-vendors.min.css">
@@ -18,7 +19,7 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
           aria-controls="sidebar-menu" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button>
         <a href="#dash" class="navbar-brand navbar-brand-autodark brand">
-          <span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Stock</span>
+          <span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Service</span>
         </a>
         <div class="collapse navbar-collapse" id="sidebar-menu">
           <ul class="navbar-nav pt-lg-3" id="nav">
@@ -34,6 +35,19 @@
             <li class="nav-item"><a class="nav-link" href="#moves"><span class="nav-link-icon"><i class="ti ti-history"></i></span><span class="nav-link-title">Movements</span></a></li>
             <li class="nav-item"><a class="nav-link" href="#low"><span class="nav-link-icon"><i class="ti ti-alert-triangle"></i></span><span class="nav-link-title">Low stock</span>
               <span class="badge bg-red-lt ms-auto" id="nav-low"></span></a></li>
+            <li class="nav-section">Complaints</li>
+            <li class="nav-item"><a class="nav-link" href="#cdash"><span class="nav-link-icon"><i class="ti ti-message-report"></i></span><span class="nav-link-title">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#complaints"><span class="nav-link-icon"><i class="ti ti-list-details"></i></span><span class="nav-link-title">All complaints</span>
+              <span class="badge nav-badge ms-auto" id="nav-open" title="Open complaints"></span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#complaint-new"><span class="nav-link-icon"><i class="ti ti-plus"></i></span><span class="nav-link-title">New complaint</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#sites"><span class="nav-link-icon"><i class="ti ti-building"></i></span><span class="nav-link-title">Sites</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#techs"><span class="nav-link-icon"><i class="ti ti-users"></i></span><span class="nav-link-title">Technicians</span></a></li>
+            <li class="nav-section">Defectives</li>
+            <li class="nav-item"><a class="nav-link" href="#ddash"><span class="nav-link-icon"><i class="ti ti-recycle"></i></span><span class="nav-link-title">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#pieces"><span class="nav-link-icon"><i class="ti ti-tags"></i></span><span class="nav-link-title">Pieces</span>
+              <span class="badge nav-badge ms-auto" id="nav-def" title="Pieces in the defective store"></span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#mark"><span class="nav-link-icon"><i class="ti ti-alert-octagon"></i></span><span class="nav-link-title">Mark defective</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#batches"><span class="nav-link-icon"><i class="ti ti-truck-return"></i></span><span class="nav-link-title">Return batches</span></a></li>
             <li class="nav-section">Setup</li>
             <li class="nav-item"><a class="nav-link" href="#items"><span class="nav-link-icon"><i class="ti ti-box"></i></span><span class="nav-link-title">Items</span></a></li>
             <li class="nav-item"><a class="nav-link" href="#masters"><span class="nav-link-icon"><i class="ti ti-settings"></i></span><span class="nav-link-title">Masters</span></a></li>
@@ -50,7 +64,7 @@
           <div class="global-search">
             <div class="input-icon">
               <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-              <input id="gsearch" type="search" class="form-control" placeholder="Search items, old spellings, entry no…" autocomplete="off" aria-label="Search">
+              <input id="gsearch" type="search" class="form-control" placeholder="Search items, entries, complaints, sites, tags…" autocomplete="off" aria-label="Search">
             </div>
             <div id="gresults" class="dropdown-menu gresults"></div>
           </div>
@@ -59,11 +73,12 @@
               <i class="ti ti-bell fs-2"></i><span class="badge bg-red text-white badge-notification bell-count" id="bell-count"></span></a>
             <div class="nav-item dropdown">
               <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="User menu">
-                <span class="avatar avatar-sm bg-blue-lt">OF</span>
+                <span class="avatar avatar-sm bg-blue-lt" id="role-av">OF</span>
                 <div class="d-none d-xl-block ps-2"><div>Office</div><div class="mt-1 small text-secondary">Office staff</div></div>
               </a>
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <span class="dropdown-header">Signed in as Office</span>
+                <span class="dropdown-header" id="role-head">Signed in as Office</span>
+                <a href="#" class="dropdown-item" id="role-switch" onclick="switchRole();return false"><i class="ti ti-user-shield me-2"></i>Mockup: act as Admin</a>
                 <a href="#masters" class="dropdown-item"><i class="ti ti-settings me-2"></i>Masters</a>
                 <div class="dropdown-divider"></div>
                 <a href="#" class="dropdown-item" onclick="toast('Mockup: logout does nothing.');return false"><i class="ti ti-logout me-2"></i>Logout</a>
@@ -87,8 +102,12 @@
   <script src="vendor/tom-select.complete.min.js"></script>
   <script src="vendor/apexcharts.min.js"></script>
   <script src="data.js"></script>
+  <script src="service.js"></script>
   <script src="ui.js"></script>
   <script src="forms.js"></script>
   <script src="screens.js"></script>
+  <script src="complaints.js"></script>
+  <script src="defectives.js"></script>
+  <script>loadData().then(() => { DB.demoBatches = DB.batches.map(b => b.no); startApp(); });</script>
 </body>
 </html>

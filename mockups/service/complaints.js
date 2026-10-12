@@ -12,7 +12,7 @@ const ageHtml = c => { const a = ageDays(c); return isOpen(c) && a > 15 ? `<span
 // Bar list: one hue (brand blue), value labels, red only when the row means "needs attention".
 const barList = (rows, href) => { const max = Math.max(1, ...rows.map(r => r[1]));
   return `<div class="list-group list-group-flush">${rows.map(([label, n, alert, key]) => `<a class="list-group-item list-group-item-action py-2" href="${href(key ?? label)}">
-    <div class="d-flex align-items-center gap-2 mb-1"><span class="${alert ? "text-danger fw-medium" : ""}">${alert ? icon("alert-triangle") : ""}${esc(label)}</span>
+    <div class="d-flex align-items-center gap-2 mb-1"><span class="${alert ? "text-danger fw-medium" : ""}">${alert ? icon("alert-triangle", "me-1") : ""}${esc(label)}</span>
       <span class="ms-auto fw-bold num">${n}</span></div>
     <div class="progress progress-sm"><div class="progress-bar ${alert ? "bg-red" : "bar-brand"}" style="width:${(n / max) * 100}%"></div></div></a>`).join("")
     || `<div class="list-group-item text-secondary">Nothing open.</div>`}</div>`; };
@@ -68,7 +68,7 @@ ROUTES.complaints = arg => {
   const set = k => `cf.${k}=this.value;resetPage('complaints');route()`;
   setHeader("Complaints", "All complaints", `<a href="#complaint-new" class="btn btn-primary">${icon("plus")} New complaint</a>${exportBtn("Complaint_List.xlsx")}`);
   view().innerHTML = `<div class="card">
-    <div class="card-header pb-0 border-0"><ul class="nav nav-tabs card-header-tabs status-tabs" role="tablist">${C_TABS.map(([k, l]) =>
+    <div class="card-header pb-0 border-0"><ul class="nav nav-tabs card-header-tabs status-tabs mb-0" role="tablist">${C_TABS.map(([k, l]) =>
       `<li class="nav-item"><a href="#" class="nav-link ${cf.tab === k ? "active" : ""}" onclick="cf.tab='${k}';resetPage('complaints');route();return false">${l}
         <span class="badge ${cf.tab === k ? "bg-primary text-white" : "bg-secondary-lt"} ms-1">${base.filter(c => inTab(c, k)).length}</span></a></li>`).join("")}</ul></div>
     <div class="card-body border-bottom py-3"><div class="row g-2 align-items-end">
@@ -192,24 +192,24 @@ ROUTES.complaint = no => {
       ${factRow("Company", esc(c.company))}${factRow("Company complaint no.", c.companyRef ? `<span class="code">${esc(c.companyRef)}</span>` : "—")}
       ${factRow("Qty affected", c.qty ?? "—")}${factRow("Priority", c.priority)}
       ${factRow("Technicians", esc(c.techs.join(", ")) || "Not assigned")}
-      </div><div class="mt-3"><div class="datagrid-title">Fault</div><div>${esc(c.fault)}</div></div></div></div>
-      <div class="card"><div class="card-header"><h3 class="card-title">${icon("clipboard-list")} Visits</h3><span class="badge bg-secondary-lt ms-2">${visits.length}</span>
+      </div><div class="mt-3"><div class="datagrid-title">Fault</div><div>${esc(c.fault)}</div></div></div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("timeline")} Status timeline</h3></div>
+      <div class="card-body"><ul class="tl">${ev.map(e => `<li class="tl-item"><span class="tl-dot ${CSTYLE[e.to][0]}">${icon(CSTYLE[e.to][1])}</span>
+        <div class="tl-body"><div class="fw-medium">${e.from ? `${CSTATUS[e.from]} → ` : ""}${CSTATUS[e.to]}</div>
+        <div class="small text-secondary">${fmt(e.at)} · ${esc(e.by)}</div>
+        ${e.reason ? `<div class="small">Reason: <b>${esc(e.reason)}</b></div>` : ""}${e.note ? `<div class="small">${esc(e.note)}</div>` : ""}</div></li>`).join("")}</ul></div></div></div>
+    <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">${icon("clipboard-list")} Visits</h3><span class="badge bg-secondary-lt ms-2">${visits.length}</span>
         ${open ? `<div class="card-actions"><a href="#visit/${c.no}" class="btn btn-sm btn-outline-primary">${icon("plus")} Record visit</a></div>` : ""}</div>
       ${dataTable("visits", { rows: visits, paging: false, sort: "date", dir: "desc", empty: "No visits yet.", columns: [
-        { key: "date", label: "Visit", sort: v => v.date + v.no, html: v => `<span class="code">${v.no}</span><div class="small text-secondary">${fmt(v.date)}</div>` },
+        { key: "date", label: "Visit", sort: v => v.date + v.no, html: v => `<span class="code">${v.no}</span><div class="small text-secondary nowrap">${fmt(v.date)}</div>` },
         { key: "techs", label: "Technicians", sort: v => v.techs.join(), html: v => esc(v.techs.join(", ")) },
         { key: "work", label: "Work done", cls: "cell-wrap", html: v => esc(v.work) },
         { key: "parts", label: "Parts given", nosort: true, html: v => { const e = v.outEntry && entry(v.outEntry);
           return e ? `${entryLink(e.no)}${undoneBy(e.no) ? ` <span class="badge bg-secondary-lt">undone</span>` : ""}<div class="small">${e.lines.map(l => `<span class="code">${esc(l.code)}</span> × ${-l.qty}`).join("<br>")}</div>`
             : `<span class="text-secondary">None</span>`; } },
         { key: "tags", label: "Failed parts collected", nosort: true, html: v => v.tags.length ? `<div class="tag-list">${v.tags.map(t =>
-          `${tagLink(t)} <span class="small text-secondary">${esc(piece(t).code)}</span>`).join("<br>")}</div>` : `<span class="text-secondary">None</span>` },
+          `<span class="nowrap">${tagLink(t)} <span class="small text-secondary">${esc(piece(t).code)}</span></span>`).join("<br>")}</div>` : `<span class="text-secondary">None</span>` },
         { key: "next", label: "Status after", sort: v => v.nextStatus, html: v => cBadge(v.nextStatus) }] })}</div></div>
-    <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("timeline")} Status timeline</h3></div>
-      <div class="card-body"><ul class="tl">${ev.map(e => `<li class="tl-item"><span class="tl-dot ${CSTYLE[e.to][0]}">${icon(CSTYLE[e.to][1])}</span>
-        <div class="tl-body"><div class="fw-medium">${e.from ? `${CSTATUS[e.from]} → ` : ""}${CSTATUS[e.to]}</div>
-        <div class="small text-secondary">${fmt(e.at)} · ${esc(e.by)}</div>
-        ${e.reason ? `<div class="small">Reason: <b>${esc(e.reason)}</b></div>` : ""}${e.note ? `<div class="small">${esc(e.note)}</div>` : ""}</div></li>`).join("")}</ul></div></div></div>
   </div>`;
 };
 function statusModal(title, body, footer) {

@@ -103,3 +103,69 @@ th.sort-asc::after { content: "↑"; opacity: .9; } th.sort-desc::after { conten
 .k-REV { background: #fde8e8; color: #b42318; }
 .bell-count { font-size: .65rem; min-width: 1.1rem; height: 1.1rem; padding: 0 .3rem; line-height: 1.1rem; top: .15rem; right: .1rem; }
 .bell-count:empty { display: none; }
+
+/* ===== Service modules (complaints + defectives). Same rule: colour carries meaning, always with a word or icon. =====
+   red = needs attention, amber = waiting on someone, green = done well, slate = neutral / finished. */
+.navbar-vertical .text-in, .navbar-vertical .text-in i { color: #7fb3f0 !important; }
+.navbar-vertical .text-out, .navbar-vertical .text-out i { color: #f5a07c !important; }
+.card .text-in, .page-body .text-in { color: #1f5fae !important; }
+.card .text-out, .page-body .text-out { color: #a8441b !important; }
+.nav-badge { background: rgba(255,255,255,.12); color: var(--brand-sidebar-text); font-weight: 600; }
+.nav-badge:empty { display: none; }
+
+.badge.st { display: inline-flex; align-items: center; gap: .25rem; font-weight: 600; white-space: nowrap; }
+.badge.st .ti { font-size: .95em; }
+.st-alert { background: #fde8e8 !important; color: #b42318 !important; }
+.st-wait { background: #fef3c7 !important; color: #854d0e !important; }
+.st-ok { background: #e7f6ec !important; color: #1e7e34 !important; }
+.st-neutral { background: rgba(71,85,105,.12) !important; color: #334155 !important; }
+.st-done { background: #eef0f3 !important; color: #475569 !important; }
+.kpi-wait { background: #fef3c7; color: #854d0e; }
+.bar-brand { background: var(--tblr-primary); }
+.progress-sm { height: .35rem; }
+.num { font-variant-numeric: tabular-nums; }
+
+.chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .65rem; border-radius: 1rem; background: #fff;
+  border: 1px solid var(--tblr-border-color); font-size: .85rem; color: var(--tblr-body-color); }
+.chip .ti { color: var(--tblr-secondary); }
+.chip-alert { background: #fde8e8; border-color: #f6c6c6; color: #b42318; } .chip-alert .ti { color: #b42318; }
+.chip-wait { background: #fef3c7; border-color: #f5dd9b; color: #854d0e; } .chip-wait .ti { color: #854d0e; }
+a.chip-link:hover { border-color: var(--tblr-primary); text-decoration: none; }
+
+/* Status timeline (complaints and pieces) */
+.tl { list-style: none; margin: 0; padding: 0; }
+.tl-item { position: relative; display: flex; gap: .75rem; padding-bottom: 1rem; }
+.tl-item:not(:last-child)::before { content: ""; position: absolute; left: .85rem; top: 1.9rem; bottom: .2rem; width: 2px; background: var(--tblr-border-color); }
+.tl-dot { flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.tl-body { min-width: 0; padding-top: .15rem; }
+
+.table td.cell-wrap { white-space: normal; min-width: 12rem; max-width: 26rem; }
+.status-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.status-tabs .nav-link { white-space: nowrap; }
+.tag-list { line-height: 1.7; }
+.table th .def-head { display: inline-block; line-height: 1.1; text-align: right; }
+.table th .def-head small { display: block; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.table td.col-def, .table th.col-def { background: #f7f8fa; border-left: 1px dashed var(--tblr-border-color); }
+.table td.col-def a { font-weight: 600; }
+td.c-check, th.c-check { width: 1%; }
+.bulk-bar { position: sticky; top: 0; z-index: 5; background: var(--tblr-primary-lt); border-bottom: 1px solid var(--tblr-border-color); }
+.lines-table td.c-fault { min-width: 12rem; }
+.settle-panel { background: #f8fafc; }
+.dl-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+@media (max-width: 767.98px) {
+  .lines-table td.c-fault { grid-column: 1 / -1; }
+  .page-header .btn-list { flex-wrap: wrap; }
+}
+/* The service sidebar has six sections: keep it compact (it still scrolls on short screens). */
+@media (min-width: 992px) {
+  .navbar-vertical .nav-section { padding: .7rem 1rem .2rem; }
+  .navbar-vertical .navbar-nav .nav-link { padding-top: .38rem; padding-bottom: .38rem; }
+  .navbar-vertical .navbar-nav.pt-lg-3 { padding-top: .25rem !important; }
+}
+.page-title .badge.st { font-size: .8rem; vertical-align: middle; margin-left: .35rem; }
+.status-tabs .nav-link { padding: .5rem .6rem; }
+.status-tabs .badge { padding: .2em .45em; }
+.lines-table td[data-label="Batch code"] { min-width: 8rem; }
+.lines-table td[data-label="PKD (packed)"] { min-width: 10rem; }
+.table th .def-head { white-space: normal; max-width: 6.5rem; }

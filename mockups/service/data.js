@@ -89,7 +89,7 @@ function post(e) {
     if (have + delta[k] < 0) return `Only ${have} ${unitOf(code)} of ${code} at ${loc}.`;
   }
   e.no = `${e.kind}-${String(++seq[e.kind]).padStart(4, "0")}`;
-  e.by = e.by || ME;
+  e.by = e.by || (typeof ROLE === "string" ? ROLE : ME);
   DB.entries.push(e);
   return null;
 }
@@ -102,7 +102,15 @@ function undo(no, reason) {
   const err = post({ kind: "REV", date: today(), reverses: no, note: reason, lines: orig.lines.map(l => ({ ...l, qty: -l.qty })) });
   return err ? err + " The stock has already been used, so this entry can't be undone." : null;
 }
-const entryWhat = e => e.kind === "IN" ? IN_FROM[e.subtype] : e.kind === "OUT" ? OUT_WHAT[e.subtype]
-  : e.kind === "TRF" ? (e.party === DB.defStore ? "Marked defective" : "Between locations") : e.kind === "ADJ" ? e.reason : `Undo of ${e.reverses}`;
+// Short, clear labels for Movements / entry detail. Service entries name the complaint or return batch they belong to.
+const SVC_WHAT = { COMPLAINT: e => `Parts for complaint ${e.complaint}`, DEFECTIVE_COLLECTED: e => `Defective collected (${e.complaint})`,
+  RETURN_TO_COMPANY: e => `Returned to company (${e.batch})`, REPLACEMENT: e => `Replacement from company (${e.batch})`,
+  DEFECTIVE_RETURNED: e => `Rejected, back from company (${e.batch})` };
+const entryWhat = e => SVC_WHAT[e.subtype] ? SVC_WHAT[e.subtype](e) : e.kind === "IN" ? IN_FROM[e.subtype] : e.kind === "OUT" ? OUT_WHAT[e.subtype]
+  : e.kind === "TRF" ? (e.party === DB.defStore ? "Marked defective" : "Between locations")
+  : e.kind === "ADJ" ? (e.lines.every(l => l.loc === DB.defStore) ? "Defective pieces scrapped" : e.reason) : `Undo of ${e.reverses}`;
+// Link from a ledger entry back to the complaint or return batch it belongs to.
+const entrySource = e => e.complaint ? `<a class="code" href="#complaint/${e.complaint}">${e.complaint}</a>`
+  : e.batch ? `<a class="code" href="#batch/${e.batch}">${e.batch}</a>` : "";
 const entryLocs = e => uniq(e.lines.map(l => l.loc)).join(" → ");
 const entryQty = e => e.kind === "TRF" ? sum(e.lines.filter(l => l.qty > 0), l => l.qty) : sum(e.lines, l => Math.abs(l.qty));

@@ -1,4 +1,5 @@
-/* Entry forms (Stock IN / OUT / Transfer / Adjust) and item fields, in Tabler markup. */
+/* Entry forms (Stock IN / OUT / Transfer / Adjust) and item fields, in Tabler markup.
+   Location pickers use DB.locations only, so the Defective store is never offered here. */
 
 const field = id => document.getElementById(id);
 
@@ -38,7 +39,7 @@ function itemFields(d, p = "it") {
     ${col(4, `<label class="form-label required" for="${p}-code">Item code</label><input id="${p}-code" class="form-control" value="${esc(d.code || "")}" autocomplete="off"
       placeholder="e.g. LG66-040-078-480IT" oninput="checkCodeHint('${p}', this.value, '${esc(d.originalCode || "")}')"><small id="${p}-code-hint" class="form-hint"></small>`)}
     ${col(4, `<label class="form-label required" for="${p}-type">Spare type</label>${sel("type", DB.spareTypes, d.type, "Choose…")}`)}
-    ${col(4, `<label class="form-label required" for="${p}-company">Company / brand</label>${sel("company", DB.companies, d.company || "Wipro Lighting")}`)}
+    ${col(4, `<label class="form-label required" for="${p}-company">Company / brand</label>${sel("company", DB.companies, d.company || DB.config.defaultCompany)}`)}
     ${col(12, `<label class="form-label" for="${p}-desc">Description</label><input id="${p}-desc" class="form-control" value="${esc(d.desc || "")}" placeholder="e.g. LED driver 40W 480mA">`)}
     ${col(4, `<label class="form-label" for="${p}-cat">Used in fitting (Product Cat Ref)</label><input id="${p}-cat" class="form-control" list="cat-refs" value="${esc(d.catRef || "")}"
       placeholder="e.g. LF40-192-060-57-HE"><small class="form-hint">The fitting this spare belongs to (optional).</small>`)}
@@ -196,7 +197,7 @@ function entryForm(mode, prefill) {
     in: fcol(12, lbl("", "Received from") + selectgroup("from", [["SUPPLIER", "From supplier", "truck-delivery"], ["RETURN", "Returned unused from site", "arrow-back-up"],
           ["OPENING", "Opening stock", "clipboard-list"]], "SUPPLIER", "inFromChanged()"))
       + dateField()
-      + fcol(3, lbl("f-supplier", "Supplier / company") + `<select id="f-supplier" class="form-select"><option value="">Choose…</option>${opt(DB.companies, "Wipro Lighting")}</select>`, "w-supplier")
+      + fcol(3, lbl("f-supplier", "Supplier / company") + `<select id="f-supplier" class="form-select"><option value="">Choose…</option>${opt(DB.companies, DB.config.defaultCompany)}</select>`, "w-supplier")
       + fcol(3, lbl("f-site", "Site / customer") + `<input id="f-site" class="form-control" list="customers" placeholder="e.g. Dr Reddys, Vizag">`, "w-site")
       + locField("Into location") + fcol(3, lbl("f-ref", "DC / bill no.", false) + `<input id="f-ref" class="form-control" placeholder="e.g. DC 4512">`)
       + noteField("Remarks", false, "Optional"),

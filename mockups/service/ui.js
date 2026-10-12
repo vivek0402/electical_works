@@ -7,7 +7,7 @@ const kindBadge = e => `<span class="badge badge-k k-${e.kind}">${KIND[e.kind]}<
 const codeLink = c => `<a class="code" href="#item/${encodeURIComponent(c)}">${esc(c)}</a>`;
 const entryLink = no => `<a class="code" href="#entry/${no}">${no}</a>`;
 const qtyHtml = q => q === 0 ? `<span class="zero">0</span>` : q;
-const icon = n => `<i class="ti ti-${n}"></i>`;
+const icon = (n, cls = "") => `<i class="ti ti-${n}${cls ? " " + cls : ""}"></i>`;
 // Mockup: Export buttons download the sample files made by make_sample_exports.py from the same demo data.
 const exportBtn = (file, label = "Export to Excel") =>
   `<a class="btn btn-outline-success" href="exports/${file}" download>${icon("file-spreadsheet")} ${label}</a>`;
@@ -81,17 +81,27 @@ function dtSort(id, key) { const t = DT[id]; t.dir = t.sort === key && t.dir ===
 function dtPage(id, p) { DT[id].page = p; dtRender(id); }
 const dtAll = () => Object.keys(DT).forEach(id => document.getElementById(`dt-${id}`) && dtRender(id));
 
-/* ---------- global search (items by any code/spelling/description, entries by number/ref/party) ---------- */
+/* ---------- global search: items (any code/spelling/description), entries (no./ref/party), complaints (no., company
+   complaint no.), sites (name/city/contact) and defective tags ---------- */
 function globalSearch(text) {
   const box = document.getElementById("gresults"), t = norm(text), k = key(text);
   if (t.length < 2) { box.classList.remove("show"); return; }
   const items = DB.items.filter(i => [i.code, ...i.aliases, i.desc, i.catRef].join(" ").toUpperCase().includes(t)
     || (k.length > 2 && [i.code, ...i.aliases].some(c => key(c).includes(k)))).slice(0, 6);
   const ents = byDateDesc(DB.entries).filter(e => [e.no, e.ref, e.party].join(" ").toUpperCase().includes(t)).slice(0, 4);
+  const cmps = DB.complaints.filter(c => [c.no, c.companyRef].join(" ").toUpperCase().includes(t)).slice(-5).reverse();
+  const sites = DB.sites.filter(s => [s.name, s.city, s.contact].join(" ").toUpperCase().includes(t)).slice(0, 4);
+  const tags = DB.pieces.filter(p => p.tag.includes(t) || (t.length > 2 && p.batch.toUpperCase().includes(t))).slice(0, 5);
   box.innerHTML = (items.length ? `<span class="dropdown-header">Items</span>` + items.map(i => `<a class="dropdown-item" href="#item/${encodeURIComponent(i.code)}">
       <span><span class="code">${esc(i.code)}</span><br><small class="text-secondary">${esc(i.type)} · ${esc(i.desc)} · ${total(i.code)} ${i.unit} in stock</small></span></a>`).join("") : "")
     + (ents.length ? `<span class="dropdown-header">Entries</span>` + ents.map(e => `<a class="dropdown-item" href="#entry/${e.no}">
       <span>${kindBadge(e)} <span class="code">${e.no}</span> <small class="text-secondary">${fmt(e.date)} · ${esc(e.party || e.reason || "")}</small></span></a>`).join("") : "")
+    + (cmps.length ? `<span class="dropdown-header">Complaints</span>` + cmps.map(c => `<a class="dropdown-item" href="#complaint/${c.no}">
+      <span><span class="code">${c.no}</span> ${cBadge(c.status)}<br><small class="text-secondary">${esc(siteName(c))}, ${esc(siteCity(c))} · ${esc(c.company)}${c.companyRef ? ` · <span class="code">${esc(c.companyRef)}</span>` : ""}</small></span></a>`).join("") : "")
+    + (sites.length ? `<span class="dropdown-header">Sites</span>` + sites.map(s => `<a class="dropdown-item" href="#site/${s.id}">
+      <span>${icon("building")} ${esc(s.name)}<br><small class="text-secondary">${esc(s.city)}${s.contact ? " · " + esc(s.contact) : ""}</small></span></a>`).join("") : "")
+    + (tags.length ? `<span class="dropdown-header">Defective pieces</span>` + tags.map(p => `<a class="dropdown-item" href="#piece/${p.tag}">
+      <span><span class="code">${p.tag}</span> ${pBadge(p.status)}<br><small class="text-secondary">${esc(p.code)} · ${esc(p.company)}${p.batch ? " · batch " + esc(p.batch) : ""}</small></span></a>`).join("") : "")
     || `<span class="dropdown-item-text text-secondary">No matches for "${esc(text)}"</span>`;
   box.classList.add("show");
 }
@@ -102,7 +112,8 @@ function go(hash) { if (location.hash === hash) route(); else location.hash = ha
 function route() {
   const [name, ...rest] = (location.hash.slice(1) || "dash").split("/");
   const arg = rest.length ? decodeURIComponent(rest.join("/")) : undefined;
-  const navName = { "item-new": "items", "item-edit": "items", item: "items", entry: "moves" }[name] || name;
+  const navName = { "item-new": "items", "item-edit": "items", item: "items", entry: "moves", complaint: "complaints", visit: "complaints",
+    site: "sites", piece: "pieces", batch: "batches", "batch-new": "batches" }[name] || name;
   document.querySelectorAll("#nav .nav-link").forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + navName));
   const menu = document.getElementById("sidebar-menu");
   if (menu.classList.contains("show")) tabler.Collapse.getOrCreateInstance(menu).hide();
@@ -113,6 +124,8 @@ function route() {
   const low = DB.items.filter(i => i.active && isLow(i)).length;
   document.getElementById("nav-low").textContent = low || "";
   document.getElementById("bell-count").textContent = low || "";
+  document.getElementById("nav-open").textContent = DB.complaints.filter(isOpen).length || "";
+  document.getElementById("nav-def").textContent = DB.pieces.filter(p => p.status === "IN_STORE").length || "";
   if (pendingToast) { toast(pendingToast); pendingToast = null; }
   window.scrollTo(0, 0);
 }
@@ -123,4 +136,16 @@ function startApp() {
   g.addEventListener("blur", () => setTimeout(() => document.getElementById("gresults").classList.remove("show"), 200));
   window.addEventListener("hashchange", route);
   route();
+}
+
+/* Mockup role switch: Admin may reopen closed complaints (and hide sites / technicians in the real app). */
+function switchRole() {
+  ROLE = ROLE === "Admin" ? "Office" : "Admin";
+  const admin = ROLE === "Admin";
+  document.getElementById("role-name").textContent = ROLE;
+  document.getElementById("role-sub").textContent = admin ? "Administrator" : "Office staff";
+  document.getElementById("role-av").textContent = admin ? "AD" : "OF";
+  document.getElementById("role-head").textContent = `Signed in as ${ROLE}`;
+  document.getElementById("role-switch").innerHTML = `${icon("user-shield", "me-2")}Mockup: act as ${admin ? "Office" : "Admin"}`;
+  toast(`Mockup: now acting as <b>${ROLE}</b>.`);
 }
