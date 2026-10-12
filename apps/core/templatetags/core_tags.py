@@ -1,4 +1,5 @@
 from django import template
+from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
@@ -74,3 +75,13 @@ def hidden_params(context, exclude=""):
         '<input type="hidden" name="{}" value="{}">',
         ((k, v) for k, v in context["request"].GET.items() if k not in skip),
     )
+
+
+@register.simple_tag(takes_context=True)
+def export_url(context, name, *args):
+    """reverse(name) + the current GET params (minus paging/sorting), so the download matches the screen."""
+    params = context["request"].GET.copy()
+    for key in ("page", "size", "sort", "dir"):
+        params.pop(key, None)
+    query = params.urlencode()
+    return reverse(name, args=args) + (f"?{query}" if query else "")

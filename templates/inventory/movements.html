@@ -2,6 +2,7 @@
 {% block title %}Stock movements{% endblock %}
 {% block pretitle %}Reports{% endblock %}
 {% block page_title %}Stock movements{% endblock %}
+{% block actions %}<a href="{% export_url 'movements_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
 {% block content %}
 <div class="card">
   <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">

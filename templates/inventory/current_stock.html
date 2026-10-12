@@ -2,7 +2,7 @@
 {% block title %}Current stock{% endblock %}
 {% block pretitle %}Reports{% endblock %}
 {% block page_title %}Current stock{% endblock %}
-{% block actions %}{% block export_button %}{% endblock %}{% endblock %}
+{% block actions %}{% block export_button %}<a href="{% export_url 'current_stock_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}{% endblock %}
 {% block content %}
 <div class="card">
   <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">

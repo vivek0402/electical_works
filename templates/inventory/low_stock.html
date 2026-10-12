@@ -2,6 +2,7 @@
 {% block title %}Low stock{% endblock %}
 {% block pretitle %}Reports{% endblock %}
 {% block page_title %}Low stock{% endblock %}
+{% block actions %}<a href="{% export_url 'low_stock_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
 {% block content %}
 <div class="alert alert-{% if table.total %}warning{% else %}success{% endif %}"><i class="ti ti-{% if table.total %}alert-triangle{% else %}circle-check{% endif %}"></i>
   {% if table.total %}{{ table.total }} items are at or below their reorder level (total across all locations).{% else %}Nothing is low.{% endif %}</div>
