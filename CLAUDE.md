@@ -25,3 +25,20 @@ Always read DESIGN.md before making any visual or UI decisions.
 All colours, spacing and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
 In QA mode, flag any code that doesn't match DESIGN.md.
+
+## Build
+Django 5.2 + PostgreSQL 16. Windows dev machine has no Docker, so use `uv` with a `DATABASE_URL`:
+- Tests: `DATABASE_URL=<postgres url> uv run pytest -q`, then `uv run ruff format --check . && uv run ruff check .`
+- Dev server: `uv run python manage.py migrate`, `SEED_PASSWORD=<strong> uv run python manage.py seed_users`, `uv run python manage.py seed_stock_demo` (empty ledger only), `uv run python manage.py runserver 8000`
+- Browser walkthrough (on demo data): `uv run --with playwright python e2e/walkthrough.py http://127.0.0.1:8000 office <password>` must exit 0 with no JS errors.
+- Prod check: `DJANGO_SETTINGS_MODULE=config.settings.prod uv run python manage.py check --deploy` (needs SECRET_KEY, DATABASE_URL, ALLOWED_HOSTS).
+- Docker: `docker compose up -d --build`, `make migrate`, `make demo`, `make test`, `make lint`.
+
+Where the logic lives:
+- `apps/inventory/services.py`: every write (items, post/adjust/undo entries, balance rebuild).
+- `apps/inventory/selectors.py`: every read (stock matrix, lists, item history, dashboard).
+- `apps/inventory/entry_lines.py`: parsing the item lines posted by the entry forms.
+- `apps/core/excel.py`: the shared XlsxWriter report writer (`apps/inventory/exports.py` builds the four exports on it).
+- Demo data: `apps/inventory/demo/demo-data.json`, loaded by `seed_stock_demo`.
+
+**Never write to StockEntry, StockLine or StockBalance outside `services.py`.** The ledger is append-only (database triggers block updates and deletes); mistakes are cancelled with `undo_entry`.

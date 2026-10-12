@@ -1,0 +1,1521 @@
+{
+ "today": "2026-10-11",
+ "locations": [
+  "Vizag Office",
+  "Svkml",
+  "TV Shop",
+  "Kartika Class"
+ ],
+ "spareTypes": [
+  "Driver",
+  "PCB / LED module",
+  "Lens",
+  "Complete fitting",
+  "Controller",
+  "Switch",
+  "Wire / cable",
+  "Accessory",
+  "Other"
+ ],
+ "fittingTypes": [
+  "Flood light",
+  "Linear / batten",
+  "Street light",
+  "High bay",
+  "Downlight",
+  "Well glass",
+  "Bulkhead",
+  "Panel"
+ ],
+ "units": [
+  "NOS",
+  "MTR",
+  "ROLL",
+  "BOX",
+  "PKT"
+ ],
+ "companies": [
+  "Wipro Lighting",
+  "Finolex Cables",
+  "Havells",
+  "Sri Sai Electricals",
+  "Lakshmi Traders"
+ ],
+ "technicians": [
+  "Ramu",
+  "Apparao"
+ ],
+ "customers": [
+  "Laurus Labs Unit-2, Vizag",
+  "Dr Reddys, Vizag",
+  "GMR Airport, Vizag",
+  "BARC, Vizag",
+  "IISER, Tirupati",
+  "Nacin, Anantapur",
+  "Punjab National Bank, Gudivada",
+  "Siri Filling Station, Nellore",
+  "Master Minds, Guntur"
+ ],
+ "items": [
+  {
+   "code": "LG78-150-700",
+   "type": "Driver",
+   "desc": "LED driver 150W 700mA",
+   "catRef": "LF40-192-060-57-HE",
+   "fittingType": "Flood light",
+   "watt": 150,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "EDC-150-S105SV-3007"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG76-150-700FH",
+   "type": "Driver",
+   "desc": "LED driver 150W 700mA (FH)",
+   "catRef": "LR22-781-XXX-57-XX",
+   "fittingType": "Street light",
+   "watt": 150,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG76-200-700F",
+   "type": "Driver",
+   "desc": "LED driver 200W 700mA",
+   "catRef": "LF40-502-060-57-HE2",
+   "fittingType": "Flood light",
+   "watt": 200,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG75-150-215-70E",
+   "type": "Driver",
+   "desc": "LED driver 150W",
+   "catRef": "LR40-272-060-7-XX",
+   "fittingType": "High bay",
+   "watt": 150,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG83-072-103-0700",
+   "type": "Driver",
+   "desc": "LED driver 72W 700mA",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": 72,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG30-018-054-0300",
+   "type": "Driver",
+   "desc": "LED driver 18W 300mA",
+   "catRef": "LL20-111-XXX-65AL",
+   "fittingType": "Linear / batten",
+   "watt": 18,
+   "ma": 300,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [
+    "LG30-018-054-300"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG26-048-0720",
+   "type": "Driver",
+   "desc": "LED driver 48W 720mA",
+   "catRef": "LD80-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": 48,
+   "ma": 720,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "LG26-048-720"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG66-036-036-900S",
+   "type": "Driver",
+   "desc": "LED driver 36W 900mA",
+   "catRef": "LR08-132-XXX-57-XX",
+   "fittingType": "Street light",
+   "watt": 36,
+   "ma": 900,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG66-040-078-480IT",
+   "type": "Driver",
+   "desc": "LED driver 40W 480mA",
+   "catRef": "LW07-141-XXX57G1",
+   "fittingType": "Well glass",
+   "watt": 40,
+   "ma": 480,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "15WATT (190MA)",
+   "type": "Driver",
+   "desc": "LED driver 15W 190mA (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": 15,
+   "ma": 190,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [
+    "15WATT DRIVERS"
+   ],
+   "active": true
+  },
+  {
+   "code": "18WATT DRIVERS",
+   "type": "Driver",
+   "desc": "LED driver 18W (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": 18,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO6006",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LD80-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO9326",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LL20-111-XXX-65AL",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO8437",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LD81-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "EI08437"
+   ],
+   "active": true
+  },
+  {
+   "code": "WPWG-5050-15SIP",
+   "type": "PCB / LED module",
+   "desc": "LED strip PCB",
+   "catRef": "LL20-281-XXX-65AL1",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "FTS-KC-60-57K",
+   "type": "PCB / LED module",
+   "desc": "LED PCB 5700K",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 50,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LH21-200-180-30S6P",
+   "type": "PCB / LED module",
+   "desc": "LED module 6P",
+   "catRef": "LR40-272-060-7-XX",
+   "fittingType": "High bay",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LF40-192-060-57-HE",
+   "type": "Complete fitting",
+   "desc": "Flood light 192W",
+   "catRef": "LF40-192-060-57-HE",
+   "fittingType": "Flood light",
+   "watt": 192,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LL20-111-XXX-65-NE3",
+   "type": "Complete fitting",
+   "desc": "Linear fitting",
+   "catRef": "LL20-111-XXX-65-NE3",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 0,
+   "aliases": [
+    "LL20-111-XXX-65NE3"
+   ],
+   "active": true
+  },
+  {
+   "code": "LF20-102-060-57-G3",
+   "type": "Complete fitting",
+   "desc": "Flood light 102W",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": 102,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "BULKHEAD 12W",
+   "type": "Complete fitting",
+   "desc": "Bulkhead fitting 12W",
+   "catRef": "",
+   "fittingType": "Bulkhead",
+   "watt": 12,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "BULCK HEAD"
+   ],
+   "active": true
+  },
+  {
+   "code": "LENS",
+   "type": "Lens",
+   "desc": "Lens (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WCS-IS-DA4",
+   "type": "Controller",
+   "desc": "iSense DALI controller",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [
+    "ISENSE DALI CONTROLLER"
+   ],
+   "active": true
+  },
+  {
+   "code": "ISENSE 8BUTTON SWITCH",
+   "type": "Switch",
+   "desc": "iSense 8-button switch",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WIRE 1.5 SQMM",
+   "type": "Wire / cable",
+   "desc": "Copper wire 1.5 sq.mm",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Finolex Cables",
+   "unit": "MTR",
+   "reorder": 100,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WIRE 2.5 SQMM",
+   "type": "Wire / cable",
+   "desc": "Copper wire 2.5 sq.mm",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Finolex Cables",
+   "unit": "MTR",
+   "reorder": 100,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "MCB 16A SP",
+   "type": "Accessory",
+   "desc": "MCB 16A single pole",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Havells",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "CABLE TIE 200MM",
+   "type": "Accessory",
+   "desc": "Cable ties 200mm (pack of 100)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Lakshmi Traders",
+   "unit": "PKT",
+   "reorder": 3,
+   "aliases": [],
+   "active": true
+  }
+ ],
+ "entries": [
+  {
+   "no": "IN-0001",
+   "kind": "IN",
+   "date": "2026-09-01",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG78-150-700",
+     "loc": "Vizag Office",
+     "qty": 31,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-150-700FH",
+     "loc": "Vizag Office",
+     "qty": 38,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 32,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Vizag Office",
+     "qty": 31,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG83-072-103-0700",
+     "loc": "Vizag Office",
+     "qty": 35,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Vizag Office",
+     "qty": 40,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": 15,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG66-036-036-900S",
+     "loc": "Vizag Office",
+     "qty": 4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 35,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 33,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "18WATT DRIVERS",
+     "loc": "Vizag Office",
+     "qty": 14,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": 9,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 31,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO8437",
+     "loc": "Vizag Office",
+     "qty": 4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": 12,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Vizag Office",
+     "qty": 220,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": 37,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LF40-192-060-57-HE",
+     "loc": "Vizag Office",
+     "qty": 5,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LL20-111-XXX-65-NE3",
+     "loc": "Vizag Office",
+     "qty": 28,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 31,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "ISENSE 8BUTTON SWITCH",
+     "loc": "Vizag Office",
+     "qty": 7,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 300,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 2.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 200,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 15,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "OPENING",
+   "party": "Opening stock (first count)",
+   "ref": "Count sheet 01-09-2026"
+  },
+  {
+   "no": "IN-0002",
+   "kind": "IN",
+   "date": "2026-09-01",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": 8,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "TV Shop",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Kartika Class",
+     "qty": 50,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": 12,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "OPENING",
+   "party": "Opening stock (first count)",
+   "ref": "Count sheet 01-09-2026"
+  },
+  {
+   "no": "OUT-0001",
+   "kind": "OUT",
+   "date": "2026-09-02",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 778"
+  },
+  {
+   "no": "OUT-0002",
+   "kind": "OUT",
+   "date": "2026-09-03",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LF40-192-060-57-HE",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "BARC, Vizag",
+   "ref": "Job 625"
+  },
+  {
+   "no": "IN-0003",
+   "kind": "IN",
+   "date": "2026-09-04",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Vizag Office",
+     "qty": 7,
+     "batch": "B2405",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 11,
+     "batch": "B2454",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 20,
+     "batch": "B2497",
+     "pkd": "07-2026"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4476"
+  },
+  {
+   "no": "IN-0004",
+   "kind": "IN",
+   "date": "2026-09-05",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 15,
+     "batch": "B2404",
+     "pkd": "07-2026"
+    },
+    {
+     "code": "18WATT DRIVERS",
+     "loc": "Vizag Office",
+     "qty": 8,
+     "batch": "B2435",
+     "pkd": "04-2026"
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 8,
+     "batch": "B2403",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 19,
+     "batch": "B2605",
+     "pkd": "08-2026"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4485"
+  },
+  {
+   "no": "OUT-0003",
+   "kind": "OUT",
+   "date": "2026-09-07",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Punjab National Bank, Gudivada",
+   "ref": "Job 219"
+  },
+  {
+   "no": "OUT-0004",
+   "kind": "OUT",
+   "date": "2026-09-08",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 315"
+  },
+  {
+   "no": "OUT-0005",
+   "kind": "OUT",
+   "date": "2026-09-09",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "TV Shop",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 891"
+  },
+  {
+   "no": "TRF-0001",
+   "kind": "TRF",
+   "date": "2026-09-10",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "TV Shop",
+   "note": "Buffer stock"
+  },
+  {
+   "no": "IN-0005",
+   "kind": "IN",
+   "date": "2026-09-11",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 100,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Sri Sai Electricals",
+   "ref": "Bill SS-107"
+  },
+  {
+   "no": "OUT-0006",
+   "kind": "OUT",
+   "date": "2026-09-12",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LL20-111-XXX-65-NE3",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Ramu",
+   "ref": ""
+  },
+  {
+   "no": "IN-0006",
+   "kind": "IN",
+   "date": "2026-09-14",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 100,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Sri Sai Electricals",
+   "ref": "Bill SS-259"
+  },
+  {
+   "no": "TRF-0002",
+   "kind": "TRF",
+   "date": "2026-09-15",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Svkml",
+     "qty": 4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Svkml",
+   "note": "Buffer stock"
+  },
+  {
+   "no": "OUT-0007",
+   "kind": "OUT",
+   "date": "2026-09-16",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 624"
+  },
+  {
+   "no": "IN-0007",
+   "kind": "IN",
+   "date": "2026-09-17",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WIRE 2.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 100,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Sri Sai Electricals",
+   "ref": "Bill SS-231"
+  },
+  {
+   "no": "TRF-0003",
+   "kind": "TRF",
+   "date": "2026-09-18",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LL20-111-XXX-65-NE3",
+     "loc": "Vizag Office",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LL20-111-XXX-65-NE3",
+     "loc": "Kartika Class",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Kartika Class",
+   "note": "Buffer stock"
+  },
+  {
+   "no": "IN-0008",
+   "kind": "IN",
+   "date": "2026-09-22",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Vizag Office",
+     "qty": 11,
+     "batch": "B2453",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 7,
+     "batch": "B2469",
+     "pkd": "07-2026"
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 19,
+     "batch": "B2464",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "B2446",
+     "pkd": "05-2026"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4503"
+  },
+  {
+   "no": "OUT-0008",
+   "kind": "OUT",
+   "date": "2026-09-23",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0009",
+   "kind": "OUT",
+   "date": "2026-09-24",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Dr Reddys, Vizag",
+   "ref": "Job 593"
+  },
+  {
+   "no": "OUT-0010",
+   "kind": "OUT",
+   "date": "2026-09-25",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Nacin, Anantapur",
+   "ref": "Job 854"
+  },
+  {
+   "no": "OUT-0011",
+   "kind": "OUT",
+   "date": "2026-09-28",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Siri Filling Station, Nellore",
+   "ref": "Job 179"
+  },
+  {
+   "no": "IN-0009",
+   "kind": "IN",
+   "date": "2026-09-30",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG78-150-700",
+     "loc": "Vizag Office",
+     "qty": 17,
+     "batch": "B2550",
+     "pkd": "01-2026"
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 24,
+     "batch": "B2419",
+     "pkd": "02-2026"
+    },
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": 7,
+     "batch": "B2564",
+     "pkd": "02-2026"
+    },
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "B2507",
+     "pkd": "06-2026"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4521"
+  },
+  {
+   "no": "OUT-0012",
+   "kind": "OUT",
+   "date": "2026-10-02",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Master Minds, Guntur",
+   "ref": "Job 130"
+  },
+  {
+   "no": "OUT-0013",
+   "kind": "OUT",
+   "date": "2026-10-03",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG66-036-036-900S",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Siri Filling Station, Nellore",
+   "ref": "Job 361"
+  },
+  {
+   "no": "OUT-0014",
+   "kind": "OUT",
+   "date": "2026-10-05",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0015",
+   "kind": "OUT",
+   "date": "2026-10-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Nacin, Anantapur",
+   "ref": "Job 314"
+  },
+  {
+   "no": "IN-0010",
+   "kind": "IN",
+   "date": "2026-10-07",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "B2444",
+     "pkd": "02-2026"
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 19,
+     "batch": "B2521",
+     "pkd": "05-2026"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4535"
+  },
+  {
+   "no": "TRF-0004",
+   "kind": "TRF",
+   "date": "2026-10-08",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": -10,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "TV Shop",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "TV Shop",
+   "note": "Buffer stock"
+  },
+  {
+   "no": "OUT-0016",
+   "kind": "OUT",
+   "date": "2026-10-09",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Svkml",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "IISER, Tirupati",
+   "ref": "Job 684"
+  },
+  {
+   "no": "OUT-0017",
+   "kind": "OUT",
+   "date": "2026-10-10",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "TV Shop",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "BARC, Vizag",
+   "ref": "Job 125"
+  },
+  {
+   "no": "ADJ-0001",
+   "kind": "ADJ",
+   "date": "2026-10-05",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reason": "Damaged",
+   "note": "2 lenses cracked in storage"
+  },
+  {
+   "no": "ADJ-0002",
+   "kind": "ADJ",
+   "date": "2026-10-07",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reason": "Physical count",
+   "note": "Found 1 extra pack during count"
+  },
+  {
+   "no": "OUT-0018",
+   "kind": "OUT",
+   "date": "2026-10-09",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Dr Reddys, Vizag",
+   "ref": "Job 512"
+  },
+  {
+   "no": "REV-0001",
+   "kind": "REV",
+   "date": "2026-10-09",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reverses": "OUT-0018",
+   "note": "Entered against the wrong job"
+  }
+ ]
+}

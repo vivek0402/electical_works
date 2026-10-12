@@ -11,3 +11,6 @@ htmlcov/
 /media/
 /staticfiles/
 data/legacy/import_review*.xlsx
+
+# e2e walkthrough screenshots
+e2e/*.png
