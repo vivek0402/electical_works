@@ -61,6 +61,6 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
 Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Approved in brainstorming after the user's correction that Wipro is just one company (see lessons).
 - [x] Prior-art research (InvenTree Return Order, Odoo Repair, django-helpdesk, OCA/rma). Verdict: build ourselves, borrow patterns only.
 - [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
-- [ ] ⛔ User approval of the mockup (http://localhost:8080/mockups/service/)
+- [x] User approved the mockup (2026-10-12: "yes it is good enough")
 - [ ] Implementation plan (writing-plans): defectives first, then complaints
 - [ ] Build with subagent-driven development
