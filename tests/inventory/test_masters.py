@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from django.db import IntegrityError, transaction
 
@@ -54,3 +56,68 @@ def test_master_names_unique_case_insensitive_and_trimmed():
         Company.objects.create(name="  Wipro   Lighting ")
     assert Company.objects.create(name="  New   Co ").name == "New Co"
     assert Company._meta.verbose_name_plural == "companies"
+
+
+# ---- admin masters page ----
+
+
+def test_office_cannot_open_masters(office_client):
+    assert office_client.get("/masters/").status_code == 403
+
+
+def test_admin_adds_location_and_company(admin_client):
+    assert admin_client.get("/masters/").status_code == 200
+    r = admin_client.post("/masters/", {"kind": "location", "name": "  Gajuwaka Store "})
+    assert r.status_code == 302 and Location.objects.filter(name="Gajuwaka Store").exists()
+    admin_client.post("/masters/", {"kind": "company", "name": "Bajaj"})
+    assert Company.objects.filter(name="Bajaj").exists()
+
+
+def test_duplicate_name_refused(admin_client):
+    html = admin_client.post(
+        "/masters/", {"kind": "location", "name": "vizag office"}, follow=True
+    ).content.decode()
+    assert "already exists" in html and Location.objects.filter(name__iexact="vizag office").count() == 1
+
+
+def test_concurrent_duplicate_gets_friendly_message(admin_client):
+    with mock.patch.object(Location.objects, "create", side_effect=IntegrityError):
+        html = admin_client.post(
+            "/masters/", {"kind": "location", "name": "Brand New"}, follow=True
+        ).content.decode()
+    assert "already exists" in html
+
+
+def test_unknown_kind_and_blank_name(admin_client):
+    html = admin_client.post("/masters/", {"kind": "nope", "name": "x"}, follow=True).content.decode()
+    assert "Type a name" in html
+    html = admin_client.post("/masters/", {"kind": "location", "name": "   "}, follow=True).content.decode()
+    assert "Type a name" in html
+
+
+def test_name_too_long_refused(admin_client):
+    html = admin_client.post(
+        "/masters/", {"kind": "location", "name": "x" * 81}, follow=True
+    ).content.decode()
+    assert "too long" in html and not Location.objects.filter(name__startswith="xxxx").exists()
+
+
+def test_toggle_active(admin_client):
+    place = Location.objects.get(name="TV Shop")
+    admin_client.post("/masters/toggle/", {"kind": "location", "pk": place.pk})
+    place.refresh_from_db()
+    assert place.is_active is False
+    admin_client.post("/masters/toggle/", {"kind": "location", "pk": place.pk})
+    place.refresh_from_db()
+    assert place.is_active is True
+
+
+def test_toggle_bad_pk_is_harmless(admin_client):
+    assert admin_client.post("/masters/toggle/", {"kind": "location", "pk": "abc"}).status_code == 302
+
+
+def test_office_cannot_toggle(office_client):
+    place = Location.objects.get(name="TV Shop")
+    assert office_client.post("/masters/toggle/", {"kind": "location", "pk": place.pk}).status_code == 403
+    place.refresh_from_db()
+    assert place.is_active is True

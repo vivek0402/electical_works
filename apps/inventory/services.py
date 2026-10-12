@@ -438,5 +438,8 @@ def search_items(text, limit=8, active_only=False):
         )
     )
     return list(
-        items.select_related("spare_type", "company").annotate(rank=rank).order_by("rank", "code")[:limit]
+        items.select_related("spare_type", "company")
+        .prefetch_related("aliases")
+        .annotate(rank=rank)
+        .order_by("rank", "code")[:limit]
     )

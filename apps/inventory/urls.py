@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import exports, views
+from . import exports, masters, views
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
@@ -22,6 +22,9 @@ urlpatterns = [
     path("stock/out/", views.stock_out, name="stock_out"),
     path("stock/transfer/", views.transfer, name="transfer"),
     path("stock/adjust/", views.adjust, name="adjust"),
+    path("search/", views.global_search, name="global_search"),
+    path("masters/", masters.masters, name="masters"),
+    path("masters/toggle/", masters.masters_toggle, name="masters_toggle"),
     path("entries/<str:number>/", views.entry_detail, name="entry_detail"),
     path("entries/<str:number>/undo/", views.entry_undo, name="entry_undo"),
 ]

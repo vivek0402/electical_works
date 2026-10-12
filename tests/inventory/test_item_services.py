@@ -157,7 +157,7 @@ def test_search_ranks_exact_first_and_returns_once(django_assert_num_queries):
     assert [i.code for i in hits[1:3]] == ["AB100", "AB101"]
     both = save_item(data=data(code="ZZ55", description="", cat_ref="", aliases=["ZZ55-A", "ZZ55-B"]))
     assert search_items("zz55") == [both]
-    with django_assert_num_queries(1):
+    with django_assert_num_queries(2):  # one query + one aliases prefetch
         search_items("zz55")
 
 

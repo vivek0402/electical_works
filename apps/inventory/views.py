@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -36,6 +37,7 @@ from .services import (
     find_item_by_code,
     post_entry,
     save_item,
+    search_items,
     undo_entry,
 )
 
@@ -462,3 +464,29 @@ def entry_undo(request, number):
         return redirect("entry_detail", number=number)
     messages.success(request, f"{entry.number} undone by {rev.number}. Stock updated.")
     return redirect("entry_detail", number=rev.number)
+
+
+@role_required(OFFICE)
+def global_search(request):
+    """Top-bar search: items (code, other spelling, description, fitting) and entry numbers."""
+    q = _text(request.GET.get("q"))
+    if len(q) <= 2:
+        return JsonResponse({"items": [], "entries": []})
+    found = [
+        {**selectors.picker_option(i), "url": reverse("item_detail", args=[i.pk])}
+        for i in search_items(q, limit=8)
+    ]
+    entries = StockEntry.objects.filter(number__icontains=q.upper()).order_by("-id")[:5]
+    return JsonResponse(
+        {
+            "items": found,
+            "entries": [
+                {
+                    "number": e.number,
+                    "url": reverse("entry_detail", args=[e.number]),
+                    "label": e.get_kind_display(),
+                }
+                for e in entries
+            ],
+        }
+    )
