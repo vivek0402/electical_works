@@ -56,3 +56,11 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
   - all 4 export files served.
 - Exports were read back with openpyxl and each has: company/title/filter rows, a styled table (TableStyleMedium2) with filter buttons, frozen header, real dates in dd-mm-yyyy, A4 landscape fit-to-width, repeated header row, and auto-fit widths.
 - [x] Final whole-branch review: fixes b4fc55e (305 tests; item deactivate/unit guards, backdated-stock check, low-stock Stock IN button + unit, dashboard links, movements search on old spellings). TRUNCATE trigger deliberately not added (breaks test DB flush); see models.py comment.
+
+## Defective pieces + Complaints (branch `service-modules`, started 2026-10-12)
+Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Approved in brainstorming after the user's correction that Wipro is just one company (see lessons).
+- [x] Prior-art research (InvenTree Return Order, Odoo Repair, django-helpdesk, OCA/rma). Verdict: build ourselves, borrow patterns only.
+- [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
+- [ ] ⛔ User approval of the mockup (http://localhost:8080/mockups/service/)
+- [ ] Implementation plan (writing-plans): defectives first, then complaints
+- [ ] Build with subagent-driven development
