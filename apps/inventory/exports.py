@@ -225,6 +225,7 @@ def item_history_xlsx(request, pk):
         Column("Batch code"),
         Column("PKD"),
         Column("Entered by"),
+        Column("Note", width=28),
     ]
     data = [
         [
@@ -240,6 +241,7 @@ def item_history_xlsx(request, pk):
             r["line"].batch_code,
             _pkd(r["line"]),
             r["entry"].created_by.first_name or r["entry"].created_by.username,
+            f"Undone by {r['entry'].reversed_by.number}" if r["undone"] else r["entry"].note,
         ]
         for r in rows
     ]

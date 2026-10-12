@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 import openpyxl
 
+from apps.core import excel
 from apps.core.excel import Column, workbook_response
 
 
@@ -36,3 +37,38 @@ def test_empty_report_still_valid():
     )
     ws = openpyxl.load_workbook(io.BytesIO(response.content)).active
     assert ws["A7"].value == "(no rows)"
+
+
+def test_user_text_is_never_a_formula_or_link():
+    nasty = ['=HYPERLINK("http://x","y")', "{=1+1}", "http://evil.example"]
+    response = workbook_response(
+        "X", "X", "-", "office", [Column("A"), Column("B"), Column("C")], [nasty], now=datetime(2026, 10, 11)
+    )
+    ws = openpyxl.load_workbook(io.BytesIO(response.content)).active
+    for cell, text in zip(ws[7], nasty, strict=False):
+        assert cell.data_type == "s" and cell.value == text and cell.hyperlink is None
+
+
+def test_row_cap(monkeypatch):
+    monkeypatch.setattr(excel, "MAX_ROWS", 3)
+    rows = [[n] for n in range(5)]
+    response = workbook_response(
+        "X",
+        "X",
+        "All",
+        "office",
+        [Column("N", "int")],
+        rows,
+        low_rows={4},
+        low_col=0,
+        now=datetime(2026, 10, 11),
+    )
+    ws = openpyxl.load_workbook(io.BytesIO(response.content)).active
+    assert ws["A3"].value == "Filters: All"
+    assert ws["A4"].value.endswith("· first 3 of 5 rows") and ws.max_row == 9
+
+
+def test_ampersand_in_title_is_escaped_in_header():
+    response = workbook_response("X", "A & B", "-", "o", [Column("N")], [["x"]], now=datetime(2026, 10, 11))
+    ws = openpyxl.load_workbook(io.BytesIO(response.content)).active
+    assert "A && B" in ws.oddHeader.right.text

@@ -191,7 +191,7 @@ def item_history(item, date_from, date_to, location=None):
     undone = StockEntry.objects.filter(reverses=OuterRef("entry_id"))
     lines = (
         StockLine.objects.filter(item=item)
-        .select_related("entry", "entry__created_by", "location")
+        .select_related("entry", "entry__created_by", "entry__reversed_by", "location")
         .annotate(undone=Exists(undone))
         .order_by("entry__entry_date", "entry_id", "id")
     )

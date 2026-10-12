@@ -61,7 +61,6 @@ def test_item_history_export_swaps_reversed_dates(office_client, stock):
     a, _ = stock
     today = timezone.localdate()
     ws = sheet(office_client.get(f"/items/{a.pk}/export/?date_from={today}&date_to=2000-01-01"))
-    assert ws.cell(7, 2).value is None or ws.cell(7, 2).value != "(no rows)"
     assert ws.cell(7, 2).value == "IN-0001"
 
 
@@ -78,8 +77,39 @@ def test_undone_note_and_flat_query_count(office_client, office_user, stock):
     assert len(ctx) < 20
 
 
-def test_non_office_user_is_refused(client, stock):
-    assert client.get("/stock/export/").status_code in (302, 403)
+@pytest.mark.parametrize(
+    "url",
+    ["/stock/export/", "/movements/export/", "/items/export/", "/low-stock/export/", "/items/1/export/"],
+)
+def test_anonymous_is_refused(client, stock, url):
+    assert client.get(url).status_code in (302, 403)
+
+
+def test_item_history_has_undone_note(office_client, office_user, stock):
+    from apps.inventory.models import StockEntry
+    from apps.inventory.services import undo_entry
+
+    a, _ = stock
+    undo_entry(entry=StockEntry.objects.get(number="IN-0001"), user=office_user, reason="mistake")
+    ws = sheet(office_client.get(f"/items/{a.pk}/export/"))
+    assert [c.value for c in ws[6]][-1] == "Note"
+    notes = [ws.cell(r, 13).value for r in range(7, ws.max_row + 1)]
+    assert "Undone by REV-0001" in notes
+
+
+def test_low_stock_keeps_int_format_when_highlighted(office_client, stock):
+    ws = sheet(office_client.get("/low-stock/export/"))
+    headers = [c.value for c in ws[6]]
+    cell = ws.cell(7, headers.index("Total") + 1)
+    assert cell.number_format.startswith("#,##0") and cell.fill.fgColor.rgb.endswith("FDE2E2")
+
+
+def test_blank_int_cell_and_format(office_client, stock):
+    ws = sheet(office_client.get("/movements/export/"))
+    headers = [c.value for c in ws[6]]
+    qty_out = ws.cell(7, headers.index("Qty out") + 1)
+    assert qty_out.value is None  # IN lines have no "out" quantity
+    assert qty_out.number_format.startswith("#,##0")
 
 
 def test_export_buttons_keep_filters(office_client, stock):
