@@ -21,3 +21,7 @@ Read at the start of every session. Each entry: the pattern I got wrong, then th
 ## 2026-10-11 — Reused the same frontend design every time
 - **Pattern:** Every mockup used the same look (Pico CSS, dark-blue top bar, cards), because the brief mentioned Pico. I never offered alternatives or asked about the visual style. The user: "why are you following particular frontend design again and again?"
 - **Rule:** Visual design is the user's choice, not a default. Before mocking screens, show 2–3 clearly different design directions (layout, navigation style, colours, density, component library) on the same sample screen, or ask for a reference app or style. Build only in the chosen direction, and record it in CLAUDE.md.
+
+## 2026-10-12 — Treated Wipro as the only company
+- **Pattern:** My design for defectives and complaints hard-coded Wipro: "return batches to Wipro", "Wipro complaint no.", "Closed – not a Wipro product", "the sheet Wipro expects". The user: "Wipro is just one of the providers, you are using wipro in everything, correct that."
+- **Rule:** Wipro is one company among several (Company master: Wipro Lighting, Havells, Finolex, …). Never name a specific company in models, statuses, labels or screens. Use the Company master instead: returns go to the item's company (or a company you pick), complaints record which company's product it is, the company's own ticket/claim number is a generic optional field, and exits read "Not covered" with a reason. A company-specific value is allowed only as a configurable default (like DEFAULT_COMPANY).
