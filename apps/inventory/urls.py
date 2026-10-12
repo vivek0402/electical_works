@@ -13,4 +13,10 @@ urlpatterns = [
     path("items/check-code/", views.item_check_code, name="item_check_code"),
     path("items/<int:pk>/", views.item_detail, name="item_detail"),
     path("items/<int:pk>/edit/", views.item_edit, name="item_edit"),
+    path("stock/in/", views.stock_in, name="stock_in"),
+    path("stock/out/", views.stock_out, name="stock_out"),
+    path("stock/transfer/", views.transfer, name="transfer"),
+    path("stock/adjust/", views.adjust, name="adjust"),
+    path("entries/<str:number>/", views.entry_detail, name="entry_detail"),
+    path("entries/<str:number>/undo/", views.entry_undo, name="entry_undo"),
 ]

@@ -65,10 +65,17 @@ def test_nav_anonymous_empty():
     assert nav(request) == {}
 
 
-def test_nav_masters_hidden_and_unbuilt_disabled(office_client):
+def test_nav_masters_hidden_and_stock_screens_live(office_client):
     html = office_client.get("/").content.decode()
     assert "Masters" not in html
-    assert 'aria-disabled="true"' in html
+    for url in ["/stock/in/", "/stock/out/", "/stock/transfer/", "/stock/adjust/"]:
+        assert f'href="{url}"' in html
+    assert 'aria-disabled="true"' not in html  # every screen office staff can see is built
+
+
+def test_nav_unbuilt_disabled(admin_client):
+    # Masters is the last screen not built yet (Task 10); it shows as a disabled link until then.
+    assert 'aria-disabled="true"' in admin_client.get("/").content.decode()
 
 
 def test_nav_masters_visible_to_admin(admin_client):

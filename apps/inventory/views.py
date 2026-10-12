@@ -10,11 +10,32 @@ from apps.accounts.roles import OFFICE
 from apps.core.tables import sort_and_page
 
 from . import selectors
+from .entry_lines import parse_lines, raw_lines
 from .filters import _text, history_filters, item_filters, movement_filters, stock_filters
-from .forms import ItemForm
-from .models import Company, EntryKind, FittingType, Item, Location, SpareType, StockBalance
+from .forms import AdjustForm, ItemForm, StockInForm, StockOutForm, TransferForm, UndoForm
+from .models import (
+    Company,
+    EntryKind,
+    FittingType,
+    InSource,
+    Item,
+    Location,
+    OutTarget,
+    SpareType,
+    StockBalance,
+    StockEntry,
+)
 from .normalise import normalise_code
-from .services import ItemError, find_item_by_code, save_item
+from .services import (
+    ItemError,
+    Line,
+    StockError,
+    adjust_counts,
+    find_item_by_code,
+    post_entry,
+    save_item,
+    undo_entry,
+)
 
 
 @role_required(OFFICE)
@@ -226,3 +247,188 @@ def item_check_code(request):
             msg = f"Looks like existing item {hit.code}. Use that instead?"
         return JsonResponse({"status": "clash", "message": msg})
     return JsonResponse({"status": "ok", "message": f"Will be saved as {normalise_code(code)}"})
+
+
+ENTRY_PAGES = {
+    # mode: (kind, form, title, subtitle, icon, save-button class)
+    "in": (
+        EntryKind.IN,
+        StockInForm,
+        "Stock IN",
+        "Material received at a location",
+        "package-import",
+        "btn-in",
+    ),
+    "out": (
+        EntryKind.OUT,
+        StockOutForm,
+        "Stock OUT",
+        "Material given out from a location",
+        "package-export",
+        "btn-out",
+    ),
+    "trf": (
+        EntryKind.TRF,
+        TransferForm,
+        "Transfer stock",
+        "Move stock from one location to another",
+        "arrows-exchange",
+        "btn-primary",
+    ),
+    "adj": (
+        EntryKind.ADJ,
+        AdjustForm,
+        "Adjust stock count",
+        "Correct the system count after a physical check",
+        "adjustments-horizontal",
+        "btn-primary",
+    ),
+}
+SUBTYPE_ICONS = {
+    InSource.SUPPLIER: "truck-delivery",
+    InSource.RETURN: "arrow-back-up",
+    InSource.OPENING: "clipboard-list",
+    OutTarget.SITE: "building-factory-2",
+    OutTarget.TECH: "user-cog",
+    OutTarget.OTHER: "user",
+}
+
+
+def _default_location():
+    places = Location.objects.filter(is_active=True)
+    return places.filter(name="Vizag Office").first() or places.first()
+
+
+def _save_entry(mode, data, parsed, user):
+    kind, place, note = ENTRY_PAGES[mode][0], data["location"], data.get("note", "")
+    common = {"entry_date": data["entry_date"], "user": user, "note": note}
+    if mode == "in":
+        return post_entry(
+            kind=kind,
+            lines=[Line(i, place, q, b, p) for i, q, b, p in parsed],
+            subtype=data["subtype"],
+            party=data["party"],
+            company=data["company"],
+            ref=data["ref"],
+            **common,
+        )
+    if mode == "out":
+        return post_entry(
+            kind=kind,
+            lines=[Line(i, place, -q) for i, q, _, _ in parsed],
+            subtype=data["subtype"],
+            party=data["party"],
+            ref=data["ref"],
+            **common,
+        )
+    if mode == "trf":
+        dest = data["to_location"]
+        moves = [line for i, q, _, _ in parsed for line in (Line(i, place, -q), Line(i, dest, q))]
+        return post_entry(kind=kind, lines=moves, party=dest.name, **common)
+    return adjust_counts(
+        entry_date=data["entry_date"],
+        location=place,
+        counts=[(i, q) for i, q, _, _ in parsed],
+        reason=data["reason"],
+        note=note,
+        user=user,
+    )
+
+
+def _entry_page(request, mode):
+    kind, form_class, title, subtitle, icon, button = ENTRY_PAGES[mode]
+    initial = {"entry_date": timezone.localdate(), "location": _default_location()}
+    if mode == "trf":
+        others = Location.objects.filter(is_active=True).exclude(pk=getattr(initial["location"], "pk", None))
+        initial["to_location"] = others.filter(name="TV Shop").first() or others.first()
+    form = form_class(request.POST or None, initial=initial)
+    error, lines = None, []
+    if request.method == "POST":
+        lines = raw_lines(request.POST)
+        if form.is_valid():
+            try:
+                entry = _save_entry(mode, form.cleaned_data, parse_lines(lines, mode), request.user)
+            except StockError as exc:
+                error = f"{exc.message} Nothing was saved."
+            else:
+                count = entry.lines.values("item").distinct().count()
+                messages.success(request, f"{entry.number} saved · {count} item(s). Stock updated.")
+                return redirect("entry_detail", number=entry.number)
+        else:
+            error = form.first_error()
+    elif request.GET.get("item", "").isdecimal():
+        lines = [{"item": request.GET["item"], "qty": "", "batch": "", "pkd": ""}]
+    items, balances = selectors.picker_data()
+    subtypes = []
+    if "subtype" in form.fields:
+        subtypes = [(v, label, SUBTYPE_ICONS[v]) for v, label in form.fields["subtype"].choices]
+    context = {
+        "mode": mode,
+        "form": form,
+        "title": title,
+        "subtitle": subtitle,
+        "icon": icon,
+        "button": button,
+        "error": error,
+        "subtypes": subtypes,
+        "items_data": items,
+        "balances_data": balances,
+        "initial_lines": lines,
+        "parties": {v: selectors.recent_parties(v) for v, _, _ in subtypes},
+    }
+    if mode == "in":
+        context["item_form"] = ItemForm(prefix="qi")
+        context["cat_refs"] = Item.objects.exclude(cat_ref="").values_list("cat_ref", flat=True).distinct()
+    return render(request, "inventory/entry_form.html", context)
+
+
+@role_required(OFFICE)
+def stock_in(request):
+    return _entry_page(request, "in")
+
+
+@role_required(OFFICE)
+def stock_out(request):
+    return _entry_page(request, "out")
+
+
+@role_required(OFFICE)
+def transfer(request):
+    return _entry_page(request, "trf")
+
+
+@role_required(OFFICE)
+def adjust(request):
+    return _entry_page(request, "adj")
+
+
+@role_required(OFFICE)
+def entry_detail(request, number):
+    entry = get_object_or_404(selectors.entries_with_lines(StockEntry.objects.all()), number=number)
+    undone_by = StockEntry.objects.filter(reverses=entry).first()
+    return render(
+        request,
+        "inventory/entry_detail.html",
+        {
+            "entry": entry,
+            "undone_by": undone_by,
+            "can_undo": entry.kind != EntryKind.REV and undone_by is None,
+        },
+    )
+
+
+@role_required(OFFICE)
+@require_POST
+def entry_undo(request, number):
+    entry = get_object_or_404(StockEntry, number=number)
+    form = UndoForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, f"Reason: {form.errors['reason'][0]}")
+        return redirect("entry_detail", number=number)
+    try:
+        rev = undo_entry(entry=entry, reason=form.cleaned_data["reason"], user=request.user)
+    except StockError as exc:
+        messages.error(request, exc.message)
+        return redirect("entry_detail", number=number)
+    messages.success(request, f"{entry.number} undone by {rev.number}. Stock updated.")
+    return redirect("entry_detail", number=rev.number)

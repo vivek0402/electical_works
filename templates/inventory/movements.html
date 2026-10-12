@@ -18,7 +18,7 @@
     <thead><tr>{% sort_th "date" "Date" %}{% sort_th "no" "Entry" %}{% sort_th "kind" "Type" %}{% sort_th "code" "Item code" %}<th>Description</th>{% sort_th "loc" "Location" %}
       {% sort_th "in" "In" True %}{% sort_th "out" "Out" True %}<th>Unit</th>{% sort_th "party" "Supplier / issued to" %}<th>Ref</th>{% sort_th "by" "By" %}</tr></thead>
     <tbody>{% for r in table.page %}<tr class="{% if r.undone %}undone{% endif %}">
-      <td class="nowrap">{{ r.entry.entry_date|date }}</td><td class="code">{{ r.entry.number }}</td><td class="keep"><span class="badge badge-k k-{{ r.entry.kind }}">{{ r.entry.get_kind_display }}</span>{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td>
+      <td class="nowrap">{{ r.entry.entry_date|date }}</td><td><a class="code" href="{% url 'entry_detail' r.entry.number %}">{{ r.entry.number }}</a></td><td class="keep"><span class="badge badge-k k-{{ r.entry.kind }}">{{ r.entry.get_kind_display }}</span>{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td>
       <td><a class="code" href="{% url 'item_detail' r.line.item.pk %}">{{ r.line.item.code }}</a></td><td>{{ r.line.item.description }}</td><td>{{ r.line.location.name }}</td>
       <td class="num">{% if r.line.qty > 0 %}<span class="qty-in">+{{ r.line.qty }}</span>{% endif %}</td>
       <td class="num">{% if r.line.qty < 0 %}<span class="qty-out">−{{ r.line.qty|stringformat:"d"|slice:"1:" }}</span>{% endif %}</td>

@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 
 from .filters import StockFilters
 from .models import EntryKind, Item, Location, StockBalance, StockEntry, StockLine
+from .normalise import search_key
 from .services import item_search_q
 
 
@@ -207,6 +208,7 @@ def item_history(item, date_from, date_to, location=None):
 
 def picker_option(item):
     """Data the searchable item picker needs (also used by the global search)."""
+    aliases = [a.alias for a in item.aliases.all()]
     return {
         "id": item.pk,
         "code": item.code,
@@ -215,5 +217,29 @@ def picker_option(item):
         "cat": item.cat_ref,
         "company": item.company.name,
         "unit": item.unit,
-        "aliases": [a.alias for a in item.aliases.all()],
+        "aliases": aliases,
+        # look-alike keys (O/0, I/1, symbols, leading zeros) so 'ei06001' finds EIO6001
+        "keys": " ".join(search_key(c) for c in [item.code, *aliases, item.cat_ref] if c),
     }
+
+
+def picker_data():
+    """(items, balances) for the entry forms. balances: {"<item_id>-<location_id>": qty}."""
+    items = (
+        Item.objects.filter(is_active=True)
+        .select_related("spare_type", "company")
+        .prefetch_related("aliases")
+        .order_by("code")
+    )
+    return [picker_option(i) for i in items], {f"{i}-{p}": q for (i, p), q in balance_map().items()}
+
+
+def recent_parties(subtype, limit=50):
+    """Names used before for this IN/OUT subtype, newest first (suggestions for the 'Name' box)."""
+    names = (
+        StockEntry.objects.filter(subtype=subtype)
+        .exclude(party="")
+        .order_by("-id")
+        .values_list("party", flat=True)[:500]
+    )
+    return list(dict.fromkeys(names))[:limit]

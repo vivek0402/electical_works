@@ -3,7 +3,7 @@
 <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
   <thead><tr><th>Entry</th><th>Date</th><th>Type</th><th>Details</th><th>Items</th><th>Location</th><th>Supplier / issued to</th><th>By</th></tr></thead>
   <tbody>{% for e in entries %}
-    <tr class="{% if e.is_undone %}undone{% endif %}"><td class="code">{{ e.number }}</td><td class="nowrap">{{ e.entry_date|date }}</td>
+    <tr class="{% if e.is_undone %}undone{% endif %}"><td><a class="code" href="{% url 'entry_detail' e.number %}">{{ e.number }}</a></td><td class="nowrap">{{ e.entry_date|date }}</td>
       <td class="keep"><span class="badge badge-k k-{{ e.kind }}">{{ e.get_kind_display }}</span>{% if e.is_undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td><td>{{ e.details }}</td>
       <td>{{ e|lines_summary }}</td><td>{{ e|entry_locations }}</td><td>{{ e.party }}</td><td>{{ e.created_by.first_name|default:e.created_by.username }}</td></tr>
   {% empty %}<tr><td colspan="8" class="text-center text-secondary py-4">No entries yet.</td></tr>{% endfor %}</tbody>

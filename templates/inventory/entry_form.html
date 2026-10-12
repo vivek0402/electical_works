@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block pretitle %}Stock{% endblock %}
+{% block page_title %}<i class="ti ti-{{ icon }}"></i> {{ title }}{% endblock %}
+{% block content %}
+<form method="post" id="entry-form" novalidate data-mode="{{ mode }}">{% csrf_token %}
+  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3>
+    <div class="card-subtitle ms-2 text-secondary">{{ subtitle }}</div></div>
+    <div class="card-body"><div class="row g-3">
+      {% if subtypes %}<div class="col-12"><label class="form-label required">{{ form.subtype.label }}</label><div class="form-selectgroup">
+        {% for value, label, ic in subtypes %}<label class="form-selectgroup-item">
+          <input type="radio" name="subtype" value="{{ value }}" class="form-selectgroup-input"{% if form.subtype.value == value %} checked{% endif %}>
+          <span class="form-selectgroup-label"><i class="ti ti-{{ ic }}"></i> {{ label }}</span></label>{% endfor %}</div></div>{% endif %}
+      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.entry_date.id_for_label }}">Date</label>
+        <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-calendar"></i></span>{{ form.entry_date }}</div></div>
+      {% if mode == "in" %}
+        <div class="col-12 col-md-3" data-show="SUPPLIER"><label class="form-label required" for="{{ form.company.id_for_label }}">Supplier / company</label>{{ form.company }}</div>
+        <div class="col-12 col-md-3" data-show="RETURN"><label class="form-label required" for="{{ form.party.id_for_label }}">Site / customer</label>{{ form.party }}</div>
+      {% endif %}
+      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "in" %}Into location{% elif mode == "adj" %}Location{% else %}From location{% endif %}</label>{{ form.location }}</div>
+      {% if mode == "in" %}
+        <div class="col-12 col-md-3"><label class="form-label" for="{{ form.ref.id_for_label }}">DC / bill no.</label>{{ form.ref }}</div>
+      {% elif mode == "out" %}
+        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.party.id_for_label }}" id="party-label">Site / customer</label>{{ form.party }}</div>
+        <div class="col-12 col-md-3"><label class="form-label" for="{{ form.ref.id_for_label }}">Job / reference no.</label>{{ form.ref }}</div>
+      {% elif mode == "trf" %}
+        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.to_location.id_for_label }}">To location</label>{{ form.to_location }}</div>
+      {% else %}
+        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}</div>
+      {% endif %}
+      <div class="col-12"><label class="form-label{% if mode == 'adj' %} required{% endif %}" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>{{ form.note }}</div>
+    </div></div></div>
+  <div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-list-details"></i> Items</h3></div>
+    <div class="card-body"><div class="lines-wrap"><table class="table table-vcenter lines-table mb-0"><thead><tr><th class="w-1">#</th><th>Item</th>
+      {% if mode == "in" %}<th>Quantity</th><th>Batch code</th><th>PKD (packed)</th>{% elif mode == "adj" %}<th>System qty</th><th>Counted qty</th><th>Difference</th>{% else %}<th>Available</th><th>Quantity</th>{% endif %}<th></th></tr></thead>
+      <tbody id="lines"></tbody></table></div>
+      <button type="button" class="btn btn-outline-primary mt-3" id="add-line"><i class="ti ti-plus"></i> Add another item</button></div>
+    <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span id="lines-summary" class="text-secondary"></span>
+      <div class="ms-auto btn-list"><a href="{% url 'dashboard' %}" class="btn btn-link link-secondary">Cancel</a>
+        <button type="submit" class="btn {{ button }}"><i class="ti ti-device-floppy"></i> Save {{ title }}</button></div></div></div>
+  <div id="form-error" class="mt-3" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+</form>
+<datalist id="parties"></datalist>
+{% if mode == "in" %}
+<div class="modal modal-blur fade" id="new-item-modal" tabindex="-1" aria-labelledby="new-item-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+  <form id="new-item-form" data-url="{% url 'item_quick_create' %}" novalidate>{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title" id="new-item-title"><i class="ti ti-box"></i> Create new item</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body">{% with form=item_form %}{% include "inventory/_item_fields.html" %}{% endwith %}<div id="ni-err" class="text-danger mt-3" aria-live="polite"></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Create item</button></div>
+  </form></div></div></div>
+{% endif %}
+{{ items_data|json_script:"items-data" }}{{ balances_data|json_script:"balances-data" }}{{ initial_lines|json_script:"initial-lines" }}{{ parties|json_script:"parties-data" }}
+{% endblock %}
+{% block scripts %}{% if mode == "in" %}<script src="{% static 'js/item-fields.js' %}"></script>{% endif %}
+<script src="{% static 'js/entry-form.js' %}"></script>{% endblock %}

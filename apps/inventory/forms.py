@@ -1,8 +1,10 @@
 from django import forms
 from django.conf import settings
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.db.models import Q
+from django.utils import timezone
 
-from .models import Company, FittingType, SpareType, Unit
+from .models import AdjustReason, Company, FittingType, InSource, Location, OutTarget, SpareType, Unit
 
 
 class TablerFormMixin:
@@ -11,6 +13,8 @@ class TablerFormMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
+            if isinstance(field.widget, forms.RadioSelect):
+                continue  # rendered by hand as Tabler select-groups
             if isinstance(field.widget, forms.Select):
                 css = "form-select"
             elif isinstance(field.widget, forms.CheckboxInput):
@@ -74,7 +78,7 @@ class ItemForm(TablerFormMixin, forms.Form):
                 self.fields[name].queryset = model.objects.filter(Q(is_active=True) | Q(pk=fk))
         self.fields["cat_ref"].widget.attrs["list"] = f"{self.prefix or 'it'}-cat-refs"
         if not self.is_bound and not self.initial.get("company"):
-            default = Company.objects.filter(name=settings.DEFAULT_COMPANY, is_active=True).first()
+            default = _default_company()
             if default:
                 self.fields["company"].initial = default.pk
 
@@ -97,3 +101,138 @@ class ItemForm(TablerFormMixin, forms.Form):
             "aliases": ", ".join(item.aliases.values_list("alias", flat=True)),
             "is_active": item.is_active,
         }
+
+
+def _default_company():
+    return Company.objects.filter(name=settings.DEFAULT_COMPANY, is_active=True).first()
+
+
+class EntryHeaderForm(TablerFormMixin, forms.Form):
+    entry_date = forms.DateField(
+        label="Date", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+    )
+    location = forms.ModelChoiceField(Location.objects.filter(is_active=True), empty_label=None)
+    note = forms.CharField(
+        required=False, label="Remarks", widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["entry_date"].widget.attrs["max"] = timezone.localdate().isoformat()
+
+    def clean_entry_date(self):
+        value = self.cleaned_data["entry_date"]
+        if value > timezone.localdate():
+            raise forms.ValidationError("The date can't be in the future.")
+        return value
+
+    def first_error(self):
+        """The first problem as one sentence, with the field's label when it belongs to a field."""
+        name, errors = next(iter(self.errors.items()))
+        if name == NON_FIELD_ERRORS:
+            return errors[0]
+        return f"{self.fields[name].label or name.replace('_', ' ').capitalize()}: {errors[0]}"
+
+
+class StockInForm(EntryHeaderForm):
+    subtype = forms.ChoiceField(
+        choices=InSource.choices, initial=InSource.SUPPLIER, widget=forms.RadioSelect, label="Received from"
+    )
+    company = forms.ModelChoiceField(
+        Company.objects.filter(is_active=True),
+        required=False,
+        label="Supplier / company",
+        empty_label="Choose…",
+    )
+    party = forms.CharField(
+        max_length=120,
+        required=False,
+        label="Site / customer",
+        widget=forms.TextInput(attrs={"list": "parties", "placeholder": "e.g. Dr Reddys, Vizag"}),
+    )
+    ref = forms.CharField(
+        max_length=60,
+        required=False,
+        label="DC / bill no.",
+        widget=forms.TextInput(attrs={"placeholder": "e.g. DC 4512"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and not self.initial.get("company"):
+            default = _default_company()
+            if default:
+                self.fields["company"].initial = default.pk
+
+    def clean(self):
+        data = super().clean()
+        source = data.get("subtype")
+        if source == InSource.SUPPLIER:
+            if not data.get("company"):
+                raise forms.ValidationError("Choose the supplier.")
+            data["party"] = data["company"].name
+        elif source == InSource.RETURN:
+            if not data.get("party", "").strip():
+                raise forms.ValidationError("Enter the site / customer.")
+            data["company"] = None
+        elif source == InSource.OPENING:
+            data["party"], data["company"] = "Opening stock (first count)", None
+        return data
+
+
+class StockOutForm(EntryHeaderForm):
+    subtype = forms.ChoiceField(
+        choices=OutTarget.choices, initial=OutTarget.SITE, widget=forms.RadioSelect, label="Issued to"
+    )
+    party = forms.CharField(
+        max_length=120,
+        required=False,
+        label="Name",
+        widget=forms.TextInput(attrs={"list": "parties", "placeholder": "e.g. GMR Airport, Vizag"}),
+    )
+    ref = forms.CharField(
+        max_length=60,
+        required=False,
+        label="Job / reference no.",
+        widget=forms.TextInput(attrs={"placeholder": "Optional"}),
+    )
+
+    def clean(self):
+        data = super().clean()
+        if data.get("subtype") and not data.get("party", "").strip():
+            target = OutTarget(data["subtype"]).label.lower()
+            raise forms.ValidationError(f"Enter who it was issued to ({target}).")
+        return data
+
+
+class TransferForm(EntryHeaderForm):
+    to_location = forms.ModelChoiceField(
+        Location.objects.filter(is_active=True), empty_label=None, label="To location"
+    )
+
+    def clean(self):
+        data = super().clean()
+        if data.get("location") and data.get("location") == data.get("to_location"):
+            raise forms.ValidationError("From and To locations must be different.")
+        return data
+
+
+class AdjustForm(EntryHeaderForm):
+    reason = forms.ChoiceField(choices=[("", "Choose…"), *AdjustReason.choices], required=False)
+    note = forms.CharField(
+        label="Note",
+        widget=forms.Textarea(
+            attrs={"rows": 2, "placeholder": "What happened? e.g. 2 lenses cracked in storage"}
+        ),
+        error_messages={"required": "Write a short note explaining the adjustment."},
+    )
+
+    def clean_reason(self):
+        if not self.cleaned_data["reason"]:
+            raise forms.ValidationError("Choose the reason for the adjustment.")
+        return self.cleaned_data["reason"]
+
+
+class UndoForm(forms.Form):
+    # Not required here: undo_entry() gives the friendly "Please give a reason." for a blank one.
+    reason = forms.CharField(max_length=200, required=False)
