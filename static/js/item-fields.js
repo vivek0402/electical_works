@@ -7,7 +7,8 @@
     ["spare_type", "company", "fitting_type"].forEach(function (name) {
       const el = root.querySelector('select[name$="' + name + '"]');
       if (!el || el.tomselect || !window.TomSelect) return;
-      const cfg = { allowEmptyOption: true };
+      // The empty option ("Choose…", "None") becomes the placeholder; the clear button empties the box.
+      const cfg = { plugins: { clear_button: { title: "Clear" } } };
       if (opts.dropdownParent) cfg.dropdownParent = opts.dropdownParent;
       new TomSelect(el, cfg);
     });

@@ -22,8 +22,8 @@ def test_parses_lines_and_skips_blank_rows():
     a = make_item("EIO6006")
     parsed = parse_lines(post((a.pk, 3, "B1", "2026-05"), ("", "", "", "")), "in")
     assert len(parsed) == 1
-    item, qty, batch, pkd = parsed[0]
-    assert (item, qty, batch, pkd.isoformat()) == (a, 3, "B1", "2026-05-01")
+    line = parsed[0]
+    assert (line.item, line.qty, line.batch, line.pkd.isoformat(), line.n) == (a, 3, "B1", "2026-05-01", 1)
 
 
 @pytest.mark.parametrize(
@@ -54,5 +54,42 @@ def test_adjust_allows_zero_and_inactive_items_are_refused():
     a = make_item("EIO6006")
     assert parse_lines(post((a.pk, 0, "", "")), "adj")[0][1] == 0
     b = make_item("OLD-1", is_active=False)
-    with pytest.raises(StockError, match="Line 1: choose an item."):
+    with pytest.raises(StockError, match="Line 1: this item is no longer active."):
         parse_lines(post((b.pk, 1, "", "")), "in")
+
+
+def test_line_numbers_count_blank_rows():
+    a = make_item("EIO6006")
+    with pytest.raises(StockError, match="Line 2: enter a whole-number quantity of 1 or more."):
+        parse_lines(post(("", "", "", ""), (a.pk, "x", "", "")), "out")
+    parsed = parse_lines(post(("", "", "", ""), (a.pk, 2, "", "")), "out")
+    assert [p.n for p in parsed] == [2]
+
+
+def test_quantity_limits():
+    a = make_item("EIO6006")
+    assert parse_lines(post((a.pk, 1_000_000, "", "")), "in")[0].qty == 1_000_000
+    with pytest.raises(StockError, match="Line 1: 1,000,001 is too large. The most per line is 1,000,000."):
+        parse_lines(post((a.pk, 1_000_001, "", "")), "in")
+    with pytest.raises(
+        StockError, match="Line 1: That quantity is too large. The most per line is 1,000,000."
+    ):
+        parse_lines(post((a.pk, "9" * 5000, "", "")), "out")
+    with pytest.raises(StockError, match="Line 1: choose an item."):
+        parse_lines(post(("1" * 5000, 1, "", "")), "out")
+
+
+def test_unknown_item_and_batch_only_row():
+    with pytest.raises(StockError, match="Line 1: choose an item."):
+        parse_lines(post((999999, 1, "", "")), "in")
+    with pytest.raises(StockError, match="Line 1: choose an item."):
+        parse_lines(post(("", "", "B1", "")), "in")
+
+
+def test_adjust_expected_is_read():
+    a = make_item("EIO6006")
+    q = QueryDict(mutable=True)
+    for name, value in [("item", a.pk), ("qty", 2), ("batch", ""), ("pkd", ""), ("expected", 5)]:
+        q.appendlist(f"line_{name}", str(value))
+    assert parse_lines(raw_lines(q), "adj")[0].expected == 5
+    assert parse_lines(raw_lines(q), "out")[0].expected is None

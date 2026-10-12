@@ -29,14 +29,22 @@
 </div>
 {% if can_undo %}
 <div class="modal modal-blur fade" id="undo-modal" tabindex="-1" aria-labelledby="undo-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-  <form method="post" action="{% url 'entry_undo' entry.number %}">{% csrf_token %}
+  <form method="post" action="{% url 'entry_undo' entry.number %}" id="undo-form">{% csrf_token %}
     <div class="modal-status bg-danger"></div>
     <div class="modal-body"><h3 id="undo-title"><i class="ti ti-arrow-back-up text-danger"></i> Undo {{ entry.number }}?</h3>
       <p class="text-secondary">This posts a new "Undo" entry with the opposite quantities. Both stay on record.</p>
       <label class="form-label required" for="undo-reason">Reason</label>
       <input id="undo-reason" name="reason" class="form-control" required maxlength="200" placeholder="e.g. typed the wrong quantity"></div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
-      <button type="submit" class="btn btn-danger ms-auto"><i class="ti ti-arrow-back-up"></i> Undo entry</button></div>
+      <button type="submit" class="btn btn-danger ms-auto" id="undo-submit"><i class="ti ti-arrow-back-up"></i> Undo entry</button></div>
   </form></div></div></div>
 {% endif %}
 {% endblock %}
+{% block scripts %}{% if can_undo %}<script>
+(function () {
+  const modal = document.getElementById("undo-modal"), form = document.getElementById("undo-form");
+  modal.addEventListener("shown.bs.modal", () => document.getElementById("undo-reason").focus());
+  form.addEventListener("submit", () => { const b = document.getElementById("undo-submit"); b.disabled = true; b.classList.add("btn-loading"); });
+  window.addEventListener("pageshow", e => { if (e.persisted) { const b = document.getElementById("undo-submit"); b.disabled = false; b.classList.remove("btn-loading"); } });
+})();
+</script>{% endif %}{% endblock %}

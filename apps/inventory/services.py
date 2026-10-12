@@ -201,24 +201,40 @@ def post_entry(
 
 
 @transaction.atomic
-def adjust_counts(*, entry_date, location, counts, reason, note, user) -> StockEntry:
-    """Set the counted quantity for each (item, counted) at one location; posts only the differences."""
+def adjust_counts(*, entry_date, location, counts, reason, note, user, line_numbers=None) -> StockEntry:
+    """Set the counted quantity for each (item, counted[, expected]) at one location; posts the differences.
+
+    `expected` is the system quantity the user saw while counting. If the locked balance differs, someone
+    moved that stock meanwhile and the count is refused. `line_numbers` (same order as counts) are the
+    line numbers to name in that message; by default 1, 2, 3...
+    """
     if not reason:
         raise StockError("Choose the reason for the adjustment.")
     if not note.strip():
         raise StockError("Write a short note explaining the adjustment.")
     if not counts:
         raise StockError("Add at least one item.")
+    counts = [(c[0], c[1], c[2] if len(c) > 2 else None) for c in counts]
+    numbers = list(line_numbers) if line_numbers else list(range(1, len(counts) + 1))
     seen = set()
-    for item, counted in counts:
+    for item, counted, _ in counts:
         if item.pk in seen:
             raise StockError(f"{item.code} is listed twice.")
         seen.add(item.pk)
         if not _is_whole(counted) or counted < 0:
             raise StockError(f"Counted quantity for {item.code} must be a whole number, 0 or more.")
-    keys = sorted((item.pk, location.pk) for item, _ in counts)
+    keys = sorted((item.pk, location.pk) for item, _, _ in counts)
     balances = _lock_balances(keys)
-    lines = [Line(item, location, counted - balances[(item.pk, location.pk)].qty) for item, counted in counts]
+    for n, (item, _, expected) in zip(numbers, counts, strict=True):
+        now = balances[(item.pk, location.pk)].qty
+        if expected is not None and expected != now:
+            raise StockError(
+                f"Line {n}: stock of {item.code} at {location.name} changed since you opened this page "
+                f"(was {expected}, now {now}). Check the count and save again."
+            )
+    lines = [
+        Line(item, location, counted - balances[(item.pk, location.pk)].qty) for item, counted, _ in counts
+    ]
     lines = [line for line in lines if line.qty]
     if not lines:
         raise StockError("The counted quantities match the system. Nothing to adjust.")

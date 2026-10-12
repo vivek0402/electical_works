@@ -40,13 +40,14 @@
   }
 
   function qtyCell(label, min) {
-    return `<td data-label="${label}" style="min-width:9rem"><div class="input-group"><input type="number" name="line_qty" class="form-control qty" min="${min}" step="1"
+    return `<td data-label="${label}" style="min-width:9rem"><div class="input-group"><input type="number" name="line_qty" class="form-control qty" min="${min}" max="1000000" step="1"
       inputmode="numeric" placeholder="0" aria-label="${label}"><span class="input-group-text u">—</span></div><div class="invalid-feedback d-block err"></div></td>`;
   }
 
   function addRow(init = {}, focus = false) {
     const tr = document.createElement("tr"), row = { tr };
-    const hidden = mode === "in" ? "" : `<input type="hidden" name="line_batch" value=""><input type="hidden" name="line_pkd" value="">`;
+    const hidden = (mode === "in" ? "" : `<input type="hidden" name="line_batch" value=""><input type="hidden" name="line_pkd" value="">`)
+      + (mode === "adj" ? `<input type="hidden" name="line_expected" class="expected" value="">` : "");
     tr.innerHTML = `<td class="c-n text-secondary"></td><td class="c-item"><select name="line_item" class="form-select" aria-label="Item"><option value=""></option></select>${hidden}<small class="form-hint line-meta"></small></td>` + {
       in: qtyCell("Quantity", 1) + `<td data-label="Batch code"><input name="line_batch" class="form-control" maxlength="40" placeholder="e.g. B2405" aria-label="Batch code"></td>
           <td data-label="PKD (packed)"><input name="line_pkd" class="form-control" type="month" aria-label="PKD (packed)"></td>`,
@@ -86,8 +87,11 @@
         avail.textContent = "";
         const diff = row.tr.querySelector(".diff");
         if (diff) diff.textContent = "";
+        const expected = row.tr.querySelector(".expected");
+        if (expected) expected.value = "";
       } else {
         const n = have(it.id);
+        if (mode === "adj") row.tr.querySelector(".expected").value = n; // the server refuses the count if this changed
         avail.innerHTML = `<b>${n}</b> ${esc(unit)} <span class="text-secondary d-block small">at ${esc(locName())}</span>`;
         if (mode === "adj") {
           const counted = row.qty.value === "" ? null : Number(row.qty.value), d = counted === null ? null : counted - n;
@@ -135,8 +139,20 @@
       e.preventDefault();
       $("form-error").innerHTML = `<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>Fix the highlighted quantities first.</div></div></div>`;
       bad.qty.focus();
+      return;
     }
+    const save = form.querySelector("button[type=submit]");
+    save.disabled = true; save.classList.add("btn-loading"); // one click, one entry
   });
+  window.addEventListener("pageshow", e => { // coming Back to a cached page: allow saving again
+    if (!e.persisted) return;
+    const save = form.querySelector("button[type=submit]");
+    save.disabled = false; save.classList.remove("btn-loading");
+  });
+
+  // A server error is shown under the form: bring it into view and move focus to it.
+  const serverError = $("form-error");
+  if (serverError.textContent.trim()) { serverError.scrollIntoView({ block: "center" }); serverError.focus({ preventScroll: true }); }
 
   // Quick "create item" (Stock IN only).
   const niForm = $("new-item-form");

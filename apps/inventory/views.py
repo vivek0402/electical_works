@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
@@ -305,7 +307,7 @@ def _save_entry(mode, data, parsed, user):
     if mode == "in":
         return post_entry(
             kind=kind,
-            lines=[Line(i, place, q, b, p) for i, q, b, p in parsed],
+            lines=[Line(p.item, place, p.qty, p.batch, p.pkd) for p in parsed],
             subtype=data["subtype"],
             party=data["party"],
             company=data["company"],
@@ -315,7 +317,7 @@ def _save_entry(mode, data, parsed, user):
     if mode == "out":
         return post_entry(
             kind=kind,
-            lines=[Line(i, place, -q) for i, q, _, _ in parsed],
+            lines=[Line(p.item, place, -p.qty) for p in parsed],
             subtype=data["subtype"],
             party=data["party"],
             ref=data["ref"],
@@ -323,16 +325,33 @@ def _save_entry(mode, data, parsed, user):
         )
     if mode == "trf":
         dest = data["to_location"]
-        moves = [line for i, q, _, _ in parsed for line in (Line(i, place, -q), Line(i, dest, q))]
+        moves = [line for p in parsed for line in (Line(p.item, place, -p.qty), Line(p.item, dest, p.qty))]
         return post_entry(kind=kind, lines=moves, party=dest.name, **common)
     return adjust_counts(
         entry_date=data["entry_date"],
         location=place,
-        counts=[(i, q) for i, q, _, _ in parsed],
+        counts=[(p.item, p.qty, p.expected) for p in parsed],
+        line_numbers=[p.n for p in parsed],
         reason=data["reason"],
         note=note,
         user=user,
     )
+
+
+# One-time form tokens stop a resubmitted form (double click, Back + Save) from posting the entry twice.
+TOKENS, SAVED, KEEP_TOKENS = "entry_tokens", "entry_saved", 20
+
+
+def _new_token(session):
+    token = uuid.uuid4().hex
+    session[TOKENS] = [*session.get(TOKENS, []), token][-KEEP_TOKENS:]
+    return token
+
+
+def _spend_token(session, token, number):
+    session[TOKENS] = [t for t in session.get(TOKENS, []) if t != token]
+    saved = {**session.get(SAVED, {}), token: number}
+    session[SAVED] = dict(list(saved.items())[-KEEP_TOKENS:])
 
 
 def _entry_page(request, mode):
@@ -342,22 +361,32 @@ def _entry_page(request, mode):
         others = Location.objects.filter(is_active=True).exclude(pk=getattr(initial["location"], "pk", None))
         initial["to_location"] = others.filter(name="TV Shop").first() or others.first()
     form = form_class(request.POST or None, initial=initial)
-    error, lines = None, []
+    error, lines, token = None, [], ""
     if request.method == "POST":
         lines = raw_lines(request.POST)
-        if form.is_valid():
+        token = request.POST.get("entry_token", "")
+        saved = request.session.get(SAVED, {})
+        if token in saved:
+            messages.warning(request, "This entry was already saved.")
+            return redirect("entry_detail", number=saved[token])
+        if token not in request.session.get(TOKENS, []):
+            # Missing or expired (not one we issued): save nothing, keep what was typed, ask to save again.
+            token = ""
+            error = "This form had expired, so nothing was saved. Check the details and save again."
+        elif form.is_valid():
             try:
                 entry = _save_entry(mode, form.cleaned_data, parse_lines(lines, mode), request.user)
             except StockError as exc:
                 error = f"{exc.message} Nothing was saved."
             else:
+                _spend_token(request.session, token, entry.number)
                 count = entry.lines.values("item").distinct().count()
                 messages.success(request, f"{entry.number} saved · {count} item(s). Stock updated.")
                 return redirect("entry_detail", number=entry.number)
         else:
             error = form.first_error()
     elif request.GET.get("item", "").isdecimal():
-        lines = [{"item": request.GET["item"], "qty": "", "batch": "", "pkd": ""}]
+        lines = [{"item": request.GET["item"], "qty": "", "batch": "", "pkd": "", "expected": ""}]
     items, balances = selectors.picker_data()
     subtypes = []
     if "subtype" in form.fields:
@@ -370,6 +399,7 @@ def _entry_page(request, mode):
         "icon": icon,
         "button": button,
         "error": error,
+        "token": token or _new_token(request.session),
         "subtypes": subtypes,
         "items_data": items,
         "balances_data": balances,

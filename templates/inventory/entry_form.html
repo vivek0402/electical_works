@@ -3,7 +3,7 @@
 {% block pretitle %}Stock{% endblock %}
 {% block page_title %}<i class="ti ti-{{ icon }}"></i> {{ title }}{% endblock %}
 {% block content %}
-<form method="post" id="entry-form" novalidate data-mode="{{ mode }}">{% csrf_token %}
+<form method="post" id="entry-form" novalidate data-mode="{{ mode }}">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
   <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3>
     <div class="card-subtitle ms-2 text-secondary">{{ subtitle }}</div></div>
     <div class="card-body"><div class="row g-3">
@@ -38,7 +38,7 @@
     <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span id="lines-summary" class="text-secondary"></span>
       <div class="ms-auto btn-list"><a href="{% url 'dashboard' %}" class="btn btn-link link-secondary">Cancel</a>
         <button type="submit" class="btn {{ button }}"><i class="ti ti-device-floppy"></i> Save {{ title }}</button></div></div></div>
-  <div id="form-error" class="mt-3" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+  <div id="form-error" class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
 </form>
 <datalist id="parties"></datalist>
 {% if mode == "in" %}
