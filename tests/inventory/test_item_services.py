@@ -165,3 +165,35 @@ def test_search_active_only():
     save_item(data=data(code="QQ77", is_active=False, aliases=[]))
     assert len(search_items("QQ77")) == 1
     assert search_items("QQ77", active_only=True) == []
+
+
+def test_deactivating_item_with_stock_refused():
+    user = make_user("clerk_d", "OFFICE")
+    item = save_item(data=data())
+    post_entry(kind=EntryKind.IN, entry_date=timezone.localdate(), lines=[Line(item, loc(), 3)], user=user)
+    with pytest.raises(ItemError) as err:
+        save_item(item=item, data=data(is_active=False))
+    assert err.value.message == "EIO8437 still holds stock. Issue or adjust it to zero first."
+    item.refresh_from_db()
+    assert item.is_active
+
+
+def test_deactivating_item_with_zero_stock_allowed():
+    user = make_user("clerk_z", "OFFICE")
+    item = save_item(data=data())
+    post_entry(kind=EntryKind.IN, entry_date=timezone.localdate(), lines=[Line(item, loc(), 3)], user=user)
+    post_entry(kind=EntryKind.OUT, entry_date=timezone.localdate(), lines=[Line(item, loc(), -3)], user=user)
+    assert not save_item(item=item, data=data(is_active=False)).is_active
+
+
+def test_unit_change_refused_once_item_has_entries():
+    user = make_user("clerk_u", "OFFICE")
+    item = save_item(data=data())
+    assert save_item(item=item, data=data(unit="BOX")).unit == "BOX"  # no entries yet: allowed
+    post_entry(kind=EntryKind.IN, entry_date=timezone.localdate(), lines=[Line(item, loc(), 3)], user=user)
+    with pytest.raises(
+        ItemError, match="The unit can't be changed because EIO8437 already has stock entries"
+    ):
+        save_item(item=item, data=data(unit="NOS"))
+    item.refresh_from_db()
+    assert item.unit == "BOX"

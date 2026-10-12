@@ -159,6 +159,9 @@ class EntryCounter(models.Model):
 
 
 IMMUTABLE = pgtrigger.Protect(name="append_only", operation=pgtrigger.Update | pgtrigger.Delete)
+# No TRUNCATE guard on purpose. A BEFORE TRUNCATE trigger (pgtrigger.Trigger, Statement level; Protect
+# can't do TRUNCATE) works, but Django's flush between transaction=True tests (e.g. the concurrency test)
+# uses TRUNCATE and then fails. TRUNCATE needs table-owner (or TRUNCATE) rights; keep those off the app role.
 
 
 class StockEntry(models.Model):

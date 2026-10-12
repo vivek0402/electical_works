@@ -30,15 +30,6 @@ def is_low(item, total):
     return item.reorder_level > 0 and total <= item.reorder_level
 
 
-def low_stock_items():
-    totals = item_totals()
-    return [
-        i
-        for i in Item.objects.filter(is_active=True).select_related("spare_type", "company")
-        if is_low(i, totals.get(i.pk, 0))
-    ]
-
-
 def low_stock_count():
     """Number of active items at or below their reorder level, in one query."""
     return (
@@ -166,12 +157,16 @@ def movement_rows(f):
     if f.item:
         lines = lines.filter(item=f.item)
     if f.q:
-        lines = lines.filter(
+        match = (
             Q(item__code__icontains=f.q)
             | Q(entry__party__icontains=f.q)
             | Q(entry__ref__icontains=f.q)
             | Q(entry__number__icontains=f.q)
         )
+        item_match = item_search_q(f.q)  # other spellings, descriptions, look-alike codes
+        if item_match is not None:
+            match |= Q(item__in=Item.objects.filter(item_match))
+        lines = lines.filter(match)
     return [
         {"entry": line.entry, "line": line, "undone": line.undone, "n": n} for n, line in enumerate(lines)
     ]

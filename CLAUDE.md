@@ -38,7 +38,7 @@ Where the logic lives:
 - `apps/inventory/services.py`: every write (items, post/adjust/undo entries, balance rebuild).
 - `apps/inventory/selectors.py`: every read (stock matrix, lists, item history, dashboard).
 - `apps/inventory/entry_lines.py`: parsing the item lines posted by the entry forms.
-- `apps/core/excel.py`: the shared XlsxWriter report writer (`apps/inventory/exports.py` builds the four exports on it).
+- `apps/core/excel.py`: the shared XlsxWriter report writer (`apps/inventory/exports.py` builds the five exports on it).
 - Demo data: `apps/inventory/demo/demo-data.json`, loaded by `seed_stock_demo`.
 
 **Never write to StockEntry, StockLine or StockBalance outside `services.py`.** The ledger is append-only (database triggers block updates and deletes); mistakes are cancelled with `undo_entry`.

@@ -212,3 +212,36 @@ def test_code_change_refused_when_item_has_lines(office_client, office_user):
     assert "can&#x27;t be changed" in html or "can't be changed" in html
     item.refresh_from_db()
     assert item.code == "EIO6006"
+
+
+def test_edit_view_refuses_deactivating_item_with_stock(office_client, office_user):
+    item = make_item("EIO6006", spare_type="PCB / LED module")
+    post_entry(
+        kind=EntryKind.IN, entry_date=timezone.localdate(), lines=[Line(item, loc(), 4)], user=office_user
+    )
+    data = form_data(code="EIO6006", aliases="")
+    data.pop("is_active")
+    response = office_client.post(f"/items/{item.pk}/edit/", data)
+    assert response.status_code == 200
+    assert "EIO6006 still holds stock. Issue or adjust it to zero first." in response.content.decode()
+    item.refresh_from_db()
+    assert item.is_active
+
+
+def test_edit_form_locks_unit_once_item_has_entries(office_client, office_user):
+    item = make_item("EIO6006", spare_type="PCB / LED module")
+    html = office_client.get(f"/items/{item.pk}/edit/").content.decode()
+    assert 'name="unit"' in html and "disabled" not in html.split('name="unit"')[1].split(">")[0]
+    post_entry(
+        kind=EntryKind.IN, entry_date=timezone.localdate(), lines=[Line(item, loc(), 4)], user=office_user
+    )
+    html = office_client.get(f"/items/{item.pk}/edit/").content.decode()
+    assert "disabled" in html.split('name="unit"')[1].split(">")[0]
+    assert "can't be changed" in html
+    # A tampered post with another unit is ignored: the disabled field keeps the saved unit.
+    response = office_client.post(
+        f"/items/{item.pk}/edit/", form_data(code="EIO6006", aliases="", unit="BOX")
+    )
+    assert response.status_code == 302
+    item.refresh_from_db()
+    assert item.unit == "NOS"

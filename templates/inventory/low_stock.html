@@ -6,14 +6,15 @@
 {% block content %}
 <div class="alert alert-{% if table.total %}warning{% else %}success{% endif %}"><i class="ti ti-{% if table.total %}alert-triangle{% else %}circle-check{% endif %}"></i>
   {% if table.total %}{{ table.total }} items are at or below their reorder level (total across all locations).{% else %}Nothing is low.{% endif %}</div>
-<div class="card"><div class="table-responsive"><table class="table table-vcenter card-table table-striped">
-  <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}<th>Description</th><th>Company</th>
-    {% for p in locations %}<th class="num">{{ p.name }}</th>{% endfor %}{% sort_th "total" "Total" True %}{% sort_th "reorder" "Reorder at" True %}{% sort_th "short" "Short by" True %}</tr></thead>
-  <tbody>{% for r in table.page %}<tr><td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
+<div class="card"><div class="table-responsive position-relative"><table class="table table-vcenter card-table table-striped">
+  <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" th_class="d-none d-xxl-table-cell" %}<th>Description</th><th class="d-none d-xxl-table-cell">Company</th>
+    {% for p in locations %}<th class="num text-wrap">{{ p.name }}</th>{% endfor %}{% sort_th "total" "Total" True %}{% sort_th "reorder" "Reorder at" True %}{% sort_th "short" "Short by" True %}<th>Unit</th><th><span class="visually-hidden">Action</span></th></tr></thead>
+  <tbody>{% for r in table.page %}<tr><td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a><div class="text-secondary small d-xxl-none">{{ r.item.spare_type.name }}</div></td><td class="nowrap d-none d-xxl-table-cell">{{ r.item.spare_type.name }}</td>
     <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
-    <td class="text-truncate" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
+    <td class="text-truncate d-none d-xxl-table-cell" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
     {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}</td>{% endfor %}
-    <td class="num"><span class="badge bg-red-lt">{{ r.total }} {{ r.item.unit }}</span></td><td class="num">{{ r.item.reorder_level }}</td><td class="num"><b class="text-danger">{{ r.short_by }}</b></td></tr>
+    <td class="num"><span class="badge bg-red-lt">{{ r.total }}</span></td><td class="num">{{ r.item.reorder_level }}</td><td class="num"><b class="text-danger">{{ r.short_by }}</b></td>
+    <td>{{ r.item.unit }}</td><td class="text-end"><a href="{% url 'stock_in' %}?item={{ r.item.pk }}" class="btn btn-sm btn-in" title="Stock IN {{ r.item.code }}"><i class="ti ti-package-import" aria-hidden="true"></i><span class="d-none d-xxl-inline"> Stock IN</span><span class="visually-hidden d-xxl-none">Stock IN {{ r.item.code }}</span></a></td></tr>
   {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing is low.</td></tr>{% endfor %}</tbody>
 </table></div>{% include "core/_pagination.html" %}</div>
 {% endblock %}

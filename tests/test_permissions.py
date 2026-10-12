@@ -8,6 +8,7 @@ EXPECTED_STOCK_ROUTES = {
     "dashboard", "current_stock", "low_stock", "movements", "items", "item_new", "item_detail", "item_edit",
     "stock_in", "stock_out", "transfer", "adjust", "entry_detail", "entry_undo", "item_quick_create",
     "item_check_code", "global_search", "masters", "masters_toggle", "items_xlsx", "current_stock_xlsx",
+    "movements_xlsx", "low_stock_xlsx", "item_history_xlsx",
 }  # fmt: skip
 
 

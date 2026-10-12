@@ -76,6 +76,10 @@ class ItemForm(TablerFormMixin, forms.Form):
                 ("fitting_type", FittingType, item.fitting_type_id),
             ):
                 self.fields[name].queryset = model.objects.filter(Q(is_active=True) | Q(pk=fk))
+            # Changing the unit would change the meaning of every quantity already posted.
+            if item.lines.exists():
+                self.fields["unit"].disabled = True
+                self.fields["unit"].initial = item.unit
         self.fields["cat_ref"].widget.attrs["list"] = f"{self.prefix or 'it'}-cat-refs"
         if not self.is_bound and not self.initial.get("company"):
             default = _default_company()

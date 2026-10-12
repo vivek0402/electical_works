@@ -53,8 +53,8 @@ def get_item(mapping, key):
 
 
 @register.inclusion_tag("core/_sort_th.html", takes_context=True)
-def sort_th(context, key, label, num=False):
-    """Column header that sorts by `key`; clicking again flips the direction."""
+def sort_th(context, key, label, num=False, th_class=""):
+    """Column header that sorts by `key`; clicking again flips the direction. `th_class` styles the cell."""
     table = context["table"]
     active = table["sort"] == key
     new_dir = "desc" if active and table["dir"] == "asc" else "asc"
@@ -62,6 +62,7 @@ def sort_th(context, key, label, num=False):
         "href": url_with(context, sort=key, dir=new_dir, page=None),
         "label": label,
         "num": num,
+        "th_class": th_class,
         "cls": table["dir"] if active else "",
     }
 

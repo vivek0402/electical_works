@@ -68,7 +68,7 @@ def test_dashboard_requires_login(client):
 # --- low-stock count, weekly boundaries, undone label ---------------------------------------------
 from datetime import timedelta  # noqa: E402
 
-from apps.inventory.selectors import low_stock_count, low_stock_items  # noqa: E402
+from apps.inventory.selectors import low_stock_count, low_stock_rows  # noqa: E402
 from apps.inventory.services import undo_entry  # noqa: E402
 
 
@@ -86,7 +86,7 @@ def test_low_stock_count_matches_list(office_user):
         user=office_user,
         lines=[Line(low, loc(), 5), Line(fine, loc(), 6)],
     )
-    assert low_stock_count() == len(low_stock_items()) == 2
+    assert low_stock_count() == len(low_stock_rows()[0]) == 2
 
 
 def test_weekly_in_out_excludes_undone_and_respects_boundaries(office_user):
@@ -124,3 +124,10 @@ def test_dashboard_query_count(office_client, office_user, django_assert_max_num
         )
     with django_assert_max_num_queries(20):
         assert office_client.get("/").status_code == 200
+
+
+def test_dashboard_tiles_and_locations_are_links(office_client, stocked):
+    html = office_client.get("/").content.decode()
+    for url in ["/items/", "/stock/", "/low-stock/", "/movements/"]:
+        assert f'href="{url}" class="card card-sm card-link' in html
+    assert f'href="/stock/?location={loc().pk}"' in html

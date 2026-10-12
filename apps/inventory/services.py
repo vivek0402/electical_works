@@ -8,7 +8,8 @@ from operator import or_
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
-from django.db.models import Case, IntegerField, Min, Q, Sum, Value, When
+from django.db.models import Case, DateField, F, IntegerField, Min, Q, Sum, Value, When
+from django.db.models.functions import Greatest
 from django.utils import timezone
 
 from .models import (
@@ -122,6 +123,41 @@ def _lock_balances(keys):
     return {(r.item_id, r.location_id): r for r in rows}
 
 
+def _check_history(*, entry_date, deltas, items, places):
+    """Refuse a backdated removal that would take stock below zero on its date or any later date.
+
+    Call after the balance rows are locked, so concurrent posts are serialised. One query per key:
+    lines dated before entry_date are folded into the entry_date bucket.
+    """
+    if entry_date >= timezone.localdate():
+        return  # dated today: the current balance check covers it
+    for (item_id, location_id), delta in deltas.items():
+        if delta >= 0:
+            continue
+        day = Greatest(F("entry__entry_date"), Value(entry_date, output_field=DateField()))
+        rows = (
+            StockLine.objects.filter(item_id=item_id, location_id=location_id)
+            .annotate(day=day)
+            .values("day")
+            .annotate(total=Sum("qty"))
+            .order_by("day")
+        )
+        running, lowest, lowest_day = 0, None, entry_date
+        for row in rows:
+            if lowest is None and row["day"] != entry_date:
+                lowest = 0  # nothing on or before entry_date: the balance there was 0
+            running += row["total"]
+            if lowest is None or running < lowest:
+                lowest, lowest_day = running, row["day"]
+        if lowest is None:
+            lowest = 0
+        if lowest + delta < 0:
+            item, place = items[item_id], places[location_id]
+            raise NotEnoughStock(
+                f"Only {lowest} {item.unit} of {item.code} at {place.name} on {lowest_day:%d-%m-%Y}."
+            )
+
+
 def _next_number(kind):
     counter = EntryCounter.objects.select_for_update().get(kind=kind)
     counter.last += 1
@@ -172,6 +208,7 @@ def post_entry(
             raise NotEnoughStock(f"Only {balances[key].qty} {item.unit} of {item.code} at {place.name}.")
         balances[key].qty = new_qty
         balances[key].updated_at = now  # bulk_update does not apply auto_now
+    _check_history(entry_date=entry_date, deltas=deltas, items=items, places=places)
     entry = StockEntry.objects.create(
         number=_next_number(kind),
         kind=kind,
@@ -365,6 +402,10 @@ def save_item(*, data, item=None) -> Item:
             "This item already has stock entries, so its code can't be changed. "
             "Add the new spelling under 'Other spellings'."
         )
+    if item and item.unit != data["unit"] and item.lines.exists():
+        raise ItemError(f"The unit can't be changed because {item.code} already has stock entries.")
+    if item and not data["is_active"] and item.balances.exclude(qty=0).exists():
+        raise ItemError(f"{item.code} still holds stock. Issue or adjust it to zero first.")
     aliases = []
     for raw in data["aliases"]:
         alias = normalise_code(raw)

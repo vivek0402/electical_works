@@ -71,6 +71,22 @@ def test_movements_filter_kind(office_client, stock):
 def test_low_stock(office_client, stock):
     html = office_client.get("/low-stock/").content.decode()
     assert "EIO6006" in html and "LG78-150-700" not in html and "Short by" in html
+    a = stock[0]
+    assert "<th>Unit</th>" in html
+    assert f'href="/stock/in/?item={a.pk}" class="btn btn-sm btn-in"' in html
+
+
+def test_movements_search_finds_other_spellings_and_descriptions(office_client, office_user):
+    from apps.inventory.models import ItemAlias
+
+    item = make_item("EIO8437", spare_type="PCB / LED module")
+    item.description = "Round LED module"
+    item.save()
+    ItemAlias.objects.create(item=item, alias="EI08437", search_key="E108437")
+    post_entry(kind=EntryKind.IN, entry_date=TODAY, user=office_user, lines=[Line(item, loc(), 3)])
+    for q in ["EI08437", "round led", "EIO-8437"]:
+        assert "IN-0001" in office_client.get(f"/movements/?q={q}").content.decode(), q
+    assert "IN-0001" not in office_client.get("/movements/?q=nothing-like-it").content.decode()
 
 
 @pytest.mark.parametrize("url", ["/stock/?q=ab%00", "/movements/?q=%00", "/stock/?q=%00%00x"])

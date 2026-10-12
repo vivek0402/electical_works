@@ -344,3 +344,47 @@ def test_two_people_cannot_oversell():
     [t.join() for t in threads]
     assert sorted(results) == ["ok", "refused"]
     assert StockBalance.objects.get(item=item).qty == 2
+
+
+def days_ago(n):
+    return today() - datetime.timedelta(days=n)
+
+
+def test_backdated_out_before_stock_arrived_refused(pcb, user):
+    post(EntryKind.IN, Line(pcb, loc(), 10), user=user)
+    with pytest.raises(StockError) as err:
+        post_entry(kind=EntryKind.OUT, entry_date=days_ago(20), lines=[Line(pcb, loc(), -6)], user=user)
+    assert err.value.message == f"Only 0 NOS of EIO6006 at Vizag Office on {days_ago(20):%d-%m-%Y}."
+    assert qty(pcb) == 10 and StockEntry.objects.count() == 1
+
+
+def test_backdated_out_after_stock_arrived_allowed(pcb, user):
+    post_entry(kind=EntryKind.IN, entry_date=days_ago(20), lines=[Line(pcb, loc(), 10)], user=user)
+    post_entry(kind=EntryKind.OUT, entry_date=days_ago(10), lines=[Line(pcb, loc(), -6)], user=user)
+    assert qty(pcb) == 4
+
+
+def test_backdated_out_that_breaks_a_later_point_refused(pcb, user):
+    # 10 in on day -20, 8 out on day -5, 5 in today: today's balance is 7.
+    post_entry(kind=EntryKind.IN, entry_date=days_ago(20), lines=[Line(pcb, loc(), 10)], user=user)
+    post_entry(kind=EntryKind.OUT, entry_date=days_ago(5), lines=[Line(pcb, loc(), -8)], user=user)
+    post(EntryKind.IN, Line(pcb, loc(), 5), user=user)
+    # 6 out on day -10 fits then (10 on hand) and today (7), but day -5 would drop to -4.
+    with pytest.raises(StockError) as err:
+        post_entry(kind=EntryKind.OUT, entry_date=days_ago(10), lines=[Line(pcb, loc(), -6)], user=user)
+    assert err.value.message == f"Only 2 NOS of EIO6006 at Vizag Office on {days_ago(5):%d-%m-%Y}."
+    assert qty(pcb) == 7
+    # 2 out on day -10 keeps every point at 0 or more.
+    post_entry(kind=EntryKind.OUT, entry_date=days_ago(10), lines=[Line(pcb, loc(), -2)], user=user)
+    assert qty(pcb) == 5
+
+
+def test_backdated_transfer_checks_the_source_history(pcb, user):
+    post(EntryKind.IN, Line(pcb, loc(), 10), user=user)
+    with pytest.raises(StockError, match="on "):
+        post_entry(
+            kind=EntryKind.TRF,
+            entry_date=days_ago(3),
+            lines=[Line(pcb, loc(), -4), Line(pcb, loc("TV Shop"), 4)],
+            user=user,
+        )

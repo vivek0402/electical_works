@@ -1,6 +1,6 @@
 # SVKML Stock Management
 
-A web app for SVKML Electrical Works (Wipro Lighting service partner, Visakhapatnam) that replaces the stock spreadsheets. Staff record Stock IN, Stock OUT, transfers between locations and count adjustments with proper forms. Every entry goes into an append-only ledger and is never edited or deleted: a mistake is cancelled with an Undo entry. On top of the ledger the app shows current stock per location, each item's history, the movements register, low-stock warnings and a global search that also finds old spellings of item codes. Four reports download as neatly formatted Excel files.
+A web app for SVKML Electrical Works (Wipro Lighting service partner, Visakhapatnam) that replaces the stock spreadsheets. Staff record Stock IN, Stock OUT, transfers between locations and count adjustments with proper forms. Every entry goes into an append-only ledger and is never edited or deleted: a mistake is cancelled with an Undo entry. On top of the ledger the app shows current stock per location, each item's history, the movements register, low-stock warnings and a global search that also finds old spellings of item codes. Five reports download as neatly formatted Excel files.
 
 Built with Django 5.2, PostgreSQL 16, Tabler and Tom Select. There is no Node build step.
 
@@ -67,3 +67,5 @@ Use `config.settings.prod`. It needs `SECRET_KEY`, `DATABASE_URL` and `ALLOWED_H
 ```bash
 DJANGO_SETTINGS_MODULE=config.settings.prod uv run python manage.py check --deploy
 ```
+
+Run `python manage.py migrate` on every deploy, before the new code starts serving, e.g. `docker compose run --rm web python manage.py migrate`.
