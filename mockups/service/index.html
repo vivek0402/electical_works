@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en-IN" data-bs-navbar-position="vertical">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MOCKUP · SVKML Stock</title>
+  <link rel="stylesheet" href="vendor/tabler.min.css">
+  <link rel="stylesheet" href="vendor/tom-select.bootstrap5.min.css">
+  <link rel="stylesheet" href="vendor/tabler-vendors.min.css">
+  <link rel="stylesheet" href="vendor/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Left sidebar (collapses behind the menu button on phones) -->
+    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark" id="sidebar">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
+          aria-controls="sidebar-menu" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button>
+        <a href="#dash" class="navbar-brand navbar-brand-autodark brand">
+          <span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Stock</span>
+        </a>
+        <div class="collapse navbar-collapse" id="sidebar-menu">
+          <ul class="navbar-nav pt-lg-3" id="nav">
+            <li class="nav-section">Overview</li>
+            <li class="nav-item"><a class="nav-link" href="#dash"><span class="nav-link-icon"><i class="ti ti-layout-dashboard"></i></span><span class="nav-link-title">Dashboard</span></a></li>
+            <li class="nav-section">Stock</li>
+            <li class="nav-item"><a class="nav-link" href="#in"><span class="nav-link-icon text-in"><i class="ti ti-package-import"></i></span><span class="nav-link-title">Stock IN</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#out"><span class="nav-link-icon text-out"><i class="ti ti-package-export"></i></span><span class="nav-link-title">Stock OUT</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#transfer"><span class="nav-link-icon"><i class="ti ti-arrows-exchange"></i></span><span class="nav-link-title">Transfer</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#adjust"><span class="nav-link-icon"><i class="ti ti-adjustments-horizontal"></i></span><span class="nav-link-title">Adjust count</span></a></li>
+            <li class="nav-section">Reports</li>
+            <li class="nav-item"><a class="nav-link" href="#stock"><span class="nav-link-icon"><i class="ti ti-building-warehouse"></i></span><span class="nav-link-title">Current stock</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#moves"><span class="nav-link-icon"><i class="ti ti-history"></i></span><span class="nav-link-title">Movements</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#low"><span class="nav-link-icon"><i class="ti ti-alert-triangle"></i></span><span class="nav-link-title">Low stock</span>
+              <span class="badge bg-red-lt ms-auto" id="nav-low"></span></a></li>
+            <li class="nav-section">Setup</li>
+            <li class="nav-item"><a class="nav-link" href="#items"><span class="nav-link-icon"><i class="ti ti-box"></i></span><span class="nav-link-title">Items</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="#masters"><span class="nav-link-icon"><i class="ti ti-settings"></i></span><span class="nav-link-title">Masters</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <div class="page-wrapper">
+      <div class="mock-banner">MOCKUP · demo data in your browser · nothing is saved (reload resets it)</div>
+      <!-- Top bar: global search, low-stock bell, user menu -->
+      <header class="navbar navbar-expand-md d-print-none topbar">
+        <div class="container-xl">
+          <div class="global-search">
+            <div class="input-icon">
+              <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+              <input id="gsearch" type="search" class="form-control" placeholder="Search items, old spellings, entry no…" autocomplete="off" aria-label="Search">
+            </div>
+            <div id="gresults" class="dropdown-menu gresults"></div>
+          </div>
+          <div class="navbar-nav flex-row order-md-last ms-auto align-items-center gap-2">
+            <a href="#low" class="nav-link px-2 position-relative" title="Low stock" aria-label="Low stock">
+              <i class="ti ti-bell fs-2"></i><span class="badge bg-red text-white badge-notification bell-count" id="bell-count"></span></a>
+            <div class="nav-item dropdown">
+              <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="User menu">
+                <span class="avatar avatar-sm bg-blue-lt">OF</span>
+                <div class="d-none d-xl-block ps-2"><div>Office</div><div class="mt-1 small text-secondary">Office staff</div></div>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                <span class="dropdown-header">Signed in as Office</span>
+                <a href="#masters" class="dropdown-item"><i class="ti ti-settings me-2"></i>Masters</a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item" onclick="toast('Mockup: logout does nothing.');return false"><i class="ti ti-logout me-2"></i>Logout</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-header d-print-none"><div class="container-xl" id="page-header"></div></div>
+      <div class="page-body"><div class="container-xl" id="view"><div class="spinner-border"></div></div></div>
+    </div>
+  </div>
+
+  <div class="modal modal-blur fade" id="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" id="modal-dialog"><div class="modal-content" id="modal-content"></div></div>
+  </div>
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts"></div>
+
+  <script src="vendor/tabler.min.js"></script>
+  <script src="vendor/tom-select.complete.min.js"></script>
+  <script src="vendor/apexcharts.min.js"></script>
+  <script src="data.js"></script>
+  <script src="ui.js"></script>
+  <script src="forms.js"></script>
+  <script src="screens.js"></script>
+</body>
+</html>
