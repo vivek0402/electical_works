@@ -15,7 +15,7 @@ make demo                   # users admin + office, demo items and ~5 weeks of s
 
 Open http://localhost:8000 and log in as `office` or `admin` with your `SEED_PASSWORD`.
 
-`make demo` only loads stock history into an empty ledger. It refuses to run a second time.
+`make demo` only loads stock history into an empty ledger. It refuses to run a second time. It also refuses when `DEBUG` is off (production settings); to load demo data into such an environment on purpose, run `python manage.py seed_stock_demo --force`.
 
 ## Run it without Docker
 
@@ -49,7 +49,7 @@ With the dev server running on demo data:
 uv run --with playwright python e2e/walkthrough.py http://127.0.0.1:8000 office "<SEED_PASSWORD>"
 ```
 
-It logs in and goes through global search, Stock IN with a new item created from the picker, a refused over-issue, a transfer, an adjustment, sorting and exporting current stock, and undo. It then checks the phone menu. It exits 0 only if every step passes and the browser logs no JS errors. Screenshots are saved as `e2e/screen-*.png` (git-ignored). Run `uv run --with playwright playwright install chromium` once first.
+The password can also come from the `E2E_PASSWORD` environment variable. The walkthrough logs in and goes through global search, Stock IN with a new item created from the picker, a refused over-issue, a transfer, an adjustment, and sorting and exporting current stock. It then undoes the adjustment, the transfer and the Stock IN, so it can be run again without draining stock, and checks the phone menu. It exits 0 only if every step passes and the browser logs no JS errors. Screenshots are saved as `e2e/screen-*.png` (git-ignored); on a failure it saves `e2e/screen-<width>-FAIL.png` and prints the failing step. Run `uv run --with playwright playwright install chromium` once first.
 
 ## Roles
 

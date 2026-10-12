@@ -7,6 +7,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -48,10 +49,15 @@ def _masters(model, names):
 
 
 class Command(BaseCommand):
-    help = "Load demo items and stock history (only into an empty ledger)."
+    help = "Load demo items and stock history (only into an empty ledger, and only with DEBUG or --force)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--force", action="store_true", help="Load demo data even when DEBUG is off.")
 
     @transaction.atomic
-    def handle(self, *args, **options):
+    def handle(self, *args, force=False, **options):
+        if not settings.DEBUG and not force:
+            raise CommandError("Demo data is for development. Pass --force to load it anyway.")
         if StockEntry.objects.exists():
             raise CommandError(
                 "The database already has stock entries. Demo data is only for an empty system."
@@ -73,7 +79,7 @@ class Command(BaseCommand):
                     "company": companies[d["company"]],
                     "description": d["desc"],
                     "cat_ref": d["catRef"],
-                    "fitting_type": fitting_types.get(d["fittingType"]),
+                    "fitting_type": fitting_types[d["fittingType"]] if d["fittingType"] else None,
                     "wattage_w": d["watt"],
                     "current_ma": d["ma"],
                     "unit": d["unit"],
@@ -93,6 +99,7 @@ class Command(BaseCommand):
                     raise CommandError(f"{e['no']} comes before {e['reverses']}, the entry it undoes.")
                 entry = undo_entry(entry=posted[e["reverses"]], reason=e["note"], user=user, entry_date=when)
             else:
+                # PKD in the demo file is "MM-YYYY" (packed month); it is stored as the 1st of that month.
                 lines = [
                     Line(
                         items[ln["code"]],
@@ -111,7 +118,7 @@ class Command(BaseCommand):
                     user=user,
                     subtype=subtype,
                     party=e.get("party", ""),
-                    company=companies.get(e.get("party")) if subtype == InSource.SUPPLIER else None,
+                    company=companies[e["party"]] if subtype == InSource.SUPPLIER else None,
                     ref=e.get("ref", ""),
                     reason=REASONS[e["reason"]] if e["kind"] == EntryKind.ADJ else "",
                     note=e.get("note", ""),
