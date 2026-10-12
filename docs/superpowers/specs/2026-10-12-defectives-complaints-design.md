@@ -57,6 +57,7 @@ There is no state-machine library. Each model gets a `TRANSITIONS` dict plus a s
   - **OUT subtype `COMPLAINT`:** parts given at a complaint visit.
   - **Collection at a site:** IN subtype `DEFECTIVE_COLLECTED`, posted to the Defective store.
   - **Dispatch to a company:** OUT subtype `RETURN_TO_COMPANY`, posted from the Defective store.
+  - **Rejected piece returned by the company:** IN subtype `DEFECTIVE_RETURNED`, posted to the Defective store.
   - **"Mark defective":** a TRF from a good location to the Defective store.
   - **Scrapping a rejected piece:** an ADJ with reason DAMAGED, posted at the Defective store.
 - **`StockEntry.complaint`** is a nullable FK, and **`StockEntry.return_batch`** is a nullable FK, so that ledger entries can link back.
