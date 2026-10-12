@@ -1,6 +1,4 @@
 import pytest
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from apps.inventory.models import EntryKind
@@ -38,15 +36,12 @@ def test_exact_match_first_and_aliases_included(office_client):
     assert items[0]["code"] == "EIO8437" and "aliases" in items[0]
 
 
-def test_search_uses_one_query_plus_prefetch(office_client):
+def test_search_query_budget(office_client, django_assert_max_num_queries):
     for n in range(5):
         make_item(f"ZZ10{n}")
-    with CaptureQueriesContext(connection) as ctx:
-        office_client.get("/search/?q=ZZ10")
-    search_sql = [
-        q["sql"] for q in ctx.captured_queries if "inventory_item" in q["sql"] or "itemalias" in q["sql"]
-    ]
-    assert len(search_sql) <= 3, search_sql  # items, aliases prefetch (plus session/user queries excluded)
+    # session, user, role groups, items, aliases prefetch, entries
+    with django_assert_max_num_queries(6):
+        assert len(office_client.get("/search/?q=ZZ10").json()["items"]) == 5
 
 
 def test_search_requires_login(client):

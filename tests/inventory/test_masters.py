@@ -90,7 +90,7 @@ def test_concurrent_duplicate_gets_friendly_message(admin_client):
 
 def test_unknown_kind_and_blank_name(admin_client):
     html = admin_client.post("/masters/", {"kind": "nope", "name": "x"}, follow=True).content.decode()
-    assert "Type a name" in html
+    assert "Unknown list" in html
     html = admin_client.post("/masters/", {"kind": "location", "name": "   "}, follow=True).content.decode()
     assert "Type a name" in html
 
@@ -113,7 +113,69 @@ def test_toggle_active(admin_client):
 
 
 def test_toggle_bad_pk_is_harmless(admin_client):
-    assert admin_client.post("/masters/toggle/", {"kind": "location", "pk": "abc"}).status_code == 302
+    r = admin_client.post("/masters/toggle/", {"kind": "location", "pk": "abc"}, follow=True)
+    assert "Nothing to change" in r.content.decode()
+
+
+def test_cannot_hide_location_holding_stock(admin_client, office_user):
+    from django.utils import timezone
+
+    from apps.inventory.models import EntryKind
+    from apps.inventory.services import Line, post_entry
+    from tests.factories import loc, make_item
+
+    place = loc()
+    post_entry(
+        kind=EntryKind.IN,
+        entry_date=timezone.localdate(),
+        lines=[Line(make_item("HLD1"), place, 3)],
+        user=office_user,
+    )
+    html = admin_client.post(
+        "/masters/toggle/", {"kind": "location", "pk": place.pk}, follow=True
+    ).content.decode()
+    place.refresh_from_db()
+    assert place.is_active and "still holds stock" in html
+
+
+def test_dashboard_card_keeps_hidden_location_with_stock():
+    from apps.inventory import selectors
+    from apps.inventory.models import StockBalance
+    from tests.factories import loc, make_item
+
+    place = loc()
+    StockBalance.objects.create(item=make_item("HLD2"), location=place, qty=4)
+    Location.objects.filter(pk=place.pk).update(is_active=False)  # hidden although it holds stock
+    shown = {p.pk: totals for p, totals in selectors.location_unit_totals()}
+    assert shown[place.pk] == {"NOS": 4}
+    StockBalance.objects.all().delete()
+    assert place.pk not in {p.pk for p, _ in selectors.location_unit_totals()}
+
+
+def test_cannot_hide_last_active_location_or_company(admin_client):
+    Location.objects.exclude(name="TV Shop").update(is_active=False)
+    place = Location.objects.get(name="TV Shop")
+    html = admin_client.post(
+        "/masters/toggle/", {"kind": "location", "pk": place.pk}, follow=True
+    ).content.decode()
+    place.refresh_from_db()
+    assert place.is_active and "At least one location must stay active" in html
+    Company.objects.exclude(name="Havells").update(is_active=False)
+    co = Company.objects.get(name="Havells")
+    html = admin_client.post(
+        "/masters/toggle/", {"kind": "company", "pk": co.pk}, follow=True
+    ).content.decode()
+    co.refresh_from_db()
+    assert co.is_active and "At least one company must stay active" in html
+
+
+def test_cannot_hide_default_company(admin_client):
+    co = Company.objects.get(name="Wipro Lighting")
+    html = admin_client.post(
+        "/masters/toggle/", {"kind": "company", "pk": co.pk}, follow=True
+    ).content.decode()
+    co.refresh_from_db()
+    assert co.is_active and "default supplier" in html
 
 
 def test_office_cannot_toggle(office_client):

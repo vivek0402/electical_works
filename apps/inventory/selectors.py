@@ -54,7 +54,9 @@ def location_unit_totals():
     totals = defaultdict(lambda: defaultdict(int))
     for row in StockBalance.objects.exclude(qty=0).values("location_id", "item__unit").annotate(q=Sum("qty")):
         totals[row["location_id"]][row["item__unit"]] += row["q"]
-    return [(place, dict(totals[place.pk])) for place in Location.objects.filter(is_active=True)]
+    # same rule as stock_locations: active, or hidden but still holding stock
+    places = Location.objects.filter(Q(is_active=True) | Q(pk__in=list(totals)))
+    return [(place, dict(totals[place.pk])) for place in places]
 
 
 def dashboard_stats(today):

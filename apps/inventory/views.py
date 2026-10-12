@@ -476,7 +476,7 @@ def global_search(request):
         {**selectors.picker_option(i), "url": reverse("item_detail", args=[i.pk])}
         for i in search_items(q, limit=8)
     ]
-    entries = StockEntry.objects.filter(number__icontains=q.upper()).order_by("-id")[:5]
+    entries = StockEntry.objects.filter(number__icontains=q).order_by("-id")[:5]
     return JsonResponse(
         {
             "items": found,
