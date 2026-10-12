@@ -39,7 +39,7 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
 - [x] Task 8 Items list, form, item card: 6f1d045 + review fixes e0a3304 (156 tests; 0 JS errors; spec ✅ quality ✅)
 - [x] Task 9 Entry forms, entry detail, undo: 93bf29d + review fixes 2aac19b (197 tests; 23-step browser walkthrough, 0 JS errors; spec ✅ quality ✅). Known limit: two truly simultaneous POSTs of one form could both save (button guard + session token cover double-clicks).
 - [x] Task 10 Excel exports: 4bdf48a + review fixes edb588b (217 tests; formula/URL injection blocked; spec ✅ quality ✅)
-- [ ] Task 11 Masters page, global search, permission sweep
+- [x] Task 11 Masters page, global search, permission sweep: 0a8a3a0 + review fixes cbb2891 (286 tests; every route guarded; spec ✅ quality ✅)
 - [ ] Task 12 Demo data, e2e walkthrough, docs
 
 ### Step A result (2026-10-11): mockup ready, waiting for the user's approval ⛔
