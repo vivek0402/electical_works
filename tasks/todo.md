@@ -55,3 +55,4 @@ Plan: `docs/superpowers/plans/2026-10-11-stock-system.md` (12 tasks). Executed w
   - filters and the item-card date range;
   - all 4 export files served.
 - Exports were read back with openpyxl and each has: company/title/filter rows, a styled table (TableStyleMedium2) with filter buttons, frozen header, real dates in dd-mm-yyyy, A4 landscape fit-to-width, repeated header row, and auto-fit widths.
+- [x] Final whole-branch review: fixes b4fc55e (305 tests; item deactivate/unit guards, backdated-stock check, low-stock Stock IN button + unit, dashboard links, movements search on old spellings). TRUNCATE trigger deliberately not added (breaks test DB flush); see models.py comment.
