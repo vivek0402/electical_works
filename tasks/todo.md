@@ -63,4 +63,22 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
 - [x] User approved the mockup (2026-10-12: "yes it is good enough")
 - [x] Implementation plan `docs/superpowers/plans/2026-10-12-defectives-complaints.md` (18 tasks, 119b2ca; self-reviewed against the real code; demo replay simulated with 107 actions and 0 errors)
-- [ ] Build with subagent-driven development
+- [ ] Build with subagent-driven development (Postgres now on port 62757)
+  - [x] S1 Defective store location + entry subtypes: deac8d2 + fixes 0fbeade (323 tests; spec ✅ quality ✅)
+  - [ ] S2 Good stock excludes the Defective store
+  - [ ] S3 Counter, defectives models, batch link
+  - [ ] S4 Piece services (create, mark defective, scrap)
+  - [ ] S5 Batch services (create, add, remove, dispatch, settle)
+  - [ ] S6 Shared line editor + Mark defective page
+  - [ ] S7 Return batch screens + piece card
+  - [ ] S8 Pieces list + bulk actions
+  - [ ] S9 Defectives dashboard + 2 exports
+  - [ ] S10 Complaints models + links
+  - [ ] S11 Complaints services
+  - [ ] S12 New complaint + complaint page
+  - [ ] S13 Record visit page
+  - [ ] S14 Complaints list, dashboard + 2 exports
+  - [ ] S15 Sites & technicians screens
+  - [ ] S16 Integration (nav, search, dashboard, links, sweep)
+  - [ ] S17 Service demo data
+  - [ ] S18 Walkthrough, docs, todo
