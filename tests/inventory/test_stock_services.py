@@ -320,7 +320,7 @@ def test_rebuild_matches_cache(pcb, user):
     assert "Rebuilt" in out.getvalue() and balance_drift() == [] and qty(pcb, "TV Shop") == 4
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db(transaction=True, serialized_rollback=True)
 def test_two_people_cannot_oversell():
     clerk = make_user("clerk2", "OFFICE")
     item = make_item("EIO9326", spare_type="PCB / LED module")

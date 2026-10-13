@@ -3,6 +3,7 @@ answer. Statuses move only through services.py, which checks TRANSITIONS and log
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 from apps.inventory.models import IMMUTABLE, Company, Item, Location, StockEntry
 
@@ -33,6 +34,7 @@ class Outcome(models.TextChoices):
 
 
 GOOD_OUTCOMES = {Outcome.REPLACED, Outcome.REPAIRED}  # a piece comes back into good stock
+UNBATCHED = [PieceStatus.IN_STORE, PieceStatus.SCRAPPED]  # statuses where a piece is in no batch
 
 
 class Source(models.TextChoices):
@@ -74,6 +76,19 @@ class ReturnBatch(models.Model):
     class Meta:
         ordering = ["-id"]
         verbose_name_plural = "return batches"
+        constraints = [
+            # Dispatched exactly when it has a dispatch date and the Stock OUT that sent it.
+            models.CheckConstraint(
+                condition=Q(
+                    status=BatchStatus.DISPATCHED, dispatched_on__isnull=False, dispatch_entry__isnull=False
+                )
+                | (
+                    ~Q(status=BatchStatus.DISPATCHED)
+                    & Q(dispatched_on__isnull=True, dispatch_entry__isnull=True)
+                ),
+                name="batch_dispatched_has_date_and_entry",
+            ),
+        ]
 
     def __str__(self):
         return self.number
@@ -110,6 +125,24 @@ class DefectivePiece(models.Model):
     class Meta:
         ordering = ["-id"]
         indexes = [models.Index(fields=["status", "company"], name="piece_status_company_idx")]
+        constraints = [
+            models.CheckConstraint(condition=Q(status__in=PieceStatus.values), name="piece_status_valid"),
+            # In store or scrapped: no batch. In a draft batch, sent or settled: always a batch.
+            models.CheckConstraint(
+                condition=Q(status__in=UNBATCHED, return_batch__isnull=True)
+                | (~Q(status__in=UNBATCHED) & Q(return_batch__isnull=False)),
+                name="piece_batch_matches_status",
+            ),
+            models.CheckConstraint(
+                condition=~Q(status=PieceStatus.SETTLED) | (~Q(outcome="") & Q(settled_on__isnull=False)),
+                name="piece_settled_has_outcome",
+            ),
+            models.CheckConstraint(
+                condition=Q(replacement_entry__isnull=True)
+                | Q(outcome__in=[Outcome.REPLACED, Outcome.REPAIRED]),
+                name="piece_replacement_needs_good_outcome",
+            ),
+        ]
 
     def __str__(self):
         return self.tag
@@ -132,7 +165,19 @@ class BatchLine(models.Model):
 
     class Meta:
         ordering = ["id"]
-        constraints = [models.UniqueConstraint(fields=["batch", "piece"], name="piece_once_per_batch")]
+        constraints = [
+            models.UniqueConstraint(fields=["batch", "piece"], name="piece_once_per_batch"),
+            # A piece waits on at most one company answer at a time.
+            models.UniqueConstraint(
+                fields=["piece"], condition=Q(outcome=""), name="one_open_line_per_piece"
+            ),
+            # An answer always has its date, and a date always has its answer.
+            models.CheckConstraint(
+                condition=Q(outcome="", settled_on__isnull=True)
+                | (~Q(outcome="") & Q(settled_on__isnull=False)),
+                name="line_outcome_has_date",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.batch} / {self.piece}"
