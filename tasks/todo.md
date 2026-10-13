@@ -66,7 +66,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - [ ] Build with subagent-driven development (Postgres now on port 62757)
   - [x] S1 Defective store location + entry subtypes: deac8d2 + fixes 0fbeade (323 tests; spec ✅ quality ✅)
   - [x] S2 Good stock excludes the Defective store: 0c0a23b + fixes acd8aef (342 tests; fits 1366px; spec ✅ quality ✅)
-  - [ ] S3 Counter, defectives models, batch link
+  - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
   - [ ] S4 Piece services (create, mark defective, scrap)
   - [ ] S5 Batch services (create, add, remove, dispatch, settle)
   - [ ] S6 Shared line editor + Mark defective page
