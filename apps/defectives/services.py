@@ -5,10 +5,15 @@ Lock order. Every service here, and every caller that combines them, takes row l
 
     ReturnBatch row, then pieces in tag order, then post_entry, then next_number(s)
 
-- ReturnBatch row: `_lock_batch` (Task 5), one batch per call.
+- ReturnBatch row: `_lock_batch`, one batch per call.
 - Pieces: `_lock`, always in tag order.
 - post_entry: StockBalance rows in (item, location) order, then the EntryCounter row for the entry kind.
 - next_number / next_numbers: the core Counter row (DEF tags last of all).
+
+One exception: a service that creates a document may take that document's own new number first (create_batch
+takes next_number("RB") before anything else). The new batch row is invisible to other transactions until
+commit, so nobody else can be waiting on it, and no service takes an RB number after locking a batch or
+pieces, so the RB Counter row never closes a cycle.
 
 So a service posts its ledger entry first and only then allocates piece tags. Two transactions that both
 follow this order can never wait on each other in a cycle. The Counter rows are the most contended, so taking
@@ -23,15 +28,28 @@ from django.db import transaction
 from django.db.models import Max, Sum
 from django.utils import timezone
 
-from apps.core.numbers import next_numbers
+from apps.core.numbers import next_number, next_numbers
 from apps.inventory.models import AdjustReason, EntryKind, Location, ServiceSubtype, StockLine
 from apps.inventory.services import Line, post_entry
 
-from .models import TRANSITIONS, DefectiveEvent, DefectivePiece, PieceStatus, ScrapReason, Source
+from .models import (
+    GOOD_OUTCOMES,
+    TRANSITIONS,
+    BatchLine,
+    BatchStatus,
+    DefectiveEvent,
+    DefectivePiece,
+    Outcome,
+    PieceStatus,
+    ReturnBatch,
+    ScrapReason,
+    Source,
+)
 
 TAG = re.compile(r"^DEF-?(\d{1,6})$")
 MAX_PIECES_PER_LINE = 200  # one form line can't tag more pieces than this
 FAULT_MAX, BATCH_CODE_MAX, NOTE_MAX = 200, 40, 300  # the model field lengths
+BATCH_NOTE_MAX, COURIER_MAX, DOCKET_MAX = 200, 60, 40  # ReturnBatch field lengths
 
 
 class DefectiveError(ValidationError):
@@ -77,7 +95,7 @@ def _check_date(day, what="The date", missing="Choose the date."):
 def _check_after_history(pieces, day, what="came into the store"):
     """Refuse a move dated before a piece's latest event, so each piece's history stays in date order.
 
-    One query for all the pieces. Task 5 uses it for add / dispatch / settle as well, with its own `what`
+    One query for all the pieces. The batch services use it too, each with its own `what`
     (e.g. "was added to the batch").
     """
     latest = dict(
@@ -330,3 +348,240 @@ def scrap(*, pieces, reason, user, note="", entry_date=None):
         p.settled_on = entry_date
     DefectivePiece.objects.bulk_update(pieces, ["status", "outcome", "settled_on"])
     return entry
+
+
+# ---------------------------------------------------------------- return batches
+
+
+def _lock_batch(batch):
+    """The batch re-read and row-locked (first in the lock order), so two people can't change it at once."""
+    return ReturnBatch.objects.select_for_update(of=("self",)).select_related("company").get(pk=batch.pk)
+
+
+@transaction.atomic
+def create_batch(*, company, user, pieces=(), note="", created_on=None):
+    """A new draft return batch for one company, optionally filled with pieces in store.
+
+    Takes the batch's own RB number first (the documented exception to the lock order), then add_pieces
+    locks the new batch and the pieces.
+    """
+    if company is None:
+        raise DefectiveError("Choose the company the pieces go back to.")
+    for p in pieces:
+        if p.company_id != company.pk:
+            raise DefectiveError(
+                f"{p.tag} is a {p.company.name} piece. A batch holds one company's pieces only."
+            )
+    created_on = created_on or timezone.localdate()
+    _check_date(created_on, "The batch date", "Choose the batch date.")
+    note = (note or "").strip()
+    _check_length(note, BATCH_NOTE_MAX, "note")
+    batch = ReturnBatch.objects.create(
+        number=next_number("RB"),
+        company=company,
+        created_on=created_on,
+        note=note,
+        created_by=user,
+    )
+    if pieces:
+        add_pieces(batch=batch, pieces=pieces, user=user, at=created_on)
+    return batch
+
+
+@transaction.atomic
+def add_pieces(*, batch, pieces, user, at=None):
+    """Put pieces in store into a draft batch of the same company.
+
+    Clears any answer left from an earlier batch (a piece rejected and sent back): the piece is waiting on the
+    company again, and that earlier answer stays on its BatchLine.
+    """
+    batch = _lock_batch(batch)
+    if not batch.is_draft:
+        raise DefectiveError(
+            f"{batch.number} was dispatched on {batch.dispatched_on:%d-%m-%Y}, so it is locked. "
+            "Start a new batch."
+        )
+    pieces = _lock(pieces)
+    if not pieces:
+        raise DefectiveError("Tick at least one piece.")
+    for p in pieces:
+        if p.company_id != batch.company_id:
+            raise DefectiveError(
+                f"{batch.number} is for {batch.company.name}, but {p.tag} is a {p.company.name} piece. "
+                "A batch holds one company's pieces only."
+            )
+        if p.status != PieceStatus.IN_STORE:
+            raise DefectiveError(_not_in_store(p, "added"))
+    at = at or timezone.localdate()
+    _check_date(at)
+    if at < batch.created_on:
+        raise DefectiveError(f"The date can't be before the batch was created ({batch.created_on:%d-%m-%Y}).")
+    _check_after_history(pieces, at, what="came into the store")
+    _move_all(pieces, PieceStatus.IN_BATCH, at=at, user=user, note=f"Added to {batch.number}")
+    for p in pieces:
+        p.return_batch = batch
+        p.outcome, p.settled_on = "", None
+    DefectivePiece.objects.bulk_update(pieces, ["status", "return_batch", "outcome", "settled_on"])
+    BatchLine.objects.bulk_create(BatchLine(batch=batch, piece=p) for p in pieces)
+    return batch
+
+
+@transaction.atomic
+def remove_pieces(*, batch, pieces, user, at=None):
+    """Take pieces out of a draft batch; they are back in store and their line in the batch is dropped."""
+    batch = _lock_batch(batch)
+    if not batch.is_draft:
+        raise DefectiveError(f"{batch.number} is dispatched and locked.")
+    pieces = _lock(pieces)
+    if not pieces:
+        raise DefectiveError("Tick at least one piece.")
+    for p in pieces:
+        if p.return_batch_id != batch.pk or p.status != PieceStatus.IN_BATCH:
+            raise DefectiveError(f"{p.tag} is not in {batch.number}.")
+    at = at or timezone.localdate()
+    _check_date(at)
+    _check_after_history(pieces, at, what="was added to the batch")
+    _move_all(pieces, PieceStatus.IN_STORE, at=at, user=user, note=f"Removed from {batch.number}")
+    for p in pieces:
+        p.return_batch = None
+    DefectivePiece.objects.bulk_update(pieces, ["status", "return_batch"])
+    BatchLine.objects.filter(batch=batch, piece__in=pieces).delete()
+    return batch
+
+
+@transaction.atomic
+def dispatch(*, batch, dispatched_on, courier, docket_no, user):
+    """Send a draft batch: one Stock OUT (RETURN_TO_COMPANY) from the Defective store, then lock the batch.
+    Returns the entry."""
+    batch = _lock_batch(batch)
+    if not batch.is_draft:
+        raise DefectiveError(f"{batch.number} was already dispatched.")
+    # The batch row is locked and every change to its lines locks it first, so this list can't go stale.
+    piece_ids = list(batch.lines.values_list("piece_id", flat=True))
+    if not piece_ids:
+        raise DefectiveError("An empty batch can't be dispatched. Add pieces first.")
+    _check_date(dispatched_on, "The dispatch date", "Choose the dispatch date.")
+    if dispatched_on < batch.created_on:
+        raise DefectiveError(
+            f"The dispatch date can't be before the batch was created ({batch.created_on:%d-%m-%Y})."
+        )
+    courier, docket_no = (courier or "").strip(), (docket_no or "").strip()
+    if not courier:
+        raise DefectiveError("Choose the courier.")
+    if not docket_no:
+        raise DefectiveError("Enter the docket / LR number.")
+    _check_length(courier, COURIER_MAX, "courier")
+    _check_length(docket_no, DOCKET_MAX, "docket / LR number")
+    pieces = _lock([DefectivePiece(pk=pk) for pk in piece_ids])
+    _check_after_history(pieces, dispatched_on, what="was added to the batch")
+    store = Location.defective_store()
+    entry = post_entry(
+        kind=EntryKind.OUT,
+        entry_date=dispatched_on,
+        lines=[Line(item, store, -n) for item, n in _per_item(pieces)],
+        user=user,
+        subtype=ServiceSubtype.RETURN_TO_COMPANY,
+        party=batch.company.name,
+        company=batch.company,
+        ref=docket_no,
+        note=f"{batch.number}: {courier} {docket_no}",
+        return_batch=batch,
+    )
+    batch.status, batch.dispatched_on, batch.dispatch_entry = BatchStatus.DISPATCHED, dispatched_on, entry
+    batch.courier, batch.docket_no = courier, docket_no
+    batch.save(update_fields=["status", "dispatched_on", "dispatch_entry", "courier", "docket_no"])
+    _move_all(
+        pieces,
+        PieceStatus.SENT,
+        at=dispatched_on,
+        user=user,
+        note=f"Dispatched with {batch.number} ({courier} {docket_no})",
+        entry=entry,
+    )
+    DefectivePiece.objects.bulk_update(pieces, ["status"])
+    return entry
+
+
+@transaction.atomic
+def settle(*, batch, pieces, outcome, settled_on, user, to_location=None):
+    """Record the company's answer for sent pieces of one dispatched batch. One ledger entry per piece:
+
+    REPLACED / REPAIRED: Stock IN (REPLACEMENT) of 1 into `to_location`, a good-stock location.
+    REJECTED_RETURNED: Stock IN (DEFECTIVE_RETURNED) of 1 back into the Defective store; the piece is in
+    store again.
+    REJECTED_SCRAPPED: nothing to post, the piece already left with the dispatch OUT.
+    The answer is saved on the piece (its latest) and on its BatchLine (this batch's). Returns the entries.
+    """
+    batch = _lock_batch(batch)
+    if batch.is_draft:
+        raise DefectiveError("Only a dispatched batch can be settled.")
+    pieces = _lock(pieces)
+    if not pieces:
+        raise DefectiveError("Tick the pieces the company has answered for.")
+    if outcome not in Outcome.values:
+        raise DefectiveError("Choose the outcome.")
+    _check_date(settled_on, "The date", "Choose the settlement date.")
+    if settled_on < batch.dispatched_on:
+        raise DefectiveError(
+            f"The date can't be before the batch was dispatched ({batch.dispatched_on:%d-%m-%Y})."
+        )
+    good = outcome in GOOD_OUTCOMES
+    if good and (to_location is None or to_location.is_defective_store or not to_location.is_active):
+        raise DefectiveError("Choose the good-stock location the replacement pieces go into.")
+    for p in pieces:
+        if p.return_batch_id != batch.pk:
+            raise DefectiveError(f"{p.tag} is not in {batch.number}.")
+        if p.status != PieceStatus.SENT:
+            raise DefectiveError(
+                f"{p.tag} is not waiting on the company (it is {p.get_status_display().lower()}). "
+                "Only sent pieces can be settled."
+            )
+    _check_after_history(pieces, settled_on, what="was dispatched")
+    store = Location.defective_store()
+    label = Outcome(outcome).label
+    to = PieceStatus.IN_STORE if outcome == Outcome.REJECTED_RETURNED else PieceStatus.SETTLED
+    where = f" → {to_location.name}" if good else ""
+    lines = {
+        line.piece_id: line for line in BatchLine.objects.filter(batch=batch, piece__in=pieces, outcome="")
+    }
+    common = {
+        "kind": EntryKind.IN,
+        "entry_date": settled_on,
+        "user": user,
+        "party": batch.company.name,
+        "company": batch.company,
+        "ref": batch.number,
+        "return_batch": batch,
+    }
+    entries = []
+    for p in pieces:
+        entry = None
+        if good:
+            entry = post_entry(
+                lines=[Line(p.item, to_location, 1)],
+                subtype=ServiceSubtype.REPLACEMENT,
+                note=f"{label} for {p.tag}",
+                **common,
+            )
+            p.replacement_entry = entry
+        elif outcome == Outcome.REJECTED_RETURNED:
+            entry = post_entry(
+                lines=[Line(p.item, store, 1, p.batch_code, p.pkd)],
+                subtype=ServiceSubtype.DEFECTIVE_RETURNED,
+                note=f"Rejected by the company, {p.tag} sent back",
+                **common,
+            )
+        _move(p, to, at=settled_on, user=user, note=f"{batch.number}: {label}{where}", entry=entry)
+        p.outcome, p.settled_on = outcome, settled_on
+        if to == PieceStatus.IN_STORE:
+            p.return_batch = None
+        line = lines[p.pk]
+        line.outcome, line.settled_on, line.entry = outcome, settled_on, entry
+        line.to_location = to_location if good else None
+        if entry:
+            entries.append(entry)
+    DefectivePiece.objects.bulk_update(
+        pieces, ["status", "outcome", "settled_on", "replacement_entry", "return_batch"]
+    )
+    BatchLine.objects.bulk_update(list(lines.values()), ["outcome", "settled_on", "entry", "to_location"])
+    return entries
