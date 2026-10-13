@@ -347,3 +347,45 @@ def test_entry_form_has_token_and_qty_limit(office_client):
     assert f'name="entry_token" value="{token}"' in html
     script = (Path(settings.BASE_DIR) / "static" / "js" / "entry-form.js").read_text(encoding="utf-8")
     assert 'max="1000000"' in script
+
+
+def stock_out_data(item, qty):
+    return {
+        "entry_date": TODAY,
+        "subtype": "SITE",
+        "party": "Bank site",
+        "location": loc().pk,
+        **lines((item, qty)),
+    }
+
+
+def test_stock_out_double_submit_saves_once(office_client, office_user):
+    a = make_item("EIO6006")
+    stock(a, 5, office_user)
+    office_client.get("/stock/out/")
+    data = {**stock_out_data(a, 1), "entry_token": office_client.session["entry_tokens"][-1]}
+    first = office_client.post("/stock/out/", data)
+    again = office_client.post("/stock/out/", data, follow=True)
+    assert again.redirect_chain[-1][0] == first.url == "/entries/OUT-0001/"
+    assert "This entry was already saved." in again.content.decode()
+    assert StockEntry.objects.filter(kind=EntryKind.OUT).count() == 1
+
+
+def test_stock_out_back_then_different_entry_with_spent_token_saves_nothing(office_client, office_user):
+    """Save, press Back, change the quantity and save again with the same (spent) token: that is a different
+    entry, so it is not sent to OUT-0001 and not saved; the page asks to save again, keeping the lines."""
+    a = make_item("EIO6006")
+    stock(a, 5, office_user)
+    office_client.get("/stock/out/")
+    token = office_client.session["entry_tokens"][-1]
+    office_client.post("/stock/out/", {**stock_out_data(a, 1), "entry_token": token})
+    r = office_client.post("/stock/out/", {**stock_out_data(a, 2), "entry_token": token})
+    html = r.content.decode()
+    assert r.status_code == 200 and "This form had expired" in html and '"qty": "2"' in html
+    assert StockEntry.objects.filter(kind=EntryKind.OUT).count() == 1
+    fresh = office_client.session["entry_tokens"][-1]
+    assert fresh != token and f'value="{fresh}"' in html
+
+
+def test_entry_pages_are_never_cached(office_client):
+    assert "no-store" in office_client.get("/stock/out/")["Cache-Control"]

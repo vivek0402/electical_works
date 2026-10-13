@@ -4,12 +4,13 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from apps.accounts.decorators import role_required
 from apps.accounts.roles import OFFICE
 from apps.core.tables import sort_and_page
-from apps.core.tokens import EXPIRED, already_saved, is_issued, new_token, spend_token
+from apps.core.tokens import guarded_post, page_token
 
 from . import selectors
 from .entry_lines import parse_lines, raw_lines
@@ -363,26 +364,25 @@ def _entry_page(request, mode):
     error, lines, token = None, [], ""
     if request.method == "POST":
         lines = raw_lines(request.POST)
-        token = request.POST.get("entry_token", "")
-        done = already_saved(request.session, token)
-        if done:
-            messages.warning(request, "This entry was already saved.")
-            return redirect("entry_detail", number=done)
-        if not is_issued(request.session, token):
-            # Missing or expired (not one we issued): save nothing, keep what was typed, ask to save again.
-            token, error = "", EXPIRED
-        elif form.is_valid():
+
+        def run():
+            if not form.is_valid():
+                raise StockError(form.first_error())
             try:
                 entry = _save_entry(mode, form.cleaned_data, parse_lines(lines, mode), request.user)
             except StockError as exc:
-                error = f"{exc.message} Nothing was saved."
-            else:
-                spend_token(request.session, token, entry.number)
-                count = entry.lines.values("item").distinct().count()
-                messages.success(request, f"{entry.number} saved · {count} item(s). Stock updated.")
-                return redirect("entry_detail", number=entry.number)
-        else:
-            error = form.first_error()
+                raise StockError(f"{exc.message} Nothing was saved.") from exc
+            count = entry.lines.values("item").distinct().count()
+            messages.success(request, f"{entry.number} saved · {count} item(s). Stock updated.")
+            return entry.number
+
+        # A missing, expired or already-spent token saves nothing, keeps what was typed and asks again.
+        result = guarded_post(request, run)
+        if result.replayed:
+            messages.warning(request, "This entry was already saved.")
+        if result.saved:
+            return redirect("entry_detail", number=result.saved)
+        error, token = result.error, result.token
     elif request.GET.get("item", "").isdecimal():
         lines = [{"item": request.GET["item"], "qty": "", "batch": "", "pkd": "", "expected": ""}]
     items, balances = selectors.picker_data()
@@ -397,7 +397,7 @@ def _entry_page(request, mode):
         "icon": icon,
         "button": button,
         "error": error,
-        "token": token or new_token(request.session),
+        "token": token or page_token(request.session, request.path),
         "subtypes": subtypes,
         "items_data": items,
         "balances_data": balances,
@@ -410,21 +410,25 @@ def _entry_page(request, mode):
     return render(request, "inventory/entry_form.html", context)
 
 
+@never_cache
 @role_required(OFFICE)
 def stock_in(request):
     return _entry_page(request, "in")
 
 
+@never_cache
 @role_required(OFFICE)
 def stock_out(request):
     return _entry_page(request, "out")
 
 
+@never_cache
 @role_required(OFFICE)
 def transfer(request):
     return _entry_page(request, "trf")
 
 
+@never_cache
 @role_required(OFFICE)
 def adjust(request):
     return _entry_page(request, "adj")

@@ -320,3 +320,171 @@ def test_entry_page_links_its_return_batch(office_client, office_user, pieces):
 
 def test_nav_links_return_batches(office_client):
     assert 'href="/defectives/batches/"' in office_client.get("/").content.decode()
+
+
+# ---------------------------------------------------------------- review fixes: tokens, tags, links, queries
+
+
+def test_back_then_remove_another_piece_with_a_spent_token_saves_nothing(office_client, office_user, pieces):
+    """Remove DEF-0001 with token T, press Back, remove DEF-0002 with T: a different action, so it is not
+    'already saved' and not done; the page asks again with a fresh token."""
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:2])
+    url = f"/defectives/batches/{b.number}/"
+    t = token(office_client, url)
+    office_client.post(url + "remove/", {"tag": "DEF-0001", "entry_token": t})
+    r = office_client.post(url + "remove/", {"tag": "DEF-0002", "entry_token": t})
+    html = r.content.decode()
+    assert r.status_code == 200 and "This form had expired" in html and "already saved" not in html
+    assert DefectivePiece.objects.get(tag="DEF-0002").status == PieceStatus.IN_BATCH
+    fresh = office_client.session["entry_tokens"][-1]
+    assert fresh != t and f'value="{fresh}"' in html
+
+
+def test_identical_double_remove_goes_to_the_saved_result(office_client, office_user, pieces):
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:2])
+    url = f"/defectives/batches/{b.number}/"
+    data = {"tag": "DEF-0001", "entry_token": token(office_client, url)}
+    first = office_client.post(url + "remove/", data)
+    again = office_client.post(url + "remove/", data)
+    assert again.status_code == 302 and again.url == first.url == url and b.lines.count() == 1
+
+
+def test_reading_other_pages_keeps_the_batch_page_token(office_client, office_user):
+    many = make_pieces(make_item("LG78-150-700"), 26, office_user)
+    b = create_batch(company=wipro(), user=office_user, pieces=many[:1])
+    url = f"/defectives/batches/{b.number}/"
+    t = token(office_client, url)
+    for p in many[1:]:  # 25 other pages
+        office_client.get(f"/defectives/pieces/{p.tag}/")
+    office_client.get(url)  # opening the page again reuses its token
+    assert office_client.session["entry_tokens"][-1] == t
+    html = office_client.post(
+        url + "remove/", {"tag": "DEF-0001", "entry_token": t}, follow=True
+    ).content.decode()
+    assert "DEF-0001 removed from" in html
+
+
+def test_batch_pages_are_never_cached(office_client, office_user, pieces):
+    b = create_batch(company=wipro(), user=office_user)
+    for url in [
+        f"/defectives/batches/{b.number}/",
+        "/defectives/pieces/DEF-0001/",
+        "/defectives/batches/new/",
+    ]:
+        assert "no-store" in office_client.get(url)["Cache-Control"]
+
+
+@pytest.mark.parametrize("action", ["remove", "settle", "add"])
+def test_unknown_tags_are_refused(office_client, office_user, pieces, action):
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:1])
+    if action == "settle":
+        dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    url = f"/defectives/batches/{b.number}/"
+    data = {
+        "remove": {"tag": "DEF-9999"},
+        "settle": {
+            "tag": ["DEF-0001", "DEF-9999"],
+            "outcome": "REJECTED_SCRAPPED",
+            "settled_on": TODAY.isoformat(),
+        },
+        "add": {"tag": ["DEF-0002", "DEF-9999"]},
+    }[action]
+    html = post(office_client, url, url + f"{action}/", data).content.decode()
+    assert "There is no piece tagged DEF-9999." in html
+    assert b.lines.count() == 1 and not b.lines.exclude(outcome="").exists()
+
+
+def test_new_batch_refuses_an_unknown_tag(office_client, pieces):
+    url = "/defectives/batches/new/"
+    html = post(
+        office_client, url, url, {"company": wipro().pk, "tag": ["DEF-0001", "DEF-9999"]}
+    ).content.decode()
+    assert (
+        "There is no piece tagged DEF-9999. Nothing was saved." in html and not ReturnBatch.objects.exists()
+    )
+
+
+def test_add_ticked_keeps_the_ticks_after_an_error(office_client, office_user, pieces):
+    make_pieces(make_item("MCB 16A SP", company="Havells", spare_type="Accessory"), 1, office_user)
+    b = create_batch(company=wipro(), user=office_user)
+    url = f"/defectives/batches/{b.number}/"
+    html = post(office_client, url, url + "add/", {"tag": ["DEF-0002", "DEF-0004"]}).content.decode()
+    assert "one company&#x27;s pieces only" in html
+    assert 'value="DEF-0002" data-tick aria-label="Tick DEF-0002" checked' in html
+
+
+@pytest.mark.parametrize(
+    ("outcome", "label"),
+    [(Outcome.REPLACED, "Replacement went into"), (Outcome.REPAIRED, "Repaired piece went into")],
+)
+def test_piece_card_shows_where_the_good_piece_went(office_client, office_user, pieces, outcome, label):
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:1])
+    dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    [entry] = settle(
+        batch=b, pieces=pieces[:1], outcome=outcome, settled_on=TODAY, to_location=loc(), user=office_user
+    )
+    html = office_client.get("/defectives/pieces/DEF-0001/").content.decode()
+    assert label in html and "Vizag Office" in html and f'href="/entries/{entry.number}/"' in html
+
+
+def test_piece_card_has_no_went_into_row_when_rejected(office_client, office_user, pieces):
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:1])
+    dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    settle(batch=b, pieces=pieces[:1], outcome=Outcome.REJECTED_RETURNED, settled_on=TODAY, user=office_user)
+    html = office_client.get("/defectives/pieces/DEF-0001/").content.decode()
+    assert "Replacement went into" not in html and "Repaired piece went into" not in html
+
+
+def test_piece_card_url_is_normalised(office_client, pieces):
+    r = office_client.get("/defectives/pieces/def-1/")
+    assert r.status_code == 302 and r.url == "/defectives/pieces/DEF-0001/"
+
+
+@pytest.mark.parametrize("evil", ["https://evil.com/", "//evil.com/x"])
+def test_an_external_next_is_ignored(office_client, office_user, pieces, evil):
+    b = create_batch(company=wipro(), user=office_user)
+    page = "/defectives/pieces/DEF-0001/"
+    r = post(
+        office_client, page, f"/defectives/batches/{b.number}/add/", {"tag": "DEF-0001", "next": evil}, False
+    )
+    assert r.status_code == 302 and r.url == f"/defectives/batches/{b.number}/"
+
+
+@pytest.fixture
+def thirty(office_user):
+    """A dispatched batch of 30 pieces, 10 replaced and 10 returned."""
+    many = make_pieces(make_item("LG78-150-700"), 30, office_user)
+    b = create_batch(company=wipro(), user=office_user, pieces=many)
+    dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    settle(
+        batch=b,
+        pieces=many[:10],
+        outcome=Outcome.REPLACED,
+        settled_on=TODAY,
+        to_location=loc(),
+        user=office_user,
+    )
+    settle(batch=b, pieces=many[10:20], outcome=Outcome.REJECTED_RETURNED, settled_on=TODAY, user=office_user)
+    return b
+
+
+def test_batch_detail_query_count(office_client, thirty, django_assert_max_num_queries):
+    url = f"/defectives/batches/{thirty.number}/"
+    office_client.get(url)  # warm the session
+    with django_assert_max_num_queries(12):
+        assert office_client.get(url).status_code == 200
+
+
+def test_piece_card_query_count(office_client, thirty, django_assert_max_num_queries):
+    office_client.get("/defectives/pieces/DEF-0001/")
+    with django_assert_max_num_queries(12):
+        assert office_client.get("/defectives/pieces/DEF-0001/").status_code == 200
+
+
+def test_draft_batch_query_count(office_client, office_user, django_assert_max_num_queries):
+    many = make_pieces(make_item("LG78-150-700"), 30, office_user)
+    b = create_batch(company=wipro(), user=office_user, pieces=many[:15])
+    url = f"/defectives/batches/{b.number}/"
+    office_client.get(url)
+    with django_assert_max_num_queries(12):
+        assert office_client.get(url).status_code == 200

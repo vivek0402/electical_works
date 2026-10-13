@@ -8,7 +8,7 @@
       {% for b in drafts %}<form method="post" action="{% url 'batch_add' b.number %}" class="m-0" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="tag" value="{{ piece.tag }}"><input type="hidden" name="next" value="{{ request.path }}">
         <button class="dropdown-item" type="submit"><i class="ti ti-packages"></i> Draft <span class="code ms-1">{{ b.number }}</span><span class="text-secondary ms-2 small">created {{ b.created_on|date }}</span></button></form>{% endfor %}
       {% if drafts %}<div class="dropdown-divider"></div>{% endif %}
-      <a class="dropdown-item" href="{% url 'batch_new' %}?company={{ piece.company_id }}&amp;tag={{ piece.tag }}"><i class="ti ti-plus"></i> New batch for {{ piece.company.name }}</a>
+      <a class="dropdown-item" href="{% url 'batch_new' %}?company={{ piece.company_id|urlencode }}&amp;tag={{ piece.tag|urlencode }}"><i class="ti ti-plus"></i> New batch for {{ piece.company.name }}</a>
     </div></div>{% endif %}
   {% if piece.return_batch %}<a href="{% url 'batch_detail' piece.return_batch.number %}" class="btn btn-quiet"><i class="ti ti-truck-return"></i> Batch {{ piece.return_batch.number }}</a>{% endif %}
 {% endblock %}
@@ -25,6 +25,7 @@
       <div class="datagrid-item"><div class="datagrid-title">Fault</div><div class="datagrid-content">{{ piece.fault|default:"—" }}</div></div>
       <div class="datagrid-item"><div class="datagrid-title">Return batch</div><div class="datagrid-content">{% if piece.return_batch %}<a class="code" href="{% url 'batch_detail' piece.return_batch.number %}">{{ piece.return_batch.number }}</a>{% else %}—{% endif %}</div></div>
       <div class="datagrid-item"><div class="datagrid-title">Latest answer</div><div class="datagrid-content">{% if piece.outcome %}{{ piece.outcome|outcome_badge }} <span class="text-secondary small">on {{ piece.settled_on|date }}</span>{% else %}—{% endif %}</div></div>
+      {% if went_into %}<div class="datagrid-item"><div class="datagrid-title">{{ went_into_label }}</div><div class="datagrid-content">{{ went_into.to_location.name }}{% if went_into.entry %} · <a class="code" href="{% url 'entry_detail' went_into.entry.number %}">{{ went_into.entry.number }}</a>{% endif %}</div></div>{% endif %}
       <div class="datagrid-item"><div class="datagrid-title">Ledger entries</div><div class="datagrid-content">{% for e in entries %}<a class="code" href="{% url 'entry_detail' e.number %}">{{ e.number }}</a>{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}</div></div>
     </div></div></div>
     <div class="card mt-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-truck-return"></i> Return batches</h3>

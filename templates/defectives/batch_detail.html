@@ -38,19 +38,20 @@
   <div class="col-lg-5"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-plus"></i> Add pieces</h3></div>
     <div class="card-body border-bottom"><label class="form-label" for="add-tag">Type or scan a tag</label>
       <form method="post" action="{% url 'batch_add' batch.number %}" class="input-group" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-        <input id="add-tag" name="tag_text" class="form-control code{% if errors.add %} is-invalid{% endif %}" placeholder="e.g. DEF-0042" autocomplete="off" maxlength="12" value="{{ posted.tag_text|default:'' }}"{% if errors.add %} aria-describedby="add-err" autofocus{% endif %}>
+        <input id="add-tag" name="tag_text" class="form-control code{% if add_error_typed %} is-invalid{% endif %}" placeholder="e.g. DEF-0042" autocomplete="off" maxlength="12" value="{{ posted.tag_text|default:'' }}"{% if add_error_typed %} aria-describedby="add-err" autofocus{% endif %}>
         <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> Add</button></form>
-      {% if errors.add %}<div id="add-err" class="text-danger small mt-2" role="alert"><i class="ti ti-alert-circle"></i> {{ errors.add }}</div>{% endif %}</div>
+      {% if add_error_typed %}<div id="add-err" class="text-danger small mt-2" role="alert"><i class="ti ti-alert-circle"></i> {{ errors.add }}</div>{% endif %}</div>
     <form method="post" action="{% url 'batch_add' batch.number %}" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
       <div class="table-responsive"><table class="table table-vcenter card-table">
         <thead><tr><th class="c-check">{% if available %}<input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all">{% endif %}</th><th>Tag</th><th>Item</th><th>Source</th></tr></thead>
         <tbody>{% for p in available %}<tr>
-          <td class="c-check"><input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"></td>
+          <td class="c-check"><input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}></td>
           <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td><td><span class="code">{{ p.item.code }}</span><div class="small text-secondary">{{ p.item.description }}</div></td><td>{% include "defectives/_source.html" %}</td></tr>
         {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No other {{ batch.company.name }} pieces in store.</td></tr>{% endfor %}</tbody>
       </table></div>
       <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span class="text-secondary small" data-tick-count data-empty-text="Only {{ batch.company.name }} pieces in store are listed."></span>
-        {% if available %}<button type="submit" class="btn btn-quiet ms-auto"><i class="ti ti-check"></i> Add ticked</button>{% endif %}</div></form></div></div>
+        {% if available %}<button type="submit" class="btn btn-quiet ms-auto"><i class="ti ti-check"></i> Add ticked</button>{% endif %}</div>
+      {% if errors.add and not add_error_typed %}<div class="px-3 pb-3" role="alert"><div class="text-danger small"><i class="ti ti-alert-circle"></i> {{ errors.add }}</div></div>{% endif %}</form></div></div>
 {% else %}
   <div class="col-12"><div class="alert alert-secondary mb-0"><i class="ti ti-lock"></i> Dispatched on {{ batch.dispatched_on|date }}, so this batch is locked: pieces can't be added or removed. Settle each piece when the company answers.</div></div>
   <div class="col-12"><form method="post" action="{% url 'batch_settle' batch.number %}" class="card" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">

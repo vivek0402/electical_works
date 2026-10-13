@@ -143,3 +143,11 @@ def test_errors_name_the_line_on_screen_past_a_blank_row(office_client, drv, qty
     html = submit(office_client, blank_row_between(drv, qty, fault)).content.decode()
     assert f"{message} Nothing was saved." in html
     assert not DefectivePiece.objects.exists()
+
+
+def test_mark_back_then_different_lines_with_a_spent_token_saves_nothing(office_client, drv):
+    office_client.get(URL)
+    t = office_client.session["entry_tokens"][-1]
+    office_client.post(URL, {**mark_data(drv, 1), "entry_token": t})
+    html = office_client.post(URL, {**mark_data(drv, 2), "entry_token": t}).content.decode()
+    assert "This form had expired" in html and DefectivePiece.objects.count() == 1
