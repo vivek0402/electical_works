@@ -73,7 +73,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S7 Return batch screens + piece card: 431f72f + fixes 4ee901b (527 tests; token replay fixed app-wide; spec ✅ quality ✅)
   - [x] S8 Pieces list + bulk actions: 94c9a46 + fixes 98705c5 (557 tests; spec ✅ quality ✅). Final review: tighten the 30-piece bulk-add query guard (80 is loose)
   - [x] S9 Defectives dashboard + 2 exports: 55d37be + fixes 8ea4969 (581 tests; spec ✅ quality ✅)
-  - [ ] S10 Complaints models + links
+  - [x] S10 Complaints models + links: 851d64c + integrity fixes 56d38f8 + landline phones 56f3a92 (624 tests; spec ✅ quality ✅)
   - [ ] S11 Complaints services
   - [ ] S12 New complaint + complaint page
   - [ ] S13 Record visit page
