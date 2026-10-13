@@ -62,5 +62,5 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - [x] Prior-art research (InvenTree Return Order, Odoo Repair, django-helpdesk, OCA/rma). Verdict: build ourselves, borrow patterns only.
 - [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
 - [x] User approved the mockup (2026-10-12: "yes it is good enough")
-- [ ] Implementation plan (writing-plans): defectives first, then complaints
+- [x] Implementation plan `docs/superpowers/plans/2026-10-12-defectives-complaints.md` (18 tasks, 119b2ca; self-reviewed against the real code; demo replay simulated with 107 actions and 0 errors)
 - [ ] Build with subagent-driven development
