@@ -63,7 +63,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
 - [x] User approved the mockup (2026-10-12: "yes it is good enough")
 - [x] Implementation plan `docs/superpowers/plans/2026-10-12-defectives-complaints.md` (18 tasks, 119b2ca; self-reviewed against the real code; demo replay simulated with 107 actions and 0 errors)
-- [ ] Build with subagent-driven development (Postgres now on port 62757)
+- [ ] Build with subagent-driven development (Postgres now on port 63810; it may move after a reboot, so check `scratchpad/pgdata2/postmaster.pid` line 4)
   - [x] S1 Defective store location + entry subtypes: deac8d2 + fixes 0fbeade (323 tests; spec ✅ quality ✅)
   - [x] S2 Good stock excludes the Defective store: 0c0a23b + fixes acd8aef (342 tests; fits 1366px; spec ✅ quality ✅)
   - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
@@ -84,7 +84,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [ ] S18 Walkthrough, docs, todo
 
 ### Brief notes for the remaining service tasks (from reviews; give these to each implementer)
-- Postgres for tests: `postgresql://postgres:@127.0.0.1:62757/postgres`. Any `transaction=True` test needs `serialized_rollback=True`.
+- Postgres for tests: `postgresql://postgres:@127.0.0.1:63810/postgres`. Any `transaction=True` test needs `serialized_rollback=True`.
 - **Lock order** (top of `apps/defectives/services.py`): ReturnBatch row → pieces in tag order → `post_entry` → `next_number(s)`. Exception to document: a document's *own* new number (RB / VIS / CMP) may be taken first.
 - **Task 5:**
   - After `_lock`, call `_check_after_history(pieces, date, what="…")`.
