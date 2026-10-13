@@ -444,7 +444,7 @@ def entry_detail(request, number):
         {
             "entry": entry,
             "undone_by": undone_by,
-            "can_undo": entry.kind != EntryKind.REV and undone_by is None,
+            "can_undo": entry.kind != EntryKind.REV and undone_by is None and not entry.is_defective,
         },
     )
 

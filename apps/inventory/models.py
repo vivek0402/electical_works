@@ -31,8 +31,32 @@ class Master(models.Model):
         super().save(*args, **kwargs)
 
 
+class LocationQuerySet(models.QuerySet):
+    def good(self):
+        """Locations that hold good stock: everything except the Defective store."""
+        return self.filter(is_defective_store=False)
+
+
 class Location(Master):
-    pass
+    # The one location that holds failed pieces. Only the defectives services post to it; it is never
+    # offered on the stock forms and never counted as good stock.
+    is_defective_store = models.BooleanField(default=False, editable=False)
+
+    objects = LocationQuerySet.as_manager()
+
+    class Meta(Master.Meta):
+        constraints = [
+            *Master.Meta.constraints,
+            models.UniqueConstraint(
+                fields=["is_defective_store"],
+                condition=Q(is_defective_store=True),
+                name="one_defective_store",
+            ),
+        ]
+
+    @classmethod
+    def defective_store(cls):
+        return cls.objects.get(is_defective_store=True)
 
 
 class Company(Master):
@@ -148,6 +172,39 @@ class AdjustReason(models.TextChoices):
     OTHER = "OTHER", "Other"
 
 
+class ServiceSubtype(models.TextChoices):
+    """Subtypes posted only by the complaints and defectives services, never chosen on a stock form."""
+
+    REPLACEMENT = "REPLACEMENT", "Replacement / repaired piece from company"
+    DEFECTIVE_COLLECTED = "DEFECTIVE_COLLECTED", "Failed parts collected at site"
+    DEFECTIVE_RETURNED = "DEFECTIVE_RETURNED", "Rejected piece back from company"
+    COMPLAINT = "COMPLAINT", "Parts given at complaint visit"
+    RETURN_TO_COMPANY = "RETURN_TO_COMPANY", "Defectives returned to company"
+    MARK_DEFECTIVE = "MARK_DEFECTIVE", "Marked defective"
+    SCRAP_DEFECTIVE = "SCRAP_DEFECTIVE", "Defective pieces scrapped"
+
+
+SERVICE_SUBTYPES = {
+    EntryKind.IN: {
+        ServiceSubtype.REPLACEMENT,
+        ServiceSubtype.DEFECTIVE_COLLECTED,
+        ServiceSubtype.DEFECTIVE_RETURNED,
+    },
+    EntryKind.OUT: {ServiceSubtype.COMPLAINT, ServiceSubtype.RETURN_TO_COMPANY},
+    EntryKind.TRF: {ServiceSubtype.MARK_DEFECTIVE},
+    EntryKind.ADJ: {ServiceSubtype.SCRAP_DEFECTIVE},
+}
+# Every line of these entries is at the Defective store.
+STORE_SUBTYPES = {
+    ServiceSubtype.DEFECTIVE_COLLECTED,
+    ServiceSubtype.DEFECTIVE_RETURNED,
+    ServiceSubtype.RETURN_TO_COMPANY,
+    ServiceSubtype.SCRAP_DEFECTIVE,
+}
+# Entries the defectives screens own. Undo is refused for them.
+DEFECTIVE_SUBTYPES = STORE_SUBTYPES | {ServiceSubtype.MARK_DEFECTIVE, ServiceSubtype.REPLACEMENT}
+
+
 class EntryCounter(models.Model):
     """Last number used per entry kind (IN-0007 ...). Locked while posting."""
 
@@ -169,7 +226,7 @@ class StockEntry(models.Model):
 
     number = models.CharField(max_length=12, unique=True)
     kind = models.CharField(max_length=3, choices=EntryKind.choices)
-    subtype = models.CharField(max_length=10, blank=True)  # InSource for IN, OutTarget for OUT
+    subtype = models.CharField(max_length=20, blank=True)  # InSource / OutTarget / ServiceSubtype
     entry_date = models.DateField()
     party = models.CharField("supplier / issued to", max_length=120, blank=True)
     company = models.ForeignKey(Company, on_delete=models.PROTECT, null=True, blank=True)
@@ -194,8 +251,10 @@ class StockEntry(models.Model):
     def details(self):
         """Short human description.
 
-        e.g. 'From supplier', 'To site / customer', 'Damaged', 'Undo of OUT-0003'.
+        e.g. 'From supplier', 'To site / customer', 'Damaged', 'Marked defective', 'Undo of OUT-0003'.
         """
+        if self.subtype in ServiceSubtype.values:
+            return ServiceSubtype(self.subtype).label
         if self.kind == EntryKind.IN:
             return InSource(self.subtype).label if self.subtype else ""
         if self.kind == EntryKind.OUT:
@@ -205,6 +264,11 @@ class StockEntry(models.Model):
         if self.kind == EntryKind.ADJ:
             return self.get_reason_display()
         return f"Undo of {self.reverses.number}" if self.reverses_id else "Undo"
+
+    @property
+    def is_defective(self):
+        """True for entries the defectives screens own (collection, mark, dispatch, settlement, scrap)."""
+        return self.subtype in DEFECTIVE_SUBTYPES
 
     @property
     def is_undone(self):

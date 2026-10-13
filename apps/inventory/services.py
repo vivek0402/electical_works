@@ -13,6 +13,8 @@ from django.db.models.functions import Greatest
 from django.utils import timezone
 
 from .models import (
+    SERVICE_SUBTYPES,
+    STORE_SUBTYPES,
     AdjustReason,
     EntryCounter,
     EntryKind,
@@ -21,6 +23,7 @@ from .models import (
     ItemAlias,
     Location,
     OutTarget,
+    ServiceSubtype,
     StockBalance,
     StockEntry,
     StockLine,
@@ -69,13 +72,14 @@ def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
         return  # an undo mirrors an existing entry, so the rules below do not apply to it
 
     # Kind-specific checks for new entries.
+    service = SERVICE_SUBTYPES.get(kind, set())
     if kind == EntryKind.IN:
-        if subtype and subtype not in InSource.values:
+        if subtype and subtype not in InSource.values and subtype not in service:
             raise StockError("Choose where the stock came from.")
     elif kind == EntryKind.OUT:
-        if subtype and subtype not in OutTarget.values:
+        if subtype and subtype not in OutTarget.values and subtype not in service:
             raise StockError("Choose who the stock was issued to.")
-    elif subtype:
+    elif subtype and subtype not in service:
         raise StockError(f"{EntryKind(kind).label} entries don't take a type.")
     if kind != EntryKind.ADJ and reason:
         raise StockError("Only an adjustment takes a reason.")
@@ -88,6 +92,15 @@ def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
     ).first()
     if inactive_place:
         raise StockError(f"{inactive_place.name} is inactive.")
+
+    # Only the defectives services post to the Defective store, and their entries only post there.
+    at_store = [line.location.is_defective_store for line in lines]
+    if subtype in STORE_SUBTYPES and not all(at_store):
+        raise StockError(f"{ServiceSubtype(subtype).label} must be posted at the Defective store.")
+    if subtype == ServiceSubtype.MARK_DEFECTIVE and (all(at_store) or not any(at_store)):
+        raise StockError("Marking defective moves stock from a good location into the Defective store.")
+    if any(at_store) and subtype not in STORE_SUBTYPES and subtype != ServiceSubtype.MARK_DEFECTIVE:
+        raise StockError("The Defective store is managed from the Defectives screens.")
 
     label = EntryKind(kind).label
     if kind == EntryKind.IN and any(line.qty < 0 for line in lines):
@@ -286,6 +299,10 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
     entry = StockEntry.objects.select_for_update().get(pk=entry.pk)
     if entry.kind == EntryKind.REV:
         raise StockError("An undo can't be undone. Make a new entry instead.")
+    if entry.is_defective:
+        raise StockError(
+            "This entry belongs to the defective pieces. Use the Defectives screens instead of Undo."
+        )
     if StockEntry.objects.filter(reverses=entry).exists():
         raise StockError("This entry was already undone.")
     if not reason.strip():

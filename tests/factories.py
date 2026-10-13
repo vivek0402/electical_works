@@ -19,6 +19,11 @@ def loc(name="Vizag Office"):
     return Location.objects.get(name=name)
 
 
+def store():
+    """The Defective store (created by migration inventory 0006)."""
+    return Location.defective_store()
+
+
 def make_item(code, unit="NOS", reorder=0, spare_type="Driver", company="Wipro Lighting", **extra):
     """search_key is recomputed by Item.save(), so it is not passed here."""
     return Item.objects.create(

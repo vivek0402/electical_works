@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_masters_seeded():
-    assert set(Location.objects.values_list("name", flat=True)) == {
+    assert set(Location.objects.good().values_list("name", flat=True)) == {
         "Vizag Office",
         "Svkml",
         "TV Shop",
