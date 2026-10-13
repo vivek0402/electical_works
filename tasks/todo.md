@@ -67,7 +67,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S1 Defective store location + entry subtypes: deac8d2 + fixes 0fbeade (323 tests; spec ✅ quality ✅)
   - [x] S2 Good stock excludes the Defective store: 0c0a23b + fixes acd8aef (342 tests; fits 1366px; spec ✅ quality ✅)
   - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
-  - [ ] S4 Piece services (create, mark defective, scrap)
+  - [x] S4 Piece services (create, mark defective, scrap): 4fc893e + fixes fda69cc (407 tests; spec ✅ quality ✅)
   - [ ] S5 Batch services (create, add, remove, dispatch, settle)
   - [ ] S6 Shared line editor + Mark defective page
   - [ ] S7 Return batch screens + piece card
@@ -82,3 +82,19 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [ ] S16 Integration (nav, search, dashboard, links, sweep)
   - [ ] S17 Service demo data
   - [ ] S18 Walkthrough, docs, todo
+
+### Brief notes for the remaining service tasks (from reviews; give these to each implementer)
+- Postgres for tests: `postgresql://postgres:@127.0.0.1:62757/postgres`. Any `transaction=True` test needs `serialized_rollback=True`.
+- **Lock order** (top of `apps/defectives/services.py`): ReturnBatch row → pieces in tag order → `post_entry` → `next_number(s)`. Exception to document: a document's *own* new number (RB / VIS / CMP) may be taken first.
+- **Task 5:**
+  - After `_lock`, call `_check_after_history(pieces, date, what="…")`.
+  - Use `_move_all` + `bulk_update`.
+  - `add_pieces` must clear `outcome=""` and `settled_on=None`; the history stays on BatchLine.
+  - Respect the defectives/0002 DB constraints.
+- **Task 11** `record_visit`:
+  - Collect failed parts with `collect_pieces(entry=…, item, qty, source=SITE_VISIT, collected_on=visit_date, user, batch_code, pkd, fault, visit=visit, note=…)`, one call per line, not one `create_piece` call per piece.
+  - Cap visit lines at 200 pieces.
+- **Task 13:** add `visit=None` to `collect_pieces` (passed into the `bulk_create`) and to `create_piece`.
+- **Task 17:**
+  - Replay the demo in date order.
+  - Re-seed `svkml_demo` fresh: it holds test-only MARK_DEFECTIVE entries with no pieces.
