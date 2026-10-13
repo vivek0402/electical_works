@@ -98,3 +98,12 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - **Task 17:**
   - Replay the demo in date order.
   - Re-seed `svkml_demo` fresh: it holds test-only MARK_DEFECTIVE entries with no pieces.
+- **From Task 5:**
+  - Service signatures:
+    - `create_batch(*, company, user, pieces=(), note="", created_on=None)`
+    - `add_pieces` / `remove_pieces(*, batch, pieces, user, at=None)`
+    - `dispatch(*, batch, dispatched_on, courier, docket_no, user)`, which returns the entry
+    - `settle(*, batch, pieces, outcome, settled_on, user, to_location=None)`, which returns the entries
+  - Forms must cap courier at 60 characters, docket at 40 and note at 200; the services refuse longer values rather than truncating.
+  - Read each batch's answers from `BatchLine`: a piece's `outcome` is empty while it is in a draft or sent batch.
+  - Task 17 must pass every date in order.
