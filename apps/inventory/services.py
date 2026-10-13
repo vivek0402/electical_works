@@ -205,6 +205,7 @@ def post_entry(
     reason="",
     note="",
     reverses=None,
+    return_batch=None,
 ) -> StockEntry:
     """Post a stock entry.
 
@@ -246,6 +247,7 @@ def post_entry(
         reason=reason,
         note=note.strip(),
         reverses=reverses,
+        return_batch=return_batch,
         created_by=user,
     )
     StockLine.objects.bulk_create(

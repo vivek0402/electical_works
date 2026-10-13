@@ -240,6 +240,10 @@ class StockEntry(models.Model):
     reverses = models.OneToOneField(
         "self", on_delete=models.PROTECT, null=True, blank=True, related_name="reversed_by"
     )
+    # Set by the defectives services: the return batch a dispatch or settlement entry belongs to.
+    return_batch = models.ForeignKey(
+        "defectives.ReturnBatch", on_delete=models.PROTECT, null=True, blank=True, related_name="entries"
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 

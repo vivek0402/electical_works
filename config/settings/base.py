@@ -11,6 +11,10 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY", default="")
 DEFAULT_COMPANY = env("DEFAULT_COMPANY", default="Wipro Lighting")
+# Suggestions for the courier box when a return batch is dispatched (any other name can be typed).
+COURIERS = env.list(
+    "COURIERS", default=["DTDC", "Professional Couriers", "ST Courier", "VRL Logistics", "By hand"]
+)
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
@@ -27,6 +31,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.inventory",
+    "apps.defectives",
 ]
 
 MIDDLEWARE = [
