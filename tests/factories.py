@@ -72,3 +72,17 @@ def make_tech(name="Ramu", **extra):
     from apps.complaints.models import Technician
 
     return Technician.objects.get_or_create(name=name, defaults=extra)[0]
+
+
+def make_complaint(user, site=None, company="Wipro Lighting", reported_on=None, **extra):
+    """A complaint filed through the service: Not attended, with its 'Complaint filed' event."""
+    from apps.complaints.services import file_complaint
+
+    return file_complaint(
+        site=site or make_site(),
+        company=Company.objects.get(name=company),
+        fault=extra.pop("fault", "Flood lights not glowing"),
+        reported_on=reported_on or timezone.localdate(),
+        user=user,
+        **extra,
+    )

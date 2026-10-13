@@ -137,6 +137,16 @@ def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
             raise StockError("Write a short note explaining the adjustment.")
 
 
+def lock_balances(lines):
+    """Lock the balance rows of every line, in one sorted pass. Must be called inside a transaction.
+
+    For a service that posts more than one entry in one transaction (complaints.record_visit): call this
+    with all the lines first, so every balance lock is taken before any EntryCounter, as in a single
+    post_entry. The post_entry calls then re-lock rows this transaction already holds, which never waits.
+    """
+    _lock_balances(sorted({(line.item.pk, line.location.pk) for line in lines}))
+
+
 def _lock_balances(keys):
     """Make sure balance rows exist, then lock them in a fixed order (avoids deadlocks)."""
     if not keys:
@@ -322,9 +332,23 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
         raise StockError(
             "This entry belongs to the defective pieces. Use the Defectives screens instead of Undo."
         )
+    return reverse_entry(entry=entry, note=reason, user=user, entry_date=entry_date)
+
+
+@transaction.atomic
+def reverse_entry(*, entry, note, user, entry_date=None, complaint=None) -> StockEntry:
+    """Post the exact opposite of `entry` (kind REV, `reverses=entry`); both stay on record.
+
+    The undo mechanics only. The caller decides whether this entry may be undone at all: undo_entry for the
+    stock screens, complaints.services.undo_visit_parts for a visit's parts given (which passes `complaint`
+    so the reversal stays linked to the complaint). Don't call it from anywhere else.
+    """
+    entry = StockEntry.objects.select_for_update().get(pk=entry.pk)
+    if entry.kind == EntryKind.REV:
+        raise StockError("An undo can't be undone. Make a new entry instead.")
     if StockEntry.objects.filter(reverses=entry).exists():
         raise StockError("This entry was already undone.")
-    if not reason.strip():
+    if not note.strip():
         raise StockError("Please give a reason.")
     entry_date = entry_date or timezone.localdate()
     if entry_date < entry.entry_date:
@@ -342,8 +366,9 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
             party=entry.party,
             company=entry.company,
             ref=entry.ref,
-            note=reason,
+            note=note,
             reverses=entry,
+            complaint=complaint,
         )
     except NotEnoughStock as exc:
         raise StockError(

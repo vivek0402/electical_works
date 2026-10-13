@@ -244,7 +244,8 @@ class StockEntry(models.Model):
     return_batch = models.ForeignKey(
         "defectives.ReturnBatch", on_delete=models.PROTECT, null=True, blank=True, related_name="entries"
     )
-    # Set by the complaints services: the complaint a visit's parts-given / collection entry belongs to.
+    # Set by the complaints services: the complaint a visit's parts-given / collection entry (or the undo of
+    # its parts given) belongs to.
     complaint = models.ForeignKey(
         "complaints.Complaint", on_delete=models.PROTECT, null=True, blank=True, related_name="entries"
     )
@@ -256,10 +257,12 @@ class StockEntry(models.Model):
         indexes = [models.Index(fields=["kind", "entry_date"], name="entry_kind_date_idx")]
         triggers = [IMMUTABLE]
         constraints = [
-            # Only a visit's parts-given OUT and its collection IN name a complaint (Undo copies no link).
+            # Only a visit's parts-given OUT, its collection IN, and the undo of a visit's parts given
+            # (complaints.services.undo_visit_parts, kind REV) name a complaint. undo_entry copies no link.
             models.CheckConstraint(
                 condition=Q(complaint__isnull=True)
-                | Q(subtype__in=[ServiceSubtype.COMPLAINT, ServiceSubtype.DEFECTIVE_COLLECTED]),
+                | Q(subtype__in=[ServiceSubtype.COMPLAINT, ServiceSubtype.DEFECTIVE_COLLECTED])
+                | Q(kind=EntryKind.REV),
                 name="entry_complaint_only_visit_subtypes",
             ),
         ]
@@ -287,7 +290,8 @@ class StockEntry(models.Model):
 
     @property
     def is_complaint_visit(self):
-        """True for a complaint visit's entries (parts given or collected); corrected from the complaint."""
+        """True for a complaint visit's entries (parts given, collected, or the undo of the parts given);
+        corrected from the complaint."""
         return self.complaint_id is not None
 
     @property
