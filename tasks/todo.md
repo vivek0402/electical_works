@@ -70,7 +70,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S4 Piece services (create, mark defective, scrap): 4fc893e + fixes fda69cc (407 tests; spec ✅ quality ✅)
   - [x] S5 Batch services (create, add, remove, dispatch, settle): 7f2b895 + settle deadlock fix de0ecc0 (433 tests; spec ✅ quality ✅)
   - [x] S6 Shared line editor + Mark defective page: 3d21107 + follow-ups bf04da1 (463 tests; walkthrough exit 0; spec ✅ quality ✅)
-  - [ ] S7 Return batch screens + piece card
+  - [x] S7 Return batch screens + piece card: 431f72f + fixes 4ee901b (527 tests; token replay fixed app-wide; spec ✅ quality ✅)
   - [ ] S8 Pieces list + bulk actions
   - [ ] S9 Defectives dashboard + 2 exports
   - [ ] S10 Complaints models + links
@@ -119,3 +119,4 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - The Mark defective step is in `e2e/walkthrough.py`.
 - **Follow-up after Task 13:** merge `static/js/entry-form.js` into `LineEditor` (in/trf/adj modes), or at least share `esc`/`norm`/`lookKey`.
 - **Brand subtitle:** change "Stock" to "Service", as in the mockup. That belongs in Task 16.
+- **Tokens (after 4ee901b):** every write view uses `apps.core.tokens.guarded_post(request, run)`, and pages get their token with `page_token(session, path)`; `new_token` no longer exists. A replay counts only when the same action is posted again (fingerprint of path + POST). Add `@never_cache` to form pages. Defectives views are now a package: `apps/defectives/views/{marking,batches,pieces,common}.py`. `pieces_by_tag` refuses unknown tags.
