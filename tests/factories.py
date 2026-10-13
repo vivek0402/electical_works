@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group, User
+from django.utils import timezone
 
-from apps.inventory.models import Company, Item, Location, SpareType
+from apps.inventory.models import Company, EntryKind, Item, Location, SpareType
+from apps.inventory.services import Line, post_entry
 
 PASSWORD = "test-pass-123"
 
@@ -34,3 +36,26 @@ def make_item(code, unit="NOS", reorder=0, spare_type="Driver", company="Wipro L
         company=Company.objects.get(name=company),
         **extra,
     )
+
+
+def give_stock(item, qty, user, place=None):
+    """A supplier Stock IN of `qty` at `place` (default Vizag Office), dated today."""
+    return post_entry(
+        kind=EntryKind.IN,
+        entry_date=timezone.localdate(),
+        lines=[Line(item, place or loc(), qty)],
+        user=user,
+        subtype="SUPPLIER",
+        party="Test supplier",
+    )
+
+
+def make_pieces(item, qty, user, fault="no output"):
+    """`qty` tagged pieces in the Defective store: stocked at Vizag Office, then marked defective."""
+    from apps.defectives.services import mark_defective
+
+    give_stock(item, qty, user)
+    _, pieces = mark_defective(
+        location=loc(), lines=[(item, qty, fault)], entry_date=timezone.localdate(), user=user
+    )
+    return pieces
