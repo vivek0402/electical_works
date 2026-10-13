@@ -72,7 +72,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S6 Shared line editor + Mark defective page: 3d21107 + follow-ups bf04da1 (463 tests; walkthrough exit 0; spec ✅ quality ✅)
   - [x] S7 Return batch screens + piece card: 431f72f + fixes 4ee901b (527 tests; token replay fixed app-wide; spec ✅ quality ✅)
   - [x] S8 Pieces list + bulk actions: 94c9a46 + fixes 98705c5 (557 tests; spec ✅ quality ✅). Final review: tighten the 30-piece bulk-add query guard (80 is loose)
-  - [ ] S9 Defectives dashboard + 2 exports
+  - [x] S9 Defectives dashboard + 2 exports: 55d37be + fixes 8ea4969 (581 tests; spec ✅ quality ✅)
   - [ ] S10 Complaints models + links
   - [ ] S11 Complaints services
   - [ ] S12 New complaint + complaint page
@@ -124,3 +124,8 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - Task 10 must fill `apps.defectives.selectors.complaint_cells` (the complaint number and the company complaint number for the dispatch list), and the complaint link in `templates/defectives/_source.html`.
   - `UNBUILT` is now an empty set.
   - Outcome counts come from `BatchLine`.
+- **Task 16:**
+  - `service_stats` must import `defectives.selectors.piece_counts()`; don't recount pieces.
+  - Use the date-window convention `__gt=today - N days`.
+  - The defectives chart ids are prefixed `def-chart-*`.
+  - `workbook_response(filters_label=…)` exists.
