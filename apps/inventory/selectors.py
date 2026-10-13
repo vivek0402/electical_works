@@ -67,7 +67,7 @@ def location_unit_totals():
     )
     for row in rows:
         totals[row["location_id"]][row["item__unit"]] += row["q"]
-    # same rule as stock_locations: active, or hidden but still holding stock
+    # same rule as current_stock_rows: active, or hidden but still holding stock
     places = Location.objects.good().filter(Q(is_active=True) | Q(pk__in=list(totals)))
     return [(place, dict(totals[place.pk])) for place in places]
 
@@ -139,12 +139,6 @@ def _filtered_items(f):
     return items
 
 
-def stock_locations(bal):
-    """Active good locations, plus any hidden good location that still holds stock."""
-    held = {loc_id for (_, loc_id), qty in bal.items() if qty}
-    return list(Location.objects.good().filter(Q(is_active=True) | Q(pk__in=held)))
-
-
 def current_stock_rows(f):
     """(rows, locations). Row: {item, per_loc: {location_id: qty}, total, low, defective}.
 
@@ -153,8 +147,13 @@ def current_stock_rows(f):
     """
     bal = balance_map()
     store_id = defective_store_id()
-    locations = [f.location] if f.location else stock_locations(bal)
-    good_ids = list(Location.objects.good().values_list("pk", flat=True))
+    good = list(Location.objects.good())
+    good_ids = [place.pk for place in good]
+    if f.location:
+        locations = [f.location]
+    else:
+        held = {loc_id for (_, loc_id), qty in bal.items() if qty}
+        locations = [p for p in good if p.is_active or p.pk in held]
     rows = []
     for item in _filtered_items(f).filter(is_active=True):
         per_loc = {pk: bal.get((item.pk, pk), 0) for pk in good_ids}

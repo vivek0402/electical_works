@@ -1,1 +1,1 @@
-<th class="{% if num %}num{% endif %}{% if th_class %} {{ th_class }}{% endif %}"><a class="sort {{ cls }}" href="{{ href }}">{{ label }}</a></th>
+<th class="{% if num %}num{% endif %}{% if th_class %} {{ th_class }}{% endif %}"><a class="sort {{ cls }}" href="{{ href }}">{{ label }}{% if sub %}<small class="d-block fw-normal">{{ sub }}</small>{% endif %}</a></th>

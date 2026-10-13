@@ -206,7 +206,7 @@ def item_detail(request, pk):
     item = get_object_or_404(Item.objects.select_related("spare_type", "company", "fitting_type"), pk=pk)
     date_from, date_to, location = history_filters(request.GET, timezone.localdate())
     held = dict(StockBalance.objects.filter(item=item).values_list("location_id", "qty"))
-    store = Location.objects.filter(is_defective_store=True).first()
+    store_id = selectors.defective_store_id()
     places = list(
         Location.objects.good().filter(Q(is_active=True) | Q(pk__in=[k for k, q in held.items() if q]))
     )
@@ -219,13 +219,13 @@ def item_detail(request, pk):
             "item": item,
             "per_loc": per_loc,
             "total": total,
-            "defective": held.get(store.pk, 0) if store else 0,
+            "defective": held.get(store_id, 0),
             "low": selectors.is_low(item, total),
             "history": selectors.item_history(item, date_from, date_to, location),
             "date_from": date_from,
             "date_to": date_to,
             "location": location,
-            "all_locations": places + ([store] if store else []),
+            "all_locations": places + list(Location.objects.filter(pk=store_id)),
         },
     )
 

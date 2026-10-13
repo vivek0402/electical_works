@@ -5,6 +5,7 @@ import pytest
 from django.utils import timezone
 
 from apps.inventory import selectors
+from apps.inventory.filters import ItemFilters
 from apps.inventory.models import EntryKind, Location, ServiceSubtype
 from apps.inventory.services import Line, post_entry
 from tests.factories import loc, make_item, store
@@ -43,7 +44,7 @@ def test_current_stock_has_a_separate_defective_column(office_client, stocked):
     assert [r["total"] for r in rows] == [6] and rows[0]["defective"] == 4
     assert all(not p.is_defective_store for p in locations)
     html = office_client.get("/stock/").content.decode()
-    assert "Defective store (not counted)" in html and "never part of the total" in html
+    assert ">not counted<" in html and "never part of the total" in html
 
 
 def test_item_with_only_failed_pieces_is_still_listed(office_user):
@@ -148,3 +149,32 @@ def test_low_stock_page_and_export_have_no_store_column(office_client, stocked):
     assert "EIO6006" in html and ">Defective store<" not in html
     ws = openpyxl.load_workbook(io.BytesIO(office_client.get("/low-stock/export/").content)).active
     assert "Defective store" not in [c.value for c in ws[6]]
+
+
+def test_item_list_in_stock_excludes_the_store(stocked):
+    rows = selectors.item_rows(ItemFilters("", None, None, None, "1"))
+    assert [r["total"] for r in rows if r["item"] == stocked] == [6]
+
+
+def test_weekly_in_out_ignores_store_lines(stocked):
+    week = selectors.weekly_in_out(TODAY)[-1]
+    assert (week["qty_in"], week["qty_out"]) == (6, 0)  # the 4 collected pieces are not counted
+
+
+def test_export_low_highlight_stays_on_the_status_column(office_client, stocked):
+    ws = openpyxl.load_workbook(io.BytesIO(office_client.get("/stock/export/").content)).active
+    headers = [c.value for c in ws[6]]
+    assert ws.cell(7, headers.index("Status") + 1).value == "LOW"
+
+
+def test_current_stock_query_count_is_bounded(office_client, stocked, django_assert_max_num_queries):
+    for n in range(5):
+        make_item(f"BULK{n}")
+    with django_assert_max_num_queries(25):
+        office_client.get("/stock/")
+
+
+def test_spare_type_is_in_the_item_cell_not_a_column(office_client, stocked):
+    html = office_client.get("/stock/").content.decode()
+    assert ">Spare type</a>" not in html.split("<tbody>")[0].split("<thead>")[-1]
+    assert "PCB / LED module" in html.split("<tbody>")[1]

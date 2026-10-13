@@ -110,7 +110,8 @@ a.chip-link:hover { border-color: var(--tblr-primary); text-decoration: none; }
 .status-tabs .nav-link { white-space: nowrap; padding: .5rem .6rem; }
 .status-tabs .badge { padding: .2em .45em; }
 .table td.col-def, .table th.col-def { background: #f7f8fa; border-left: 1px dashed var(--tblr-border-color); }
-.table th.col-def a { white-space: normal; display: inline-block; max-width: 7rem; text-align: right; }
+.table th.col-def a { white-space: normal; display: inline-block; max-width: 6.5rem; text-align: right; }
+.table th.col-loc a { display: inline-block; max-width: 6rem; white-space: normal; text-align: right; }
 .table td.col-def a { font-weight: 600; }
 td.c-check, th.c-check { width: 1%; }
 .bulk-bar { position: sticky; top: 0; z-index: 5; background: var(--tblr-primary-lt); border-bottom: 1px solid var(--tblr-border-color); }
