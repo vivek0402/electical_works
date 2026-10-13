@@ -2,8 +2,8 @@
    so colour is never the only signal (blue = answered well, red = rejected). Table view, as on the stock
    dashboard (DESIGN.md). */
 (function () {
-  const data = JSON.parse(document.getElementById("outcomes-data").textContent);
-  const el = document.getElementById("chart-outcomes");
+  const data = JSON.parse(document.getElementById("def-chart-data").textContent);
+  const el = document.getElementById("def-chart-outcomes");
   new ApexCharts(el, {
     chart: { type: "bar", height: 260, toolbar: { show: false }, fontFamily: "inherit", animations: { enabled: false } },
     series: [{ name: "Pieces", data: data.map(d => d.n) }],
@@ -15,10 +15,10 @@
     xaxis: { min: 0, tickAmount: Math.min(Math.max(...data.map(d => d.n), 1), 5), categories: data.map(d => d.label), labels: { formatter: v => Math.round(v) }, axisBorder: { show: false }, axisTicks: { show: false } },
     tooltip: { y: { formatter: v => `${v} pieces` } },
   }).render();
-  const table = document.getElementById("chart-table"), btn = document.getElementById("chart-toggle");
+  const table = document.getElementById("def-chart-table"), btn = document.getElementById("def-chart-toggle");
   btn.addEventListener("click", () => {
     table.hidden = !table.hidden; el.hidden = !table.hidden;
     btn.setAttribute("aria-pressed", String(!table.hidden));
-    btn.innerHTML = table.hidden ? '<i class="ti ti-table"></i> View as table' : '<i class="ti ti-chart-bar"></i> View as chart';
+    btn.innerHTML = table.hidden ? '<i class="ti ti-table"></i> Table view' : '<i class="ti ti-chart-bar"></i> Table view';
   });
 })();

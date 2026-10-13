@@ -8,6 +8,7 @@
 <div class="card">
   <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">
     {% if f.outcome %}<input type="hidden" name="outcome" value="{{ f.outcome }}">{% endif %}
+    {% if f.answered %}<input type="hidden" name="answered" value="{{ f.answered }}">{% if f.since %}<input type="hidden" name="since" value="{{ f.since|date:'Y-m-d' }}">{% endif %}{% endif %}
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-co">Company</label>
       <select id="pf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
         {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
@@ -25,6 +26,7 @@
     <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-from">Collected from</label><input id="pf-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
     <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-to">Collected to</label><input id="pf-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
     {% if f.outcome %}<div class="col-auto pb-2">Outcome: {{ f.outcome|outcome_badge }}</div>{% endif %}
+    {% if f.answered %}<div class="col-auto pb-2">Answered: {{ f.answered|outcome_badge }}{% if f.since %} <span class="text-secondary small">since {{ f.since|date }}</span>{% endif %}</div>{% endif %}
     <div class="col-auto ms-auto pb-1"><a href="{% url 'defective_pieces' %}" class="btn btn-link link-secondary px-0"><i class="ti ti-filter-off"></i> Clear filters</a></div>
   </form></div>
   <form method="post" action="{% url 'pieces_bulk' %}">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">

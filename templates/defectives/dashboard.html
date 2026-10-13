@@ -17,7 +17,7 @@
     <div><div class="fw-medium fs-2 lh-1">{{ d.answered }}</div><div class="text-secondary small mt-1">Answered by companies</div><div class="small text-secondary">last 90 days</div></div></div></div></a></div>
   <div class="col-lg-5"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-building-warehouse"></i> In the Defective store, per company</h3><div class="card-subtitle">Physical pieces waiting to go back</div></div></div>
     <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Company</th><th class="num">In store</th><th class="num">In draft batch</th><th class="num">Total</th></tr></thead>
-      <tbody>{% for r in d.store_rows %}<tr><td><a href="{{ pieces_url }}?company={{ r.company_id }}&amp;status=IN_STORE">{{ r.company__name }}</a></td><td class="num"><b>{{ r.store }}</b></td><td class="num">{{ r.batch }}</td><td class="num">{{ r.store|add:r.batch }}</td></tr>
+      <tbody>{% for r in d.store_rows %}<tr><td><a href="{{ pieces_url }}?company={{ r.company_id }}">{{ r.company__name }}</a></td><td class="num"><b>{{ r.store }}</b></td><td class="num">{{ r.batch }}</td><td class="num">{{ r.store|add:r.batch }}</td></tr>
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">The Defective store is empty.</td></tr>{% endfor %}</tbody></table></div></div></div>
   <div class="col-lg-7"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-truck"></i> Sent, awaiting settlement</h3><div class="card-subtitle">Red = the oldest batch has waited more than 30 days</div></div></div>
     <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Company</th><th class="num">Pieces</th><th>Batches</th><th>Oldest dispatched</th><th class="num">Waiting</th></tr></thead>
@@ -25,10 +25,11 @@
         <td>{% for b in r.batches %}<a class="code" href="{% url 'batch_detail' b.number %}">{{ b.number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td><td class="nowrap">{{ r.oldest.dispatched_on|date }}</td><td class="num">{{ r.waiting|waiting_badge }}</td></tr>
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing is waiting on a company.</td></tr>{% endfor %}</tbody></table></div></div></div>
   <div class="col-lg-5"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-chart-bar"></i> Outcomes, last 90 days</h3><div class="card-subtitle">{{ d.answered }} pieces answered by the companies</div></div>
-      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle" aria-pressed="false" aria-controls="chart-table"><i class="ti ti-table"></i> View as table</button></div></div>
-    <div class="card-body"><div id="chart-outcomes" class="chart-box" role="img" aria-label="Bar chart of the answers from the companies in the last 90 days: replaced, repaired, rejected and returned, rejected and scrapped"></div>
-      <table class="table table-sm" id="chart-table" hidden><thead><tr><th>Outcome</th><th class="num">Pieces</th></tr></thead>
-        <tbody>{% for value, label, n in d.outcomes %}<tr><td><a href="{{ pieces_url }}?outcome={{ value }}">{{ value|outcome_badge }}</a></td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+      {% if d.answered %}<div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="def-chart-toggle" aria-pressed="false" aria-controls="def-chart-table"><i class="ti ti-table"></i> Table view</button></div>{% endif %}</div>
+    <div class="card-body">{% if d.answered %}<div id="def-chart-outcomes" class="chart-box" role="img" aria-label="Bar chart, answers from the companies in the last 90 days: {% for value, label, n in d.outcomes %}{{ label }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}"></div>
+      <table class="table table-sm" id="def-chart-table" hidden><thead><tr><th>Outcome</th><th class="num">Pieces</th></tr></thead>
+        <tbody>{% for value, label, n in d.outcomes %}<tr><td><a href="{{ pieces_url }}?answered={{ value }}&amp;since={{ d.since|date:'Y-m-d' }}">{{ value|outcome_badge }}</a></td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table>
+      {% else %}<div class="text-center text-secondary py-5"><i class="ti ti-chart-bar fs-1 d-block mb-2"></i>No answers in the last 90 days</div>{% endif %}</div></div></div>
   <div class="col-lg-7"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clock"></i> Longest in store</h3>
     <div class="card-actions"><a href="{{ pieces_url }}?status=IN_STORE" class="btn btn-sm btn-outline-primary">All in store <i class="ti ti-arrow-right"></i></a></div></div>
     <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Tag</th><th>Item</th><th>Company</th><th>Source</th><th class="num">In store</th></tr></thead>
@@ -36,6 +37,6 @@
         <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="num">{{ r.days }} days</td></tr>{% endwith %}
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing in store.</td></tr>{% endfor %}</tbody></table></div></div></div>
 </div>
-{{ outcomes_chart|json_script:"outcomes-data" }}
+{% if d.answered %}{{ outcomes_chart|json_script:"def-chart-data" }}{% endif %}
 {% endblock %}
-{% block scripts %}<script src="{% static 'vendor/apexcharts.min.js' %}"></script><script src="{% static 'js/defectives-dashboard.js' %}"></script>{% endblock %}
+{% block scripts %}{% if d.answered %}<script src="{% static 'vendor/apexcharts.min.js' %}"></script><script src="{% static 'js/defectives-dashboard.js' %}"></script>{% endif %}{% endblock %}

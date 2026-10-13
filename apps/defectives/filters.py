@@ -30,10 +30,13 @@ class PieceFilters:
     date_from: date | None  # collected on or after
     date_to: date | None
     q: str
+    answered: str = ""  # a company answer recorded on any of the piece's batch lines
+    since: date | None = None  # ... with the answer dated after this day
 
 
 def piece_filters(params):
     status, source, outcome = params.get("status", ""), params.get("source", ""), params.get("outcome", "")
+    answered = params.get("answered", "")
     date_from, date_to = _date(params.get("date_from"), None), _date(params.get("date_to"), None)
     if date_from and date_to and date_from > date_to:
         date_from, date_to = date_to, date_from
@@ -46,4 +49,6 @@ def piece_filters(params):
         date_from,
         date_to,
         _text(params.get("q")),
+        answered if answered in Outcome.values else "",
+        _date(params.get("since"), None),
     )

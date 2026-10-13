@@ -58,7 +58,18 @@ def _title(ws, row, last, text, fmt):
         ws.write(row, 0, text, fmt)
 
 
-def workbook_response(filename, title, filters, username, columns, rows, low_rows=(), low_col=None, now=None):
+def workbook_response(
+    filename,
+    title,
+    filters,
+    username,
+    columns,
+    rows,
+    low_rows=(),
+    low_col=None,
+    now=None,
+    filters_label="Filters",
+):
     """Build the report in memory and return it as a download.
 
     low_rows: row indexes to highlight in low_col.
@@ -69,7 +80,7 @@ def workbook_response(filename, title, filters, username, columns, rows, low_row
         buffer, {"in_memory": True, "strings_to_formulas": False, "strings_to_urls": False}
     )
     wb.set_properties({"title": title, "company": COMPANY, "author": "SVKML Stock"})
-    ws = wb.add_worksheet(SHEET_BAD.sub("-", title)[:31])
+    ws = wb.add_worksheet(SHEET_BAD.sub("-", title)[:31].strip("'") or "Report")
     f = _formats(wb)
     last = len(columns) - 1
     total = len(rows)
@@ -105,7 +116,7 @@ def workbook_response(filename, title, filters, username, columns, rows, low_row
     counted = f"{total} rows" if total <= MAX_ROWS else f"first {MAX_ROWS:,} of {total:,} rows"
     _title(ws, 0, last, COMPANY, f["company"])
     _title(ws, 1, last, title, f["title"])
-    _title(ws, 2, last, f"Filters: {filters}", f["meta"])
+    _title(ws, 2, last, f"{filters_label}: {filters}", f["meta"])
     _title(ws, 3, last, f"Generated on {now:%d-%m-%Y %H:%M} by {username} · {counted}", f["meta"])
     ws.set_row(HEAD_ROW, 30)
     ws.hide_gridlines(2)

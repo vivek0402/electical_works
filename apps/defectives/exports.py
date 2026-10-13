@@ -75,8 +75,9 @@ def batch_xlsx(request, number):
     return workbook_response(
         f"Return_Batch_{batch.number}",
         f"Return Batch {batch.number} · {batch.company.name}",
-        f"{status} · {len(lines)} pieces{note}",
+        f"{status} · {len(lines)} {'piece' if len(lines) == 1 else 'pieces'}{note}",
         _who(request),
         cols,
         data,
+        filters_label="Status",
     )

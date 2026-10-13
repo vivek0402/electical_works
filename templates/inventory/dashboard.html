@@ -25,7 +25,7 @@
   </div></div></div></div>
   <div class="col-lg-8"><div class="card"><div class="card-header"><div><h3 class="card-title">Stock IN vs OUT</h3>
       <div class="card-subtitle">Quantity per week, last 5 weeks (items counted in NOS)</div></div>
-      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle" aria-pressed="false" aria-controls="chart-table"><i class="ti ti-table"></i> View as table</button></div></div>
+      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle" aria-pressed="false" aria-controls="chart-table"><i class="ti ti-table"></i> Table view</button></div></div>
     <div class="card-body"><div id="chart-weekly" class="chart-box" role="img" aria-label="Bar chart of stock in and stock out per week"></div>
       <table class="table table-sm" id="chart-table" hidden><thead><tr><th>Week</th><th class="num">Stock IN (NOS)</th><th class="num">Stock OUT (NOS)</th></tr></thead>
         <tbody>{% for w in weeks %}<tr><td>{{ w.label }}</td><td class="num">{{ w.qty_in }}</td><td class="num">{{ w.qty_out }}</td></tr>{% endfor %}</tbody></table></div></div></div>

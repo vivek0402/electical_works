@@ -131,6 +131,12 @@ def piece_rows(f):
         pieces = pieces.filter(collected_on__gte=f.date_from)
     if f.date_to:
         pieces = pieces.filter(collected_on__lte=f.date_to)
+    if f.answered:
+        # Same rule as the dashboard's outcome counts: the answers on the batch lines, not the piece's latest.
+        answers = {"batch_lines__outcome": f.answered}
+        if f.since:
+            answers["batch_lines__settled_on__gt"] = f.since
+        pieces = pieces.filter(**answers).distinct()
     if f.q:
         pieces = pieces.filter(piece_search_q(f.q))
     return list(pieces)
@@ -141,10 +147,20 @@ def piece_items():
     return Item.objects.filter(defective_pieces__isnull=False).distinct().order_by("code")
 
 
+def piece_counts():
+    """Pieces in store, in draft batches and sent, in one query: {"in_store", "in_batch", "sent"}.
+    Task 16's main-dashboard `service_stats` must import this, so both dashboards always agree."""
+    counts = dict(DefectivePiece.objects.values_list("status").annotate(n=Count("id")))
+    return {
+        "in_store": counts.get(PieceStatus.IN_STORE, 0),
+        "in_batch": counts.get(PieceStatus.IN_BATCH, 0),
+        "sent": counts.get(PieceStatus.SENT, 0),
+    }
+
+
 def dashboard(today):
     """Figures for the defectives dashboard. Answers come from BatchLine: a piece's own outcome is empty while
     it sits in a draft or sent batch, and a piece rejected and replaced later has two answers."""
-    counts = dict(DefectivePiece.objects.values_list("status").annotate(n=Count("id")))
     in_store, in_batch = Q(status=PieceStatus.IN_STORE), Q(status=PieceStatus.IN_BATCH)
     store_rows = list(
         DefectivePiece.objects.filter(in_store | in_batch)
@@ -165,13 +181,13 @@ def dashboard(today):
             {**row, "batches": batches, "oldest": oldest, "waiting": (today - oldest.dispatched_on).days}
         )
     sent_rows.sort(key=lambda r: -r["waiting"])
-    answered = BatchLine.objects.exclude(outcome="").filter(settled_on__gte=today - timedelta(days=90))
+    since = today - timedelta(days=90)  # answers dated after this day: exactly the last 90 days
+    answered = BatchLine.objects.exclude(outcome="").filter(settled_on__gt=since)
     by_outcome = dict(answered.values_list("outcome").annotate(n=Count("id")))
     longest = pieces_qs().filter(status=PieceStatus.IN_STORE).order_by("collected_on", "tag")[:6]
     return {
-        "in_store": counts.get(PieceStatus.IN_STORE, 0),
-        "in_batch": counts.get(PieceStatus.IN_BATCH, 0),
-        "sent": counts.get(PieceStatus.SENT, 0),
+        **piece_counts(),
+        "since": since,
         "drafts": ReturnBatch.objects.filter(status=BatchStatus.DRAFT).count(),
         "answered": sum(by_outcome.values()),
         "store_rows": store_rows,
