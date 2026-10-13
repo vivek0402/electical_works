@@ -68,7 +68,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S2 Good stock excludes the Defective store: 0c0a23b + fixes acd8aef (342 tests; fits 1366px; spec ✅ quality ✅)
   - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
   - [x] S4 Piece services (create, mark defective, scrap): 4fc893e + fixes fda69cc (407 tests; spec ✅ quality ✅)
-  - [ ] S5 Batch services (create, add, remove, dispatch, settle)
+  - [x] S5 Batch services (create, add, remove, dispatch, settle): 7f2b895 + settle deadlock fix de0ecc0 (433 tests; spec ✅ quality ✅)
   - [ ] S6 Shared line editor + Mark defective page
   - [ ] S7 Return batch screens + piece card
   - [ ] S8 Pieces list + bulk actions
@@ -107,3 +107,9 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - Forms must cap courier at 60 characters, docket at 40 and note at 200; the services refuse longer values rather than truncating.
   - Read each batch's answers from `BatchLine`: a piece's `outcome` is empty while it is in a draft or sent batch.
   - Task 17 must pass every date in order.
+- **Settle (after de0ecc0):**
+  - `settle` posts **one entry per call** and returns `[entry]` or `[]`.
+  - One replacement entry can belong to several pieces and items; use `entry.replaced_pieces` and `entry.settled_lines`.
+  - Batch detail should group lines by entry.
+  - The Task 17 replay calls `settle` once per (batch, outcome, date, location) group.
+- **Rule:** at most one `post_entry` per service call. **Task 11 `record_visit` breaks it:** it posts the parts-given OUT and the collected IN in one transaction. The implementer and reviewer must check that this order can't deadlock against Stock IN/OUT, mark_defective and settle, and either document why it is safe or restructure it.
