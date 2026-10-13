@@ -4,6 +4,7 @@
 {% block page_title %}<span class="code">{{ batch.number }}</span> {{ label|batch_badge }}{% endblock %}
 {% block actions %}
   {% if batch.is_draft %}<button type="button" class="btn btn-out" data-bs-toggle="modal" data-bs-target="#dispatch-modal"><i class="ti ti-truck"></i> Dispatch…</button>{% endif %}
+  <a href="{% url 'batch_xlsx' batch.number %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export dispatch list</a>
   <a href="{% url 'return_batches' %}" class="btn btn-quiet"><i class="ti ti-list"></i> All batches</a>
 {% endblock %}
 {% block content %}

@@ -1,8 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import exports, views
 
 urlpatterns = [
+    path("defectives/", views.defectives_dashboard, name="defectives_dashboard"),
+    path("defectives/export/", exports.defective_list_xlsx, name="defective_list_xlsx"),
+    path("defectives/batches/<str:number>/export/", exports.batch_xlsx, name="batch_xlsx"),
     path("defectives/mark/", views.mark_defective, name="mark_defective"),
     path("defectives/pieces/", views.defective_pieces, name="defective_pieces"),
     path("defectives/pieces/bulk/", views.pieces_bulk, name="pieces_bulk"),

@@ -2,7 +2,8 @@
 {% block title %}Defective pieces{% endblock %}
 {% block pretitle %}Defectives{% endblock %}
 {% block page_title %}Defective pieces{% endblock %}
-{% block actions %}<a href="{% url 'mark_defective' %}" class="btn btn-quiet"><i class="ti ti-alert-octagon"></i> Mark defective</a>{% endblock %}
+{% block actions %}<a href="{% url 'mark_defective' %}" class="btn btn-quiet"><i class="ti ti-alert-octagon"></i> Mark defective</a>
+  <a href="{% url 'defective_list_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
 {% block content %}
 <div class="card">
   <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">

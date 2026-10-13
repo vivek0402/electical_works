@@ -1,6 +1,7 @@
 """All reads for the defectives screens. Views call these; no queries in templates."""
 
-from datetime import date
+from collections import defaultdict
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.db.models import Count, Q
@@ -8,7 +9,7 @@ from django.db.models import Count, Q
 from apps.inventory.models import Item
 from apps.inventory.normalise import normalise_code
 
-from .models import DefectivePiece, ReturnBatch, Source
+from .models import BatchLine, BatchStatus, DefectivePiece, Outcome, PieceStatus, ReturnBatch, Source
 from .services import normalise_tag
 
 # What a piece row shows. Task 10 adds the complaint and site of the visit that collected it.
@@ -138,3 +139,65 @@ def piece_rows(f):
 def piece_items():
     """Items that have ever had a defective piece (the item filter on the pieces list)."""
     return Item.objects.filter(defective_pieces__isnull=False).distinct().order_by("code")
+
+
+def dashboard(today):
+    """Figures for the defectives dashboard. Answers come from BatchLine: a piece's own outcome is empty while
+    it sits in a draft or sent batch, and a piece rejected and replaced later has two answers."""
+    counts = dict(DefectivePiece.objects.values_list("status").annotate(n=Count("id")))
+    in_store, in_batch = Q(status=PieceStatus.IN_STORE), Q(status=PieceStatus.IN_BATCH)
+    store_rows = list(
+        DefectivePiece.objects.filter(in_store | in_batch)
+        .values("company_id", "company__name")
+        .annotate(store=Count("id", filter=in_store), batch=Count("id", filter=in_batch))
+        .order_by("-store", "company__name")
+    )
+    sent_batches = defaultdict(list)  # company id -> its batches with pieces still out, oldest first
+    out = ReturnBatch.objects.filter(pieces__status=PieceStatus.SENT).distinct()
+    for b in out.order_by("dispatched_on", "id"):
+        sent_batches[b.company_id].append(b)
+    sent_rows = []
+    sent = DefectivePiece.objects.filter(status=PieceStatus.SENT)
+    for row in sent.values("company_id", "company__name").annotate(n=Count("id")).order_by("company__name"):
+        batches = sent_batches[row["company_id"]]
+        oldest = batches[0]
+        sent_rows.append(
+            {**row, "batches": batches, "oldest": oldest, "waiting": (today - oldest.dispatched_on).days}
+        )
+    sent_rows.sort(key=lambda r: -r["waiting"])
+    answered = BatchLine.objects.exclude(outcome="").filter(settled_on__gte=today - timedelta(days=90))
+    by_outcome = dict(answered.values_list("outcome").annotate(n=Count("id")))
+    longest = pieces_qs().filter(status=PieceStatus.IN_STORE).order_by("collected_on", "tag")[:6]
+    return {
+        "in_store": counts.get(PieceStatus.IN_STORE, 0),
+        "in_batch": counts.get(PieceStatus.IN_BATCH, 0),
+        "sent": counts.get(PieceStatus.SENT, 0),
+        "drafts": ReturnBatch.objects.filter(status=BatchStatus.DRAFT).count(),
+        "answered": sum(by_outcome.values()),
+        "store_rows": store_rows,
+        "sent_rows": sent_rows,
+        "outcomes": [(value, label, by_outcome.get(value, 0)) for value, label in Outcome.choices],
+        "oldest": [{"piece": p, "days": (today - p.collected_on).days} for p in longest],
+    }
+
+
+def defective_list_rows():
+    """Pieces physically in the Defective store (in store + in draft batches), grouped by company, item, batch
+    code and PKD: [company, item code, description, batch code, PKD, qty, of which in a draft batch, tags]."""
+    groups = defaultdict(list)
+    for p in pieces_qs().filter(status__in=[PieceStatus.IN_STORE, PieceStatus.IN_BATCH]).order_by("tag"):
+        groups[(p.company.name, p.item.code, p.batch_code, p.pkd)].append(p)
+    ordered = sorted(groups.items(), key=lambda kv: (*kv[0][:3], kv[0][3] or date.min))
+    return [
+        [
+            company,
+            code,
+            ps[0].item.description,
+            batch,
+            f"{pkd:%m-%Y}" if pkd else "",
+            len(ps),
+            sum(p.status == PieceStatus.IN_BATCH for p in ps),
+            ", ".join(p.tag for p in ps),
+        ]
+        for (company, code, batch, pkd), ps in ordered
+    ]
