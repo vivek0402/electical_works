@@ -59,3 +59,16 @@ def make_pieces(item, qty, user, fault="no output"):
         location=loc(), lines=[(item, qty, fault)], entry_date=timezone.localdate(), user=user
     )
     return pieces
+
+
+def make_site(name="BARC", city="Visakhapatnam", **extra):
+    """A site (reused if one with exactly this name and city exists)."""
+    from apps.complaints.models import Site
+
+    return Site.objects.get_or_create(name=name, city=city, defaults=extra)[0]
+
+
+def make_tech(name="Ramu", **extra):
+    from apps.complaints.models import Technician
+
+    return Technician.objects.get_or_create(name=name, defaults=extra)[0]

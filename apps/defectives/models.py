@@ -113,6 +113,10 @@ class DefectivePiece(models.Model):
     fault = models.CharField(max_length=200, blank=True)
     source = models.CharField(max_length=20, choices=Source.choices)
     collected_on = models.DateField()
+    # The visit that collected it (source SITE_VISIT); empty for pieces found in stock.
+    visit = models.ForeignKey(
+        "complaints.Visit", on_delete=models.PROTECT, null=True, blank=True, related_name="pieces"
+    )
     status = models.CharField(max_length=10, choices=PieceStatus.choices, default=PieceStatus.IN_STORE)
     # The batch the piece is in (draft, sent or settled). Cleared when it is removed or sent back rejected.
     return_batch = models.ForeignKey(
@@ -145,6 +149,11 @@ class DefectivePiece(models.Model):
                 condition=Q(replacement_entry__isnull=True)
                 | Q(outcome__in=[Outcome.REPLACED, Outcome.REPAIRED]),
                 name="piece_replacement_needs_good_outcome",
+            ),
+            # Only a piece collected at a site visit can name the visit.
+            models.CheckConstraint(
+                condition=Q(visit__isnull=True) | Q(source=Source.SITE_VISIT),
+                name="piece_visit_only_from_site_visit",
             ),
         ]
 

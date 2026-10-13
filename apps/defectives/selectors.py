@@ -12,8 +12,8 @@ from apps.inventory.normalise import normalise_code
 from .models import BatchLine, BatchStatus, DefectivePiece, Outcome, PieceStatus, ReturnBatch, Source
 from .services import normalise_tag
 
-# What a piece row shows. Task 10 adds the complaint and site of the visit that collected it.
-PIECE_RELATED = ["item", "company", "return_batch"]
+# What a piece row shows, including the complaint and site of the visit that collected it.
+PIECE_RELATED = ["item", "company", "return_batch", "visit__complaint__site"]
 
 
 def pieces_qs():
@@ -100,19 +100,23 @@ def courier_suggestions():
 
 
 def complaint_cells(piece):
-    """[complaint no., company complaint no.] for the dispatch list. Task 10 fills these from the visit."""
+    """[complaint no., company complaint no.] for the dispatch list ('Found in stock' for pieces from stock).
+    Expects a piece from pieces_qs() or a batch line's piece, so its visit and complaint are loaded."""
+    if piece.visit_id:
+        return [piece.visit.complaint.number, piece.visit.complaint.company_ref]
     return ["Found in stock" if piece.source == Source.FOUND_IN_STOCK else "", ""]
 
 
 def piece_search_q(text):
-    """The pieces search box: a tag typed loosely (def-42), batch code, fault, return batch no. or item code.
-    Task 10 adds the complaint number."""
+    """The pieces search box: a tag typed loosely (def-42), batch code, fault, return batch no., item code or
+    the number of the complaint whose visit collected the piece."""
     return (
         Q(tag__icontains=normalise_tag(text))
         | Q(batch_code__icontains=text)
         | Q(fault__icontains=text)
         | Q(return_batch__number__icontains=text)
         | Q(item__code__icontains=normalise_code(text))
+        | Q(visit__complaint__number__icontains=text)
     )
 
 

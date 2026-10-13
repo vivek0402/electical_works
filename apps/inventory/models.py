@@ -244,6 +244,10 @@ class StockEntry(models.Model):
     return_batch = models.ForeignKey(
         "defectives.ReturnBatch", on_delete=models.PROTECT, null=True, blank=True, related_name="entries"
     )
+    # Set by the complaints services: the complaint a visit's parts-given / collection entry belongs to.
+    complaint = models.ForeignKey(
+        "complaints.Complaint", on_delete=models.PROTECT, null=True, blank=True, related_name="entries"
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -193,10 +193,12 @@ def _per_item(pieces):
 
 @transaction.atomic
 def collect_pieces(
-    *, entry, item, qty, source, collected_on, user, batch_code="", pkd=None, fault="", note=""
+    *, entry, item, qty, source, collected_on, user, batch_code="", pkd=None, fault="", note="", visit=None
 ):
     """`qty` tagged pieces of one item in the Defective store, all from `entry`: the ledger entry the caller
     has already posted that brought them there (a collection Stock IN or a mark-defective transfer).
+
+    `visit` is the complaint visit that collected them (source SITE_VISIT only).
 
     Checks that the entry really put that many of the item into the Defective store (counting pieces already
     tagged from it), then takes the tags in one counter update and saves pieces and events in one INSERT each.
@@ -211,6 +213,10 @@ def collect_pieces(
         )
     if source not in Source.values:
         raise DefectiveError("Choose where the piece came from.")
+    if visit is not None and source != Source.SITE_VISIT:
+        raise DefectiveError("Only pieces collected at a site visit belong to a visit.")
+    if visit is not None and visit.collect_entry_id != entry.pk:
+        raise DefectiveError(f"{entry.number} is not the collection entry of visit {visit.number}.")
     _check_qty(qty)
     batch_code, fault, note = (_clean(value) for value in (batch_code, fault, note))
     _check_length(fault, FAULT_MAX, "fault")
@@ -240,6 +246,7 @@ def collect_pieces(
             fault=fault,
             source=source,
             collected_on=collected_on,
+            visit=visit,
             created_by=user,
         )
         for tag in next_numbers("DEF", qty)
@@ -248,7 +255,9 @@ def collect_pieces(
     return pieces
 
 
-def create_piece(*, item, source, collected_on, user, entry, batch_code="", pkd=None, fault="", note=""):
+def create_piece(
+    *, item, source, collected_on, user, entry, batch_code="", pkd=None, fault="", note="", visit=None
+):
     """One tagged piece from `entry` (collect_pieces with qty=1). Prefer collect_pieces for several."""
     [piece] = collect_pieces(
         entry=entry,
@@ -261,6 +270,7 @@ def create_piece(*, item, source, collected_on, user, entry, batch_code="", pkd=
         pkd=pkd,
         fault=fault,
         note=note,
+        visit=visit,
     )
     return piece
 
