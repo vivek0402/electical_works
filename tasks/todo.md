@@ -152,3 +152,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
     - Forms offer only active sites and technicians; the services don't refuse hidden ones.
   - A status change can't be dated before the complaint's latest event.
   - Tests: use your own `DATABASE_URL` database name if another run is using `test_postgres`.
+- **From the Task 11 spec review:**
+  - Task 15's plan test expects "Phone must be a 10-digit mobile number." for a *site*. Site phones now allow landlines, so assert the new message ("…or an STD landline like 0891-2345678.").
+  - Task 13 must keep the plan's view-level message "Failed parts collected: Line 1: choose an item. Nothing was saved." (from `entry_lines`).
+  - `undo_visit_parts` records the undo as a REV entry linked to the complaint, not as a ComplaintEvent (events are status moves only). The complaint page shows it from `visit.out_entry.reversed_by`.
