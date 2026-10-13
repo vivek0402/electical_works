@@ -71,7 +71,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S5 Batch services (create, add, remove, dispatch, settle): 7f2b895 + settle deadlock fix de0ecc0 (433 tests; spec ✅ quality ✅)
   - [x] S6 Shared line editor + Mark defective page: 3d21107 + follow-ups bf04da1 (463 tests; walkthrough exit 0; spec ✅ quality ✅)
   - [x] S7 Return batch screens + piece card: 431f72f + fixes 4ee901b (527 tests; token replay fixed app-wide; spec ✅ quality ✅)
-  - [ ] S8 Pieces list + bulk actions
+  - [x] S8 Pieces list + bulk actions: 94c9a46 + fixes 98705c5 (557 tests; spec ✅ quality ✅). Final review: tighten the 30-piece bulk-add query guard (80 is loose)
   - [ ] S9 Defectives dashboard + 2 exports
   - [ ] S10 Complaints models + links
   - [ ] S11 Complaints services
