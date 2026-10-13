@@ -23,16 +23,18 @@
   <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
     <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "type" "Spare type" %}{% sort_th "desc" "Description" %}{% sort_th "company" "Company" %}
       {% for p in locations %}{% sort_th p.sort_key p.name True %}{% endfor %}
-      {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}</tr></thead>
+      {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}
+      {% if not f.location %}{% sort_th "def" "Defective store (not counted)" True "col-def" %}{% endif %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
       <td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a></td><td class="nowrap">{{ r.item.spare_type.name }}</td>
       <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
       <td class="text-truncate" style="max-width:10rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
       {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}{% if f.location %} <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endfor %}
-      {% if not f.location %}<td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }} {{ r.item.unit }}</span>{% else %}<b>{{ r.total }}</b> <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endif %}</tr>
+      {% if not f.location %}<td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }} {{ r.item.unit }}</span>{% else %}<b>{{ r.total }}</b> <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endif %}
+      {% if not f.location %}<td class="num col-def">{% if r.defective and nav_urls.defective_pieces %}<a href="{{ nav_urls.defective_pieces }}?item={{ r.item.pk }}&amp;status=IN_STORE" title="Open the pieces">{{ r.defective }}</a>{% else %}{{ r.defective|qty }}{% endif %}</td>{% endif %}</tr>
     {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing matches these filters.</td></tr>{% endfor %}</tbody>
   </table></div>
   {% include "core/_pagination.html" %}
 </div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Red total = at or below the item's reorder level.</p>
+<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Red total = at or below the item's reorder level. The <b>Defective store</b> column shows failed pieces waiting to go back to the company; they are never part of the total.</p>
 {% endblock %}

@@ -115,7 +115,7 @@ class EntryHeaderForm(TablerFormMixin, forms.Form):
     entry_date = forms.DateField(
         label="Date", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
     )
-    location = forms.ModelChoiceField(Location.objects.filter(is_active=True), empty_label=None)
+    location = forms.ModelChoiceField(Location.objects.good().filter(is_active=True), empty_label=None)
     note = forms.CharField(
         required=False, label="Remarks", widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"})
     )
@@ -211,7 +211,7 @@ class StockOutForm(EntryHeaderForm):
 
 class TransferForm(EntryHeaderForm):
     to_location = forms.ModelChoiceField(
-        Location.objects.filter(is_active=True), empty_label=None, label="To location"
+        Location.objects.good().filter(is_active=True), empty_label=None, label="To location"
     )
 
     def clean(self):

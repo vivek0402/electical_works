@@ -38,7 +38,13 @@ def current_stock_xlsx(request):
         Column("Company"),
     ]
     cols += [Column(p.name, "int") for p in locations]
-    cols += [Column("Total", "int"), Column("Unit"), Column("Reorder level", "int"), Column("Status")]
+    cols += [
+        Column("Total", "int"),
+        Column("Unit"),
+        Column("Reorder level", "int"),
+        Column("Status"),
+        Column("Defective store (not counted)", "int"),
+    ]
     data = [
         [
             r["item"].code,
@@ -49,7 +55,7 @@ def current_stock_xlsx(request):
             r["item"].company.name,
         ]
         + [r["per_loc"].get(p.pk, 0) for p in locations]
-        + [r["total"], r["item"].unit, r["item"].reorder_level, "LOW" if r["low"] else "OK"]
+        + [r["total"], r["item"].unit, r["item"].reorder_level, "LOW" if r["low"] else "OK", r["defective"]]
         for r in rows
     ]
     filters = _describe(
@@ -58,10 +64,11 @@ def current_stock_xlsx(request):
         f.company.name if f.company else "all companies",
         f'search "{f.q}"' if f.q else "",
         "only low stock" if f.low else "",
+        "Total = good stock only; the Defective store is listed separately",
     )
     low = {n for n, r in enumerate(rows) if r["low"]}
     return workbook_response(
-        "Current_Stock", "Current Stock", filters, _who(request), cols, data, low, len(cols) - 1
+        "Current_Stock", "Current Stock", filters, _who(request), cols, data, low, len(cols) - 2
     )
 
 

@@ -50,12 +50,18 @@ def masters(request):
 
 def _refuse_hide(model, label, row):
     """Reason this row may not be hidden, or None."""
+    if model is Location and row.is_defective_store:
+        return f"{row.name} holds the defective pieces and can't be hidden."
     if model is Location and StockBalance.objects.filter(location=row).exclude(qty=0).exists():
         return f"{row.name} still holds stock. Move or adjust it to zero first."
     if model is Company and row.name == settings.DEFAULT_COMPANY:
         return f"{row.name} is the default supplier and can't be hidden."
-    if model in (Location, Company) and not model.objects.filter(is_active=True).exclude(pk=row.pk).exists():
-        return f"At least one {'location' if model is Location else 'company'} must stay active."
+    if model in (Location, Company):
+        others = model.objects.filter(is_active=True).exclude(pk=row.pk)
+        if model is Location:
+            others = others.filter(is_defective_store=False)
+        if not others.exists():
+            return f"At least one {'location' if model is Location else 'company'} must stay active."
     return None
 
 

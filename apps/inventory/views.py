@@ -62,7 +62,7 @@ def dashboard(request):
 
 def _masters():
     return {
-        "all_locations": Location.objects.filter(is_active=True),
+        "all_locations": Location.objects.good().filter(is_active=True),
         "spare_types": SpareType.objects.filter(is_active=True),
         "companies": Company.objects.filter(is_active=True),
     }
@@ -79,6 +79,7 @@ def current_stock(request):
         "company": lambda r: r["item"].company.name,
         "total": lambda r: r["total"],
         "unit": lambda r: r["item"].unit,
+        "def": lambda r: r["defective"],
     }
     for p in locations:
         p.sort_key = f"L{p.pk}"
@@ -128,7 +129,13 @@ def movements(request):
     return render(
         request,
         "inventory/movements.html",
-        {"f": f, "table": table, "kinds": EntryKind.choices, **_masters()},
+        {
+            "f": f,
+            "table": table,
+            "kinds": EntryKind.choices,
+            **_masters(),
+            "all_locations": Location.objects.filter(is_active=True),  # the Defective store stays filterable
+        },
     )
 
 
@@ -199,7 +206,10 @@ def item_detail(request, pk):
     item = get_object_or_404(Item.objects.select_related("spare_type", "company", "fitting_type"), pk=pk)
     date_from, date_to, location = history_filters(request.GET, timezone.localdate())
     held = dict(StockBalance.objects.filter(item=item).values_list("location_id", "qty"))
-    places = list(Location.objects.filter(Q(is_active=True) | Q(pk__in=[k for k, q in held.items() if q])))
+    store = Location.objects.filter(is_defective_store=True).first()
+    places = list(
+        Location.objects.good().filter(Q(is_active=True) | Q(pk__in=[k for k, q in held.items() if q]))
+    )
     per_loc = [(p, held.get(p.pk, 0)) for p in places]
     total = sum(q for _, q in per_loc)
     return render(
@@ -209,12 +219,13 @@ def item_detail(request, pk):
             "item": item,
             "per_loc": per_loc,
             "total": total,
+            "defective": held.get(store.pk, 0) if store else 0,
             "low": selectors.is_low(item, total),
             "history": selectors.item_history(item, date_from, date_to, location),
             "date_from": date_from,
             "date_to": date_to,
             "location": location,
-            "all_locations": places,
+            "all_locations": places + ([store] if store else []),
         },
     )
 
@@ -299,8 +310,7 @@ SUBTYPE_ICONS = {
 
 
 def _default_location():
-    places = Location.objects.filter(is_active=True)
-    return places.filter(name="Vizag Office").first() or places.first()
+    return selectors.default_location()
 
 
 def _save_entry(mode, data, parsed, user):
@@ -360,7 +370,11 @@ def _entry_page(request, mode):
     kind, form_class, title, subtitle, icon, button = ENTRY_PAGES[mode]
     initial = {"entry_date": timezone.localdate(), "location": _default_location()}
     if mode == "trf":
-        others = Location.objects.filter(is_active=True).exclude(pk=getattr(initial["location"], "pk", None))
+        others = (
+            Location.objects.good()
+            .filter(is_active=True)
+            .exclude(pk=getattr(initial["location"], "pk", None))
+        )
         initial["to_location"] = others.filter(name="TV Shop").first() or others.first()
     form = form_class(request.POST or None, initial=initial)
     error, lines, token = None, [], ""

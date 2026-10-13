@@ -20,10 +20,25 @@ def balance_map():
     }
 
 
+def defective_store_id():
+    """pk of the Defective store."""
+    return Location.objects.filter(is_defective_store=True).values_list("pk", flat=True).first()
+
+
+def default_location():
+    """The location entry forms start on: Vizag Office if active, else the first active good location."""
+    places = Location.objects.good().filter(is_active=True)
+    return places.filter(name="Vizag Office").first() or places.first()
+
+
 def item_totals():
-    return {
-        r["item_id"]: r["total"] for r in StockBalance.objects.values("item_id").annotate(total=Sum("qty"))
-    }
+    """{item_id: good-stock total}. The Defective store is never part of a total."""
+    rows = (
+        StockBalance.objects.filter(location__is_defective_store=False)
+        .values("item_id")
+        .annotate(total=Sum("qty"))
+    )
+    return {r["item_id"]: r["total"] for r in rows}
 
 
 def is_low(item, total):
@@ -31,27 +46,39 @@ def is_low(item, total):
 
 
 def low_stock_count():
-    """Number of active items at or below their reorder level, in one query."""
+    """Number of active items at or below their reorder level (good stock only), in one query."""
+    good = Q(balances__location__is_defective_store=False)
     return (
         Item.objects.filter(is_active=True, reorder_level__gt=0)
-        .annotate(t=Coalesce(Sum("balances__qty"), 0))
+        .annotate(t=Coalesce(Sum("balances__qty", filter=good), 0))
         .filter(t__lte=F("reorder_level"))
         .count()
     )
 
 
 def location_unit_totals():
-    """[(location, {unit: qty})] for the 'Stock by location' card."""
+    """[(location, {unit: qty})] for the 'Stock by location' card. Good locations only."""
     totals = defaultdict(lambda: defaultdict(int))
-    for row in StockBalance.objects.exclude(qty=0).values("location_id", "item__unit").annotate(q=Sum("qty")):
+    rows = (
+        StockBalance.objects.exclude(qty=0)
+        .filter(location__is_defective_store=False)
+        .values("location_id", "item__unit")
+        .annotate(q=Sum("qty"))
+    )
+    for row in rows:
         totals[row["location_id"]][row["item__unit"]] += row["q"]
     # same rule as stock_locations: active, or hidden but still holding stock
-    places = Location.objects.filter(Q(is_active=True) | Q(pk__in=list(totals)))
+    places = Location.objects.good().filter(Q(is_active=True) | Q(pk__in=list(totals)))
     return [(place, dict(totals[place.pk])) for place in places]
 
 
 def dashboard_stats(today):
-    nos = StockBalance.objects.filter(item__unit="NOS").aggregate(t=Sum("qty"))["t"] or 0
+    nos = (
+        StockBalance.objects.filter(item__unit="NOS", location__is_defective_store=False).aggregate(
+            t=Sum("qty")
+        )["t"]
+        or 0
+    )
     return {
         "active_items": Item.objects.filter(is_active=True).count(),
         "nos_in_stock": nos,
@@ -66,13 +93,17 @@ def weekly_in_out(today, weeks=5):
     windows = [
         (today - timedelta(days=7 * w + 6), today - timedelta(days=7 * w)) for w in range(weeks - 1, -1, -1)
     ]
-    lines = StockLine.objects.filter(
-        entry__kind__in=[EntryKind.IN, EntryKind.OUT],
-        item__unit="NOS",
-        entry__entry_date__gte=windows[0][0],
-        entry__entry_date__lte=today,
-        entry__reversed_by__isnull=True,
-    ).values_list("entry__entry_date", "qty")
+    lines = (
+        StockLine.objects.filter(
+            entry__kind__in=[EntryKind.IN, EntryKind.OUT],
+            item__unit="NOS",
+            entry__entry_date__gte=windows[0][0],
+            entry__entry_date__lte=today,
+            entry__reversed_by__isnull=True,
+        )
+        .exclude(location__is_defective_store=True)
+        .values_list("entry__entry_date", "qty")
+    )
     out = [
         {"start": s, "end": e, "label": f"{s:%d-%m}–{e:%d-%m}", "qty_in": 0, "qty_out": 0} for s, e in windows
     ]
@@ -109,24 +140,32 @@ def _filtered_items(f):
 
 
 def stock_locations(bal):
-    """Active locations, plus any inactive location that still holds stock."""
+    """Active good locations, plus any hidden good location that still holds stock."""
     held = {loc_id for (_, loc_id), qty in bal.items() if qty}
-    return list(Location.objects.filter(Q(is_active=True) | Q(pk__in=held)))
+    return list(Location.objects.good().filter(Q(is_active=True) | Q(pk__in=held)))
 
 
 def current_stock_rows(f):
-    """(rows, locations). Row: {item, per_loc: {location_id: qty}, total, low}. Hides items with no stock."""
+    """(rows, locations). Row: {item, per_loc: {location_id: qty}, total, low, defective}.
+
+    Good stock only: the Defective store is never a column or part of `total`; its quantity is `defective`,
+    shown separately. Hides items with no stock anywhere (good or defective).
+    """
     bal = balance_map()
+    store_id = defective_store_id()
     locations = [f.location] if f.location else stock_locations(bal)
-    all_ids = [place.pk for place in Location.objects.all()]
+    good_ids = list(Location.objects.good().values_list("pk", flat=True))
     rows = []
     for item in _filtered_items(f).filter(is_active=True):
-        per_loc = {pk: bal.get((item.pk, pk), 0) for pk in all_ids}
+        per_loc = {pk: bal.get((item.pk, pk), 0) for pk in good_ids}
         total = sum(per_loc.values())
+        defective = bal.get((item.pk, store_id), 0)
         low = is_low(item, total)
-        shown = per_loc.get(f.location.pk, 0) != 0 if f.location else (total != 0 or f.low)
+        shown = per_loc.get(f.location.pk, 0) != 0 if f.location else total != 0 or defective != 0 or f.low
         if shown and (low or not f.low):
-            rows.append({"item": item, "per_loc": per_loc, "total": total, "low": low})
+            rows.append(
+                {"item": item, "per_loc": per_loc, "total": total, "low": low, "defective": defective}
+            )
     return rows, locations
 
 

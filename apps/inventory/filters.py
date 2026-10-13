@@ -35,8 +35,11 @@ class StockFilters:
 
 
 def stock_filters(params):
+    place = _obj(Location, params.get("location"))
+    if place is not None and place.is_defective_store:
+        place = None  # the Defective store has its own column, it is not a location filter here
     return StockFilters(
-        _obj(Location, params.get("location")),
+        place,
         _obj(SpareType, params.get("spare_type")),
         _obj(Company, params.get("company")),
         _text(params.get("q")),

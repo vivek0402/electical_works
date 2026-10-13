@@ -24,7 +24,9 @@
   </div></div></div></div>
   <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">Stock by location</h3></div><div class="list-group list-group-flush">
     {% for p, q in per_loc %}<div class="list-group-item d-flex"><span>{{ p.name }}</span><span class="ms-auto fw-bold">{{ q|qty }} <span class="text-secondary fw-normal">{{ item.unit }}</span></span></div>{% endfor %}
-    <div class="list-group-item d-flex bg-light"><b>Total</b><span class="ms-auto fw-bold">{{ total|qty }} {{ item.unit }}</span></div></div></div></div>
+    <div class="list-group-item d-flex bg-light"><b>Total (good stock)</b><span class="ms-auto fw-bold">{{ total|qty }} {{ item.unit }}</span></div></div>
+    <div class="card-footer d-flex align-items-center"><i class="ti ti-recycle me-2 text-secondary"></i><span>Defective store: <b>{{ defective }}</b> {{ item.unit }}<span class="d-block small text-secondary">Failed pieces, not counted above</span></span>
+      {% if defective and nav_urls.defective_pieces %}<a class="btn btn-sm btn-quiet ms-auto" href="{{ nav_urls.defective_pieces }}?item={{ item.pk }}&amp;status=IN_STORE"><i class="ti ti-tags"></i> Pieces</a>{% endif %}</div></div></div>
   <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Movement history</h3>{% block export_history %}<div class="card-actions"><a href="{% export_url 'item_history_xlsx' item.pk %}" class="btn btn-sm btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export</a></div>{% endblock %}</div>
     <div class="card-body border-bottom py-3"><form method="get" class="row g-2">
       <div class="col-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="h-from">From date</label><input id="h-from" type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
