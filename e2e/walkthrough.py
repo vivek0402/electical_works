@@ -6,7 +6,8 @@ The password comes from argv, or from the E2E_PASSWORD environment variable.
 
 Re-runnable: each run creates a new item TEST-<timestamp>, then undoes everything it posted (the Stock IN,
 the transfer and the adjustment), so stock levels end where they started. Only the new item and the
-entry/undo pairs stay on record.
+entry/undo pairs stay on record, plus one piece of the new item marked defective (a Stock IN of 1 and the
+mark-defective transfer, which can't be undone; they touch only the throwaway item).
 
 Screenshots go to e2e/screen-<width>.png. If a step fails, e2e/screen-<width>-FAIL.png is saved, and the
 failing step and any JS errors are printed.
@@ -129,6 +130,31 @@ def run(page):
     expect(page.locator("#form-error")).to_contain_text("Fix the highlighted quantities")
     expect(page).to_have_url(re.compile(r"/stock/out/$"))
 
+    step("Mark defective: over-quantity is blocked live; 1 piece saves and gets a DEF tag")
+    page.goto(
+        f"{BASE}/stock/in/"
+    )  # one extra piece to mark, so the clean-up undo of the IN above still balances
+    pick_item(page, NEW)
+    page.locator("input[name=line_qty]").first.fill("1")
+    page.click("button.btn-in[type=submit]")
+    entry_number(page, "IN")
+    page.goto(f"{BASE}/defectives/mark/")
+    expect(page.locator("#id_location option", has_text="Defective store")).to_have_count(0)
+    pick_item(page, NEW)
+    have = int(page.locator(".lines-table .avail b").first.inner_text())
+    page.locator("input[name=line_fault]").first.fill("Dead on arrival (walkthrough)")
+    page.locator("input[name=line_qty]").first.fill(str(have + 1))
+    expect(page.locator(".err").first).to_contain_text(f"Only {have} NOS available")
+    page.click("form[data-lines-form] button[type=submit]")
+    expect(page.locator("#form-error")).to_contain_text("Fix the highlighted lines")
+    expect(page).to_have_url(re.compile(r"/defectives/mark/$"))
+    page.locator("input[name=line_qty]").first.fill("1")
+    page.click("form[data-lines-form] button[type=submit]")
+    entry_number(page, "TRF")
+    expect(page.locator(".alert-success").first).to_contain_text(
+        re.compile(r"New defective tag: DEF-\d{4}\.")
+    )
+
     step("transfer to the same location is refused; a real transfer saves")
     page.goto(f"{BASE}/stock/transfer/")
     page.select_option("#id_to_location", label="Vizag Office")
@@ -176,7 +202,9 @@ def run(page):
 
     step(f"clean-up: find {in_no} in movements and undo it")
     page.goto(f"{BASE}/movements/?q={NEW}")
-    page.locator("a.code", has_text=re.compile(r"^IN-")).first.click()
+    page.locator(
+        "a.code", has_text=re.compile(rf"^{in_no}$")
+    ).first.click()  # the item has two INs (see Mark)
     undo(page, in_no, "walkthrough cleanup")
 
 

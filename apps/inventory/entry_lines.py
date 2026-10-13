@@ -12,7 +12,9 @@ from .services import StockError
 
 FIELDS = ("item", "qty", "batch", "pkd", "expected", "fault")
 TYPED = ("item", "qty", "batch", "pkd", "fault")  # a row with none of these filled in is blank and skipped
-IN_LIKE = ("in", "collect")  # lines that bring stock in: the same item may be on several lines (batches)
+# Modes where the same item may be on several lines: stock coming in (one line per batch) and pieces marked
+# defective (one line per fault; mark_defective groups them into one ledger line per item).
+REPEATS_OK = ("in", "collect", "mark")
 FAULT_MAX = 200  # DefectivePiece.fault
 MAX_QTY = 1_000_000  # far above any real line; keeps typos out of the 32-bit ledger column
 MAX_DIGITS = 9  # never int() an unbounded string
@@ -108,6 +110,6 @@ def parse_lines(rows, mode, allow_empty=False):
         if allow_empty:
             return []
         raise StockError("Add at least one item.")
-    if mode not in IN_LIKE and len({line.item.pk for line in parsed}) != len(parsed):
+    if mode not in REPEATS_OK and len({line.item.pk for line in parsed}) != len(parsed):
         raise StockError("The same item is on two lines. Combine them into one line.")
     return parsed

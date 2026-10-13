@@ -36,7 +36,11 @@ def drv(office_user):
 def test_page_offers_good_locations_and_a_mark_editor(office_client, drv):
     html = office_client.get(URL).content.decode()
     assert "Mark defective from stock" in html and "Defective store</option>" not in html
-    assert 'id="items-data"' in html and 'data-lines="line"' in html and 'data-mode="mark"' in html
+    assert 'id="items-data"' in html and 'id="balances-data"' in html and 'id="initial-lines"' in html
+    assert "data-lines-form" in html and "data-form-error" in html
+    assert (
+        'data-lines="line"' in html and 'data-mode="mark"' in html and 'data-initial="initial-lines"' in html
+    )
 
 
 def test_mark_saves_one_transfer_and_tags_pieces(office_client, drv):
@@ -100,3 +104,42 @@ def test_nav_links_mark_defective(office_client):
 def test_a_user_without_a_role_cannot_open_the_page(client):
     client.force_login(make_user("norole_t"))
     assert client.get(URL).status_code == 403
+
+
+def test_same_item_on_two_lines_with_different_faults(office_client, drv):
+    data = {**mark_data(drv, 2, "no output"), "line_item": [str(drv.pk)] * 2, "line_qty": ["2", "1"]}
+    data["line_fault"] = ["no output", "burnt"]
+    r = submit(office_client, data)
+    assert r.status_code == 302
+    entry = StockEntry.objects.get(subtype="MARK_DEFECTIVE")
+    assert entry.lines.get(item=drv, location=store()).qty == 3
+    assert list(DefectivePiece.objects.order_by("tag").values_list("fault", flat=True)) == [
+        "no output",
+        "no output",
+        "burnt",
+    ]
+
+
+def blank_row_between(item, qty, fault):
+    """Line 1 is fine, line 2 is left blank, line 3 is the one under test."""
+    return {
+        "entry_date": TODAY,
+        "location": loc().pk,
+        "line_item": [str(item.pk), "", str(item.pk)],
+        "line_qty": ["1", "", str(qty)],
+        "line_fault": ["burnt", "", fault],
+    }
+
+
+@pytest.mark.parametrize(
+    "qty,fault,message",
+    [
+        (1, "", "Line 3: write what is wrong with the piece."),
+        (201, "dead", "Line 3: quantity must be between 1 and 200."),
+        (1, "x" * 201, "Line 3: keep the fault to 200 characters or less."),
+    ],
+)
+def test_errors_name_the_line_on_screen_past_a_blank_row(office_client, drv, qty, fault, message):
+    html = submit(office_client, blank_row_between(drv, qty, fault)).content.decode()
+    assert f"{message} Nothing was saved." in html
+    assert not DefectivePiece.objects.exists()

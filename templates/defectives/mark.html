@@ -17,7 +17,7 @@
     <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span id="lines-summary" class="text-secondary"></span>
       <div class="ms-auto btn-list"><a href="{{ nav_urls.defectives_dashboard|default:'/' }}" class="btn btn-link link-secondary">Cancel</a>
         <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Mark as defective</button></div></div></div>
-  <div id="form-error" class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+  <div id="form-error" data-form-error class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
 </form>
 {{ items_data|json_script:"items-data" }}{{ balances_data|json_script:"balances-data" }}{{ initial_lines|json_script:"initial-lines" }}
 {% endblock %}

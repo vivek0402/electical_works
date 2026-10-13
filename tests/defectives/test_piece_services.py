@@ -179,12 +179,38 @@ def test_too_long_fault_is_refused_not_cut(drv, office_user):
         )
 
 
-def test_same_item_on_two_lines_is_refused(drv, office_user):
+def test_same_item_with_different_faults_posts_one_grouped_ledger_line(drv, office_user):
+    give_stock(drv, 3, office_user)
+    entry, pieces = mark_defective(
+        location=loc(), lines=[(drv, 2, "no output"), (drv, 1, "burnt")], entry_date=TODAY, user=office_user
+    )
+    assert sorted((ln.location.name, ln.qty) for ln in entry.lines.filter(item=drv)) == [
+        ("Defective store", 3),
+        ("Vizag Office", -3),
+    ]
+    assert [(p.tag, p.fault) for p in pieces] == [
+        ("DEF-0001", "no output"),
+        ("DEF-0002", "no output"),
+        ("DEF-0003", "burnt"),
+    ]
+    assert StockBalance.objects.get(item=drv, location=store()).qty == 3
+
+
+def test_same_item_lines_together_cannot_take_more_than_there_is(drv, office_user):
     give_stock(drv, 2, office_user)
-    with pytest.raises(DefectiveError, match="LG78-150-700 is listed twice."):
+    with pytest.raises(NotEnoughStock, match="Only 2 NOS of LG78-150-700 at Vizag Office."):
         mark_defective(
-            location=loc(), lines=[(drv, 1, "x"), (drv, 1, "y")], entry_date=TODAY, user=office_user
+            location=loc(), lines=[(drv, 2, "x"), (drv, 1, "y")], entry_date=TODAY, user=office_user
         )
+    assert not DefectivePiece.objects.exists()
+
+
+def test_the_piece_limit_is_per_line_even_for_the_same_item(drv, office_user):
+    give_stock(drv, 250, office_user)
+    entry, pieces = mark_defective(
+        location=loc(), lines=[(drv, 200, "x"), (drv, 50, "y")], entry_date=TODAY, user=office_user
+    )
+    assert len(pieces) == 250 and entry.lines.get(item=drv, location=store()).qty == 250
 
 
 def test_cannot_mark_at_an_inactive_location(drv, office_user):
@@ -364,3 +390,16 @@ def test_scrap_across_two_items_posts_one_line_per_item(drv, office_user):
     lines = sorted(StockLine.objects.filter(entry=entry).values_list("item__code", "location__name", "qty"))
     assert lines == [("EIO9326", store().name, -1), ("LG78-150-700", store().name, -2)]
     assert balance_drift() == []
+
+
+def test_calls_sharing_one_store_line_cannot_tag_more_than_it_moved(drv, office_user):
+    give_stock(drv, 3, office_user)
+    entry, _ = mark_defective(
+        location=loc(), lines=[(drv, 2, "x"), (drv, 1, "y")], entry_date=TODAY, user=office_user
+    )
+    with pytest.raises(
+        DefectiveError, match=r"brought only 3 LG78-150-700 into the Defective store \(3 already tagged\)"
+    ):
+        collect_pieces(
+            entry=entry, item=drv, qty=1, source=Source.FOUND_IN_STOCK, collected_on=TODAY, user=office_user
+        )

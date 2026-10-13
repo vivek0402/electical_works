@@ -264,28 +264,33 @@ def create_piece(*, item, source, collected_on, user, entry, batch_code="", pkd=
 def mark_defective(*, location, lines, entry_date, user):
     """Move faulty pieces from good stock into the Defective store and tag each one.
 
-    lines: [(item, qty, fault)], each item once, qty 1 to MAX_PIECES_PER_LINE. Posts one Transfer
-    (MARK_DEFECTIVE), then tags `qty` pieces per line. Returns (entry, pieces).
+    lines: [(item, qty, fault)], qty 1 to MAX_PIECES_PER_LINE per line. The same item may be on several lines
+    with different faults. Posts one Transfer (MARK_DEFECTIVE) with one pair of ledger lines per item (the qty
+    summed over its lines), then tags `qty` pieces per form line with that line's fault.
+    Returns (entry, pieces).
     Raises DefectiveError or StockError and saves nothing.
     """
     if location.is_defective_store:
         raise DefectiveError("Choose the good-stock location where the faulty pieces were found.")
     if not lines:
         raise DefectiveError("Add at least one item.")
-    seen, cleaned = set(), []
+    cleaned, per_item = [], {}  # per_item: {item_pk: [item, total qty]} in first-seen order
     for n, (item, qty, fault) in enumerate(lines, start=1):
         _check_qty(qty, n)
         fault = (fault or "").strip()
         if not fault:
             raise DefectiveError(f"Line {n}: write what is wrong with the piece.")
         _check_length(fault, FAULT_MAX, "fault", n)
-        if item.pk in seen:
-            raise DefectiveError(f"{item.code} is listed twice.")
-        seen.add(item.pk)
         cleaned.append((item, qty, fault))
+        per_item.setdefault(item.pk, [item, 0])[1] += qty
     _check_date(entry_date)
     store = Location.defective_store()
-    moves = [ln for item, qty, _ in cleaned for ln in (Line(item, location, -qty), Line(item, store, qty))]
+    # post_entry refuses an item twice at one location, so each item moves once with its lines' total.
+    moves = [
+        ln
+        for item, total in per_item.values()
+        for ln in (Line(item, location, -total), Line(item, store, total))
+    ]
     # Lock order: post_entry (balances, entry counter) before next_numbers (piece tags).
     entry = post_entry(
         kind=EntryKind.TRF,
@@ -296,6 +301,8 @@ def mark_defective(*, location, lines, entry_date, user):
         party=store.name,
         note="Marked defective",
     )
+    # One collect_pieces call per form line, all against the item's one store line: its count check adds the
+    # pieces earlier calls already tagged from this entry, so the lines together can't tag more than moved.
     pieces = [
         piece
         for item, qty, fault in cleaned

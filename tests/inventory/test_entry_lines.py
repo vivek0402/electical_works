@@ -126,11 +126,21 @@ def test_collect_lines_keep_batch_pkd_fault_and_allow_repeats():
     ]
 
 
-def test_mark_lines_refuse_the_same_item_twice():
+def test_mark_lines_allow_the_same_item_with_different_faults():
     a = make_item("X9")
-    q = service_post("line", [{"item": a.pk, "qty": 1, "fault": "a"}, {"item": a.pk, "qty": 1, "fault": "b"}])
+    q = service_post("line", [{"item": a.pk, "qty": 2, "fault": "a"}, {"item": a.pk, "qty": 1, "fault": "b"}])
+    assert [(p.item, p.qty, p.fault, p.n) for p in parse_lines(raw_lines(q), "mark")] == [
+        (a, 2, "a", 1),
+        (a, 1, "b", 2),
+    ]
+
+
+@pytest.mark.parametrize("mode", ["out", "trf", "adj"])
+def test_stock_forms_still_refuse_the_same_item_twice(mode):
+    a = make_item("X9")
+    q = service_post("line", [{"item": a.pk, "qty": 1}, {"item": a.pk, "qty": 1}])
     with pytest.raises(StockError, match="The same item is on two lines"):
-        parse_lines(raw_lines(q), "mark")
+        parse_lines(raw_lines(q), mode)
 
 
 def test_mark_lines_need_a_fault_numbered_as_on_screen():
