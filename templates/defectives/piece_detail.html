@@ -11,6 +11,7 @@
       <a class="dropdown-item" href="{% url 'batch_new' %}?company={{ piece.company_id|urlencode }}&amp;tag={{ piece.tag|urlencode }}"><i class="ti ti-plus"></i> New batch for {{ piece.company.name }}</a>
     </div></div>{% endif %}
   {% if piece.return_batch %}<a href="{% url 'batch_detail' piece.return_batch.number %}" class="btn btn-quiet"><i class="ti ti-truck-return"></i> Batch {{ piece.return_batch.number }}</a>{% endif %}
+  {% if piece.status == "IN_STORE" %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#scrap-modal"><i class="ti ti-trash"></i> Scrap…</button>{% endif %}
 {% endblock %}
 {% block content %}
 <div class="row row-cards">
@@ -42,5 +43,6 @@
       <div class="tl-body"><div class="fw-medium">{% if ev.from_status %}{{ ev.get_from_status_display }} → {% endif %}{{ ev.get_to_status_display }}</div>
         <div class="small text-secondary">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}{% if ev.entry %} · <a class="code" href="{% url 'entry_detail' ev.entry.number %}">{{ ev.entry.number }}</a>{% endif %}</div>{% if ev.note %}<div class="small">{{ ev.note }}</div>{% endif %}</div></li>{% endfor %}</ul></div></div></div>
 </div>
+{% if piece.status == "IN_STORE" %}{% include "defectives/_scrap_modal.html" with standalone=True tag=piece.tag %}{% endif %}
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/service.js' %}"></script>{% endblock %}

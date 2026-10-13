@@ -10,7 +10,7 @@ from .batches import (
     return_batches,
 )
 from .marking import mark_defective
-from .pieces import piece_detail
+from .pieces import defective_pieces, piece_detail, pieces_bulk
 
 __all__ = [
     "batch_add",
@@ -19,7 +19,9 @@ __all__ = [
     "batch_new",
     "batch_remove",
     "batch_settle",
+    "defective_pieces",
     "mark_defective",
     "piece_detail",
+    "pieces_bulk",
     "return_batches",
 ]

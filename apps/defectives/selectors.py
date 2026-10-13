@@ -5,7 +5,11 @@ from datetime import date
 from django.conf import settings
 from django.db.models import Count, Q
 
+from apps.inventory.models import Item
+from apps.inventory.normalise import normalise_code
+
 from .models import DefectivePiece, ReturnBatch, Source
+from .services import normalise_tag
 
 # What a piece row shows. Task 10 adds the complaint and site of the visit that collected it.
 PIECE_RELATED = ["item", "company", "return_batch"]
@@ -97,3 +101,40 @@ def courier_suggestions():
 def complaint_cells(piece):
     """[complaint no., company complaint no.] for the dispatch list. Task 10 fills these from the visit."""
     return ["Found in stock" if piece.source == Source.FOUND_IN_STOCK else "", ""]
+
+
+def piece_search_q(text):
+    """The pieces search box: a tag typed loosely (def-42), batch code, fault, return batch no. or item code.
+    Task 10 adds the complaint number."""
+    return (
+        Q(tag__icontains=normalise_tag(text))
+        | Q(batch_code__icontains=text)
+        | Q(fault__icontains=text)
+        | Q(return_batch__number__icontains=text)
+        | Q(item__code__icontains=normalise_code(text))
+    )
+
+
+def piece_rows(f):
+    pieces = pieces_qs()
+    for field, value in (
+        ("company", f.company),
+        ("item", f.item),
+        ("status", f.status),
+        ("source", f.source),
+        ("outcome", f.outcome),
+    ):
+        if value:
+            pieces = pieces.filter(**{field: value})
+    if f.date_from:
+        pieces = pieces.filter(collected_on__gte=f.date_from)
+    if f.date_to:
+        pieces = pieces.filter(collected_on__lte=f.date_to)
+    if f.q:
+        pieces = pieces.filter(piece_search_q(f.q))
+    return list(pieces)
+
+
+def piece_items():
+    """Items that have ever had a defective piece (the item filter on the pieces list)."""
+    return Item.objects.filter(defective_pieces__isnull=False).distinct().order_by("code")

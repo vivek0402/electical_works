@@ -1,0 +1,12 @@
+{% comment %}Scrap dialog. In the pieces list it sits inside the bulk form; on a piece card (standalone) it has its own form.
+The standalone form carries action as a hidden field: its data-once handler disables the submit button, and a
+disabled button sends no name/value.{% endcomment %}
+<div class="modal modal-blur fade" id="scrap-modal" tabindex="-1" aria-labelledby="scrap-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  {% if standalone %}<form method="post" action="{% url 'pieces_bulk' %}" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="tag" value="{{ tag }}"><input type="hidden" name="next" value="{{ request.get_full_path }}"><input type="hidden" name="action" value="scrap">{% endif %}
+  <div class="modal-header"><h5 class="modal-title" id="scrap-title"><i class="ti ti-trash"></i> Scrap {% if standalone %}{{ tag }}{% else %}the ticked pieces{% endif %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+  <div class="modal-body"><p class="text-secondary">Use this when a piece is not worth sending back. It leaves the Defective store with an adjustment (Damaged) and can't be batched again.</p>
+    <label class="form-label required" for="sc-reason">Reason</label><select id="sc-reason" name="reason" class="form-select"><option value="">Choose…</option>{% for value, label in scrap_reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+    <label class="form-label mt-3" for="sc-note">Note</label><textarea id="sc-note" name="note" class="form-control" rows="2" maxlength="200" placeholder="Required when the reason is Other"></textarea></div>
+  <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit"{% if not standalone %} name="action" value="scrap"{% endif %} class="btn btn-danger ms-auto"><i class="ti ti-trash"></i> Scrap</button></div>
+  {% if standalone %}</form>{% endif %}
+</div></div></div>

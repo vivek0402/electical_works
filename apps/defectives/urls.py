@@ -4,6 +4,8 @@ from . import views
 
 urlpatterns = [
     path("defectives/mark/", views.mark_defective, name="mark_defective"),
+    path("defectives/pieces/", views.defective_pieces, name="defective_pieces"),
+    path("defectives/pieces/bulk/", views.pieces_bulk, name="pieces_bulk"),
     path("defectives/pieces/<str:tag>/", views.piece_detail, name="piece_detail"),
     path("defectives/batches/", views.return_batches, name="return_batches"),
     path("defectives/batches/new/", views.batch_new, name="batch_new"),

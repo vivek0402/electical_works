@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% load static core_tags defective_tags %}
+{% block title %}Defective pieces{% endblock %}
+{% block pretitle %}Defectives{% endblock %}
+{% block page_title %}Defective pieces{% endblock %}
+{% block actions %}<a href="{% url 'mark_defective' %}" class="btn btn-quiet"><i class="ti ti-alert-octagon"></i> Mark defective</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">
+    {% if f.outcome %}<input type="hidden" name="outcome" value="{{ f.outcome }}">{% endif %}
+    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-co">Company</label>
+      <select id="pf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
+        {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="pf-item">Item</label>
+      <select id="pf-item" name="item" data-ts onchange="this.form.submit()"><option value="">All items</option>
+        {% for i in items %}<option value="{{ i.pk }}" {% if f.item == i %}selected{% endif %}>{{ i.code }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-st">Status</label>
+      <select id="pf-st" name="status" class="form-select" onchange="this.form.submit()"><option value="">Any status</option>
+        {% for v, label in statuses %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-src">Source</label>
+      <select id="pf-src" name="source" class="form-select" onchange="this.form.submit()"><option value="">Any source</option>
+        {% for v, label in sources %}<option value="{{ v }}" {% if f.source == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-lg-3"><label class="form-label small text-secondary mb-1" for="pf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+      <input id="pf-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Tag, batch code, RB no., fault"></div></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-from">Collected from</label><input id="pf-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-to">Collected to</label><input id="pf-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    {% if f.outcome %}<div class="col-auto pb-2">Outcome: {{ f.outcome|outcome_badge }}</div>{% endif %}
+    <div class="col-auto ms-auto pb-1"><a href="{% url 'defective_pieces' %}" class="btn btn-link link-secondary px-0"><i class="ti ti-filter-off"></i> Clear filters</a></div>
+  </form></div>
+  <form method="post" action="{% url 'pieces_bulk' %}">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div class="bulk-bar px-3 py-2 d-flex flex-wrap align-items-center gap-2" data-bulk hidden><b data-tick-count></b>
+      <div class="ms-auto btn-list"><button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#batch-modal"><i class="ti ti-packages"></i> Add to draft batch…</button>
+        <button type="button" class="btn btn-sm btn-quiet" data-bs-toggle="modal" data-bs-target="#scrap-modal"><i class="ti ti-trash"></i> Scrap…</button></div></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+      <thead><tr><th class="c-check"><input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all pieces in store on this page"></th>
+        {% sort_th "tag" "Tag" %}{% sort_th "code" "Item" %}{% sort_th "company" "Company" %}{% sort_th "source" "Source" %}{% sort_th "collected" "Collected" %}{% sort_th "bpkd" "Batch · PKD" %}{% sort_th "status" "Status" %}{% sort_th "rb" "Return batch" %}</tr></thead>
+      <tbody>{% for p in table.page %}<tr>
+        <td class="c-check">{% if p.status == "IN_STORE" %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}">{% else %}<span class="text-secondary" title="Only pieces in store can be batched or scrapped"><i class="ti ti-lock"></i></span>{% endif %}</td>
+        <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td>
+        <td><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a><div class="small text-secondary">{{ p.item.description }}</div></td>
+        <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="nowrap">{{ p.collected_on|date }}</td>
+        <td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|pkd_month }}{% endif %}</td>
+        <td>{{ p.status|piece_badge }}{% if p.outcome %}<div class="mt-1">{{ p.outcome|outcome_badge }}</div>{% endif %}</td>
+        <td>{% if p.return_batch %}<a class="code" href="{% url 'batch_detail' p.return_batch.number %}">{{ p.return_batch.number }}</a>{% else %}<span class="text-secondary">—</span>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No pieces match these filters.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="modal modal-blur fade" id="batch-modal" tabindex="-1" aria-labelledby="batch-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="batch-title"><i class="ti ti-packages"></i> Add the ticked pieces to a draft batch</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body"><p class="text-secondary">A batch holds one company's pieces. Pick a draft batch of the same company, or start a new one.</p>
+        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column gap-2">
+          {% for b in drafts %}<label class="form-selectgroup-item flex-fill"><input type="radio" name="batch" value="{{ b.number }}" class="form-selectgroup-input"><div class="form-selectgroup-label d-flex align-items-center p-2 text-start"><span class="form-selectgroup-check me-2"></span><span><span class="code">{{ b.number }}</span><span class="text-secondary ms-2">{{ b.company.name }} · created {{ b.created_on|date }}</span></span></div></label>{% endfor %}
+          <label class="form-selectgroup-item flex-fill"><input type="radio" name="batch" value="new" class="form-selectgroup-input" checked><div class="form-selectgroup-label d-flex align-items-center p-2 text-start"><span class="form-selectgroup-check me-2"></span><span><i class="ti ti-plus"></i> New batch for the company of the ticked pieces</span></div></label>
+        </div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" name="action" value="batch" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Add to batch</button></div>
+    </div></div></div>
+    {% include "defectives/_scrap_modal.html" with standalone=False %}
+  </form>
+  {% include "core/_pagination.html" %}
+</div>
+<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Tick pieces that are in store to add them to a draft return batch or scrap them. Pieces in a batch, sent or settled are locked.</p>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/service.js' %}"></script>{% endblock %}
