@@ -3,9 +3,17 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from apps.defectives.models import BatchLine, BatchStatus, DefectivePiece, Outcome, PieceStatus
+from apps.defectives.models import (
+    BatchLine,
+    BatchStatus,
+    DefectiveEvent,
+    DefectivePiece,
+    Outcome,
+    PieceStatus,
+)
 from apps.defectives.services import (
     DefectiveError,
+    _tag_list,
     add_pieces,
     create_batch,
     dispatch,
@@ -13,12 +21,13 @@ from apps.defectives.services import (
     remove_pieces,
     settle,
 )
-from apps.inventory.models import Company, EntryKind, ServiceSubtype, StockBalance
+from apps.inventory.models import Company, EntryKind, ServiceSubtype, StockBalance, StockEntry
 from apps.inventory.services import Line, balance_drift, post_entry
 from tests.factories import loc, make_item, make_pieces, store
 
 pytestmark = pytest.mark.django_db
 TODAY = timezone.localdate()
+QUERY_BUDGET = 21  # measured for 10 pieces; it must not grow with the piece count
 
 
 def qty(item, place):
@@ -363,3 +372,103 @@ def test_store_matches_the_pieces_after_a_full_cycle(wipro_pieces, office_user):
     )
     in_store = DefectivePiece.objects.filter(status__in=[PieceStatus.IN_STORE, PieceStatus.IN_BATCH]).count()
     assert qty(drv, store()) == in_store == 1 and balance_drift() == []
+
+
+@pytest.fixture
+def two_item_batch(office_user):
+    """RB-0001 dispatched with 2 x LG78-150-700 (DEF-0001, DEF-0002) and 1 x LG80-200 (DEF-0003)."""
+    a = make_pieces(make_item("LG78-150-700"), 2, office_user)
+    b = make_pieces(make_item("LG80-200"), 1, office_user)
+    return sent_batch(a + b, office_user), a + b
+
+
+def test_settle_posts_one_entry_for_several_items(two_item_batch, office_user):
+    batch, pieces = two_item_batch
+    a, b = pieces[0].item, pieces[2].item
+    before = (qty(a, loc()), qty(b, loc()))
+    [e] = settle(
+        batch=batch,
+        pieces=pieces,
+        outcome=Outcome.REPLACED,
+        settled_on=TODAY,
+        to_location=loc(),
+        user=office_user,
+    )
+    assert [(ln.item, ln.location, ln.qty) for ln in e.lines.order_by("item__code")] == [
+        (a, loc(), 2),
+        (b, loc(), 1),
+    ]
+    assert (qty(a, loc()), qty(b, loc())) == (before[0] + 2, before[1] + 1)
+    assert e.note == "RB-0001 Replaced: DEF-0001, DEF-0002, DEF-0003"
+    assert {fresh(p).replacement_entry for p in pieces} == {e}
+    assert set(BatchLine.objects.filter(batch=batch).values_list("entry", flat=True)) == {e.pk}
+    assert {p.events.last().entry for p in pieces} == {e}
+    assert StockEntry.objects.filter(return_batch=batch, kind=EntryKind.IN).count() == 1
+    assert balance_drift() == []
+
+
+def test_rejected_returned_lines_group_by_item_and_batch_code(office_user):
+    first, second = make_item("LG78-150-700"), make_item("LG80-200")
+    pieces = make_pieces(first, 3, office_user) + make_pieces(second, 1, office_user)
+    for p, code in zip(pieces, ["B1", "B2", "B1", ""], strict=True):
+        DefectivePiece.objects.filter(pk=p.pk).update(batch_code=code)
+    batch = sent_batch(pieces, office_user)
+    [e] = settle(
+        batch=batch, pieces=pieces, outcome=Outcome.REJECTED_RETURNED, settled_on=TODAY, user=office_user
+    )
+    got = sorted((ln.item.code, ln.batch_code, ln.qty) for ln in e.lines.all())
+    assert got == [("LG78-150-700", "B1", 2), ("LG78-150-700", "B2", 1), ("LG80-200", "", 1)]
+    assert all(ln.location == store() for ln in e.lines.all())
+    assert qty(first, store()) == 3 and qty(second, store()) == 1 and balance_drift() == []
+
+
+def test_a_refused_settle_changes_nothing(wipro_pieces, office_user):
+    batch = sent_batch(wipro_pieces[:1], office_user)  # RB-0001
+    create_batch(company=wipro(), user=office_user, pieces=wipro_pieces[1:2])  # RB-0002, draft
+    entries, events = StockEntry.objects.count(), DefectiveEvent.objects.count()
+    lines = list(BatchLine.objects.values_list("pk", "outcome", "settled_on", "entry", "to_location"))
+    with pytest.raises(DefectiveError, match="DEF-0002 is not in RB-0001."):
+        settle(
+            batch=batch,
+            pieces=wipro_pieces[:2],
+            outcome=Outcome.REPLACED,
+            settled_on=TODAY,
+            to_location=loc(),
+            user=office_user,
+        )
+    assert fresh(wipro_pieces[0]).status == PieceStatus.SENT
+    assert (StockEntry.objects.count(), DefectiveEvent.objects.count()) == (entries, events)
+    assert list(BatchLine.objects.values_list("pk", "outcome", "settled_on", "entry", "to_location")) == lines
+
+
+def test_a_settled_line_is_refused_not_a_crash(wipro_pieces, office_user):
+    batch = sent_batch(wipro_pieces[:1], office_user)
+    BatchLine.objects.filter(batch=batch).update(outcome=Outcome.REPAIRED, settled_on=TODAY)  # a stale page
+    with pytest.raises(DefectiveError, match="DEF-0001's line in RB-0001 is already settled; refresh."):
+        settle(
+            batch=batch,
+            pieces=wipro_pieces[:1],
+            outcome=Outcome.REJECTED_SCRAPPED,
+            settled_on=TODAY,
+            user=office_user,
+        )
+
+
+def test_settling_many_pieces_takes_a_fixed_number_of_queries(office_user, django_assert_max_num_queries):
+    pieces = make_pieces(make_item("LG78-150-700"), 10, office_user)
+    batch = sent_batch(pieces, office_user)
+    with django_assert_max_num_queries(QUERY_BUDGET):
+        settle(
+            batch=batch,
+            pieces=pieces,
+            outcome=Outcome.REPLACED,
+            settled_on=TODAY,
+            to_location=loc(),
+            user=office_user,
+        )
+
+
+def test_entry_note_lists_at_most_twenty_tags():
+    pieces = [DefectivePiece(tag=f"DEF-{n:04d}") for n in range(1, 24)]
+    assert _tag_list(pieces) == ", ".join(f"DEF-{n:04d}" for n in range(1, 21)) + " +3 more"
+    assert _tag_list(pieces[:2]) == "DEF-0001, DEF-0002"
