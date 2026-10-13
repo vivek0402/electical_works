@@ -3,6 +3,7 @@ done. Statuses move only through services.py, which checks TRANSITIONS and logs 
 
 import re
 
+import pgtrigger
 from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
@@ -130,7 +131,9 @@ class Complaint(models.Model):
     qty_affected = models.PositiveIntegerField(null=True, blank=True)
     reported_on = models.DateField()
     priority = models.CharField(max_length=8, choices=Priority.choices, default=Priority.NORMAL)
-    technicians = models.ManyToManyField(Technician, blank=True, related_name="complaints")
+    technicians = models.ManyToManyField(
+        Technician, blank=True, related_name="complaints", through="ComplaintTechnician"
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NOT_ATTENDED)
     contact_name = models.CharField("contact person", max_length=80, blank=True)  # copied from the site
     phone = models.CharField(max_length=10, blank=True)
@@ -141,8 +144,14 @@ class Complaint(models.Model):
 
     class Meta:
         ordering = ["-reported_on", "-id"]
-        indexes = [models.Index(fields=["status"], name="complaint_status_idx")]
+        indexes = [models.Index(fields=["status", "reported_on"], name="complaint_status_reported_idx")]
         constraints = [
+            models.CheckConstraint(condition=~Q(number=""), name="complaint_number_present"),
+            models.CheckConstraint(condition=~Q(fault=""), name="complaint_fault_present"),
+            models.CheckConstraint(
+                condition=Q(closed_on__isnull=True) | Q(closed_on__gte=F("reported_on")),
+                name="complaint_closed_after_reported",
+            ),
             models.CheckConstraint(condition=Q(status__in=Status.values), name="complaint_status_valid"),
             models.CheckConstraint(
                 condition=Q(priority__in=Priority.values), name="complaint_priority_valid"
@@ -216,7 +225,7 @@ class Visit(models.Model):
     number = models.CharField(max_length=12, unique=True)
     complaint = models.ForeignKey(Complaint, on_delete=models.PROTECT, related_name="visits")
     visit_date = models.DateField()
-    technicians = models.ManyToManyField(Technician, related_name="visits")
+    technicians = models.ManyToManyField(Technician, related_name="visits", through="VisitTechnician")
     work_done = models.TextField()
     next_status = models.CharField(max_length=20, choices=Status.choices)
     # The location the parts were given from: set exactly when there is a parts-given OUT.
@@ -232,7 +241,11 @@ class Visit(models.Model):
 
     class Meta:
         ordering = ["-visit_date", "-id"]
+        # A visit posted stock and tagged pieces, so it is never deleted. Updates stay possible.
+        triggers = [pgtrigger.Protect(name="visit_no_delete", operation=pgtrigger.Delete)]
         constraints = [
+            models.CheckConstraint(condition=~Q(number=""), name="visit_number_present"),
+            models.CheckConstraint(condition=~Q(work_done=""), name="visit_work_done_present"),
             models.CheckConstraint(
                 condition=Q(next_status__in=WORK_STATUSES), name="visit_next_status_is_work"
             ),
@@ -245,3 +258,29 @@ class Visit(models.Model):
 
     def __str__(self):
         return self.number
+
+
+# The technician links. Their own models so that a technician with any history can't be deleted (PROTECT);
+# hide them instead (is_active).
+class ComplaintTechnician(models.Model):
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name="+")
+    technician = models.ForeignKey(Technician, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["complaint", "technician"], name="complaint_technician_once")
+        ]
+
+    def __str__(self):
+        return f"{self.complaint_id} / {self.technician_id}"
+
+
+class VisitTechnician(models.Model):
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE, related_name="+")
+    technician = models.ForeignKey(Technician, on_delete=models.PROTECT, related_name="+")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["visit", "technician"], name="visit_technician_once")]
+
+    def __str__(self):
+        return f"{self.visit_id} / {self.technician_id}"

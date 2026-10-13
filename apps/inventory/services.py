@@ -316,6 +316,8 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
     entry = StockEntry.objects.select_for_update().get(pk=entry.pk)
     if entry.kind == EntryKind.REV:
         raise StockError("An undo can't be undone. Make a new entry instead.")
+    if entry.is_complaint_visit:  # checked first: a visit's collection IN is also a defectives entry
+        raise StockError("This entry belongs to a complaint visit. Correct it from the complaint.")
     if entry.is_defective:
         raise StockError(
             "This entry belongs to the defective pieces. Use the Defectives screens instead of Undo."

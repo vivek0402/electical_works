@@ -123,7 +123,7 @@ def test_scrap_is_an_adjustment_at_the_store(drv, user):
     assert e.details == "Defective pieces scrapped" and e.is_defective
 
 
-def test_complaint_out_is_ordinary_and_can_be_undone(drv, user):
+def test_unlinked_complaint_out_is_ordinary_and_can_be_undone(drv, user):
     stock(drv, 3, user)
     e = post(
         EntryKind.OUT,

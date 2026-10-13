@@ -436,7 +436,9 @@ def adjust(request):
 
 @role_required(OFFICE)
 def entry_detail(request, number):
-    entry = get_object_or_404(selectors.entries_with_lines(StockEntry.objects.all()), number=number)
+    entry = get_object_or_404(
+        selectors.entries_with_lines(StockEntry.objects.select_related("complaint")), number=number
+    )
     undone_by = StockEntry.objects.filter(reverses=entry).first()
     return render(
         request,
@@ -444,7 +446,10 @@ def entry_detail(request, number):
         {
             "entry": entry,
             "undone_by": undone_by,
-            "can_undo": entry.kind != EntryKind.REV and undone_by is None and not entry.is_defective,
+            "can_undo": entry.kind != EntryKind.REV
+            and undone_by is None
+            and not entry.is_defective
+            and not entry.is_complaint_visit,
         },
     )
 

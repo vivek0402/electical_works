@@ -255,6 +255,14 @@ class StockEntry(models.Model):
         ordering = ["-entry_date", "-id"]
         indexes = [models.Index(fields=["kind", "entry_date"], name="entry_kind_date_idx")]
         triggers = [IMMUTABLE]
+        constraints = [
+            # Only a visit's parts-given OUT and its collection IN name a complaint (Undo copies no link).
+            models.CheckConstraint(
+                condition=Q(complaint__isnull=True)
+                | Q(subtype__in=[ServiceSubtype.COMPLAINT, ServiceSubtype.DEFECTIVE_COLLECTED]),
+                name="entry_complaint_only_visit_subtypes",
+            ),
+        ]
 
     def __str__(self):
         return self.number
@@ -276,6 +284,11 @@ class StockEntry(models.Model):
         if self.kind == EntryKind.ADJ:
             return self.get_reason_display()
         return f"Undo of {self.reverses.number}" if self.reverses_id else "Undo"
+
+    @property
+    def is_complaint_visit(self):
+        """True for a complaint visit's entries (parts given or collected); corrected from the complaint."""
+        return self.complaint_id is not None
 
     @property
     def is_defective(self):

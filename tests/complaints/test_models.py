@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.test.utils import CaptureQueriesContext
@@ -16,9 +18,9 @@ from apps.complaints.models import (
 from apps.defectives import selectors as defective_selectors
 from apps.defectives.models import DefectivePiece, Source
 from apps.defectives.services import collect_pieces, create_piece
-from apps.inventory.models import Company, EntryKind, ServiceSubtype
-from apps.inventory.services import Line, post_entry
-from tests.factories import loc, make_item, make_pieces, make_site, make_tech, store
+from apps.inventory.models import Company, EntryKind, ServiceSubtype, StockEntry
+from apps.inventory.services import Line, StockError, post_entry, undo_entry
+from tests.factories import give_stock, loc, make_item, make_pieces, make_site, make_tech, store
 
 pytestmark = pytest.mark.django_db
 TODAY = timezone.localdate()
@@ -272,3 +274,107 @@ def test_only_site_visit_pieces_name_a_visit(office_user):
     refused(DefectivePiece.objects.filter(pk=p.pk), source=Source.FOUND_IN_STOCK)
     [found] = make_pieces(make_item("LG78-150-701"), 1, office_user)
     refused(DefectivePiece.objects.filter(pk=found.pk), visit=v)
+
+
+# ---------------------------------------------------------------- history is kept
+
+
+def test_a_technician_with_history_cannot_be_deleted(office_user):
+    from django.db.models import ProtectedError
+
+    ramu, appa, new = make_tech("Ramu"), make_tech("Apparao"), make_tech("Suresh")
+    c = complaint(office_user)
+    c.technicians.add(ramu)
+    v = Visit.objects.create(
+        number="VIS-0001",
+        complaint=c,
+        visit_date=TODAY,
+        work_done="Checked",
+        next_status=Status.ATTENDED,
+        created_by=office_user,
+    )
+    v.technicians.set([appa])
+    for tech in (ramu, appa):
+        with pytest.raises(ProtectedError), transaction.atomic():
+            tech.delete()
+    new.delete()  # never used: fine
+    assert list(c.technicians.all()) == [ramu] and list(v.technicians.all()) == [appa]
+
+
+def test_visits_cannot_be_deleted_but_can_be_updated(office_user):
+    v = Visit.objects.create(
+        number="VIS-0001",
+        complaint=complaint(office_user),
+        visit_date=TODAY,
+        work_done="Checked",
+        next_status=Status.ATTENDED,
+        created_by=office_user,
+    )
+    with pytest.raises(DatabaseError), transaction.atomic():
+        Visit.objects.filter(pk=v.pk).delete()
+    Visit.objects.filter(pk=v.pk).update(work_done="Checked all fittings")
+    assert Visit.objects.get(pk=v.pk).work_done == "Checked all fittings"
+
+
+def test_numbers_fault_and_work_done_cannot_be_blank(office_user):
+    c = complaint(office_user)
+    refused(Complaint.objects.filter(pk=c.pk), number="")
+    refused(Complaint.objects.filter(pk=c.pk), fault="")
+    v = Visit.objects.create(
+        number="VIS-0001",
+        complaint=c,
+        visit_date=TODAY,
+        work_done="Checked",
+        next_status=Status.ATTENDED,
+        created_by=office_user,
+    )
+    refused(Visit.objects.filter(pk=v.pk), number="")
+    refused(Visit.objects.filter(pk=v.pk), work_done="")
+
+
+def test_a_complaint_cannot_close_before_it_was_reported(office_user):
+    rows = Complaint.objects.filter(pk=complaint(office_user).pk)
+    refused(rows, status=Status.CLOSED, closed_on=TODAY - timedelta(days=1))
+    rows.update(status=Status.CLOSED, closed_on=TODAY)  # the same day is fine
+
+
+# ---------------------------------------------------------------- a visit's ledger entries
+
+
+def test_only_visit_subtypes_can_name_a_complaint(office_user):
+    item = make_item("LG78-150-700")
+    with pytest.raises(IntegrityError), transaction.atomic():
+        post_entry(
+            kind=EntryKind.IN,
+            entry_date=TODAY,
+            lines=[Line(item, loc(), 1)],
+            user=office_user,
+            subtype="SUPPLIER",
+            complaint=complaint(office_user),
+        )
+
+
+def test_a_visits_entries_cannot_be_undone(office_client, office_user):
+    item = make_item("LG78-150-700")
+    give_stock(item, 3, office_user)
+    c = complaint(office_user)
+    given = post_entry(
+        kind=EntryKind.OUT,
+        entry_date=TODAY,
+        lines=[Line(item, loc(), -1)],
+        user=office_user,
+        subtype=ServiceSubtype.COMPLAINT,
+        complaint=c,
+    )
+    v, _ = collect(office_user, c, item, number="VIS-0002")
+    message = "This entry belongs to a complaint visit. Correct it from the complaint."
+    for e in (given, v.collect_entry):
+        with pytest.raises(StockError, match=message):
+            undo_entry(entry=e, reason="typed twice", user=office_user)
+        html = office_client.get(f"/entries/{e.number}/").content.decode()
+        assert "Undo this entry" not in html
+        assert "belongs to a visit on complaint" in html and "CMP-0001" in html
+        assert "belongs to the defective pieces" not in html
+        r = office_client.post(f"/entries/{e.number}/undo/", {"reason": "x"}, follow=True)
+        assert message in r.content.decode()
+    assert not StockEntry.objects.filter(kind=EntryKind.REV).exists()
