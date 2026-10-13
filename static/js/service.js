@@ -66,6 +66,29 @@
     window.location.assign(`?${query}`);
   }));
 
+  // Pieces list: the "Add to draft batch" dialog follows the ticked pieces. Drafts of other companies are hidden,
+  // the first remaining draft is picked, and ticks that span companies show the refusal and disable the button.
+  const batchModal = document.querySelector("[data-batch-modal]");
+  if (batchModal) batchModal.addEventListener("show.bs.modal", () => {
+    const form = batchModal.closest("form");
+    const companies = [...new Set([...form.querySelectorAll("input[data-tick]:checked")].map(b => b.dataset.company))];
+    const mixed = companies.length > 1;
+    batchModal.querySelector("[data-batch-mixed]").hidden = !mixed;
+    batchModal.querySelector("[data-batch-mixed-count]").textContent = companies.length;
+    batchModal.querySelector("[data-batch-hint]").hidden = mixed;
+    batchModal.querySelector("[data-batch-submit]").disabled = mixed;
+    batchModal.querySelector(".form-selectgroup").hidden = mixed;
+    let first = null;
+    batchModal.querySelectorAll("[data-draft]").forEach(label => {
+      const radio = label.querySelector("input");
+      const show = companies.length === 1 && radio.dataset.company === companies[0];
+      label.hidden = !show;
+      radio.disabled = !show;
+      if (show && !first) first = radio;
+    });
+    (first || batchModal.querySelector("input[value=new]")).checked = true;
+  });
+
   const pending = document.querySelector(".modal[data-show-on-load]");
   if (pending && BS) BS.Modal.getOrCreateInstance(pending).show();
   const settleErr = document.getElementById("settle-err");

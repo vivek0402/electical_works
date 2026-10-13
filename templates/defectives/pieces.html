@@ -11,7 +11,7 @@
       <select id="pf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
         {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
     <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="pf-item">Item</label>
-      <select id="pf-item" name="item" data-ts onchange="this.form.submit()"><option value="">All items</option>
+      <select id="pf-item" name="item" class="form-select" data-ts onchange="this.form.submit()"><option value="">All items</option>
         {% for i in items %}<option value="{{ i.pk }}" {% if f.item == i %}selected{% endif %}>{{ i.code }}</option>{% endfor %}</select></div>
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-st">Status</label>
       <select id="pf-st" name="status" class="form-select" onchange="this.form.submit()"><option value="">Any status</option>
@@ -34,7 +34,7 @@
       <thead><tr><th class="c-check"><input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all pieces in store on this page"></th>
         {% sort_th "tag" "Tag" %}{% sort_th "code" "Item" %}{% sort_th "company" "Company" %}{% sort_th "source" "Source" %}{% sort_th "collected" "Collected" %}{% sort_th "bpkd" "Batch · PKD" %}{% sort_th "status" "Status" %}{% sort_th "rb" "Return batch" %}</tr></thead>
       <tbody>{% for p in table.page %}<tr>
-        <td class="c-check">{% if p.status == "IN_STORE" %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}">{% else %}<span class="text-secondary" title="Only pieces in store can be batched or scrapped"><i class="ti ti-lock"></i></span>{% endif %}</td>
+        <td class="c-check">{% if p.status == "IN_STORE" %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-company="{{ p.company_id }}" data-tick aria-label="Tick {{ p.tag }}">{% else %}<span class="text-secondary" title="Only pieces in store can be batched or scrapped"><i class="ti ti-lock"></i></span>{% endif %}</td>
         <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td>
         <td><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a><div class="small text-secondary">{{ p.item.description }}</div></td>
         <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="nowrap">{{ p.collected_on|date }}</td>
@@ -43,14 +43,15 @@
         <td>{% if p.return_batch %}<a class="code" href="{% url 'batch_detail' p.return_batch.number %}">{{ p.return_batch.number }}</a>{% else %}<span class="text-secondary">—</span>{% endif %}</td></tr>
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No pieces match these filters.</td></tr>{% endfor %}</tbody>
     </table></div>
-    <div class="modal modal-blur fade" id="batch-modal" tabindex="-1" aria-labelledby="batch-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal modal-blur fade" id="batch-modal" data-batch-modal tabindex="-1" aria-labelledby="batch-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
       <div class="modal-header"><h5 class="modal-title" id="batch-title"><i class="ti ti-packages"></i> Add the ticked pieces to a draft batch</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body"><p class="text-secondary">A batch holds one company's pieces. Pick a draft batch of the same company, or start a new one.</p>
+      <div class="modal-body"><div class="alert alert-danger" role="alert" data-batch-mixed hidden><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>The ticked pieces belong to <span data-batch-mixed-count></span> companies. A return batch holds one company's pieces only. Close this, then filter the list by company or untick the others.</div></div></div>
+        <p class="text-secondary" data-batch-hint>A batch holds one company's pieces. Only draft batches of the ticked pieces' company are offered, or start a new one.</p>
         <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column gap-2">
-          {% for b in drafts %}<label class="form-selectgroup-item flex-fill"><input type="radio" name="batch" value="{{ b.number }}" class="form-selectgroup-input"><div class="form-selectgroup-label d-flex align-items-center p-2 text-start"><span class="form-selectgroup-check me-2"></span><span><span class="code">{{ b.number }}</span><span class="text-secondary ms-2">{{ b.company.name }} · created {{ b.created_on|date }}</span></span></div></label>{% endfor %}
+          {% for b in drafts %}<label class="form-selectgroup-item flex-fill" data-draft><input type="radio" name="batch" value="{{ b.number }}" data-company="{{ b.company_id }}" class="form-selectgroup-input"><div class="form-selectgroup-label d-flex align-items-center p-2 text-start"><span class="form-selectgroup-check me-2"></span><span><span class="code">{{ b.number }}</span><span class="text-secondary ms-2">{{ b.company.name }} · created {{ b.created_on|date }} · {{ b.n }} piece{{ b.n|pluralize }}{% if b.note %} · {{ b.note }}{% endif %}</span></span></div></label>{% endfor %}
           <label class="form-selectgroup-item flex-fill"><input type="radio" name="batch" value="new" class="form-selectgroup-input" checked><div class="form-selectgroup-label d-flex align-items-center p-2 text-start"><span class="form-selectgroup-check me-2"></span><span><i class="ti ti-plus"></i> New batch for the company of the ticked pieces</span></div></label>
         </div></div>
-      <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" name="action" value="batch" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Add to batch</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" name="action" value="batch" class="btn btn-primary ms-auto" data-batch-submit><i class="ti ti-check"></i> Add to batch</button></div>
     </div></div></div>
     {% include "defectives/_scrap_modal.html" with standalone=False %}
   </form>

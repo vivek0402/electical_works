@@ -4,7 +4,7 @@ import pytest
 
 from apps.defectives.models import DefectivePiece, PieceStatus, ReturnBatch
 from apps.defectives.services import create_batch
-from apps.inventory.models import Company, Location, StockBalance
+from apps.inventory.models import Company, Item, Location, StockBalance
 from tests.factories import make_item, make_pieces
 
 pytestmark = pytest.mark.django_db
@@ -53,7 +53,9 @@ def test_only_pieces_in_store_can_be_ticked(office_client, office_user, mixed):
         pieces=list(DefectivePiece.objects.filter(tag="DEF-0001")),
     )
     html = office_client.get(LIST).content.decode()
-    assert 'value="DEF-0002" data-tick' in html and 'value="DEF-0001" data-tick' not in html
+    boxes = re.findall(r'<input[^>]*name="tag"[^>]*>', html)
+    ticked = [re.search(r'value="(DEF-\d{4})"', b).group(1) for b in boxes]
+    assert "DEF-0002" in ticked and "DEF-0001" not in ticked
 
 
 def test_bulk_add_to_a_new_batch(office_client, mixed):
@@ -153,3 +155,87 @@ def test_piece_card_offers_scrap_and_scraps(office_client, mixed):
 
 def test_nav_links_pieces(office_client):
     assert f'href="{LIST}"' in office_client.get("/").content.decode()
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        {"action": "scrap", "reason": "OTHER", "tag": ["DEF-0001"], "note": "bad\x00note"},
+        {"action": "scrap", "reason": "BURNT", "tag": ["DEF-0001\x00"]},
+        {"action": "batch", "batch": "RB-0001\x00", "tag": ["DEF-0001"]},
+    ],
+)
+def test_nul_bytes_never_cause_a_500(office_client, mixed, extra):
+    r = bulk(office_client, extra, follow=True)
+    assert r.status_code == 200
+
+
+def test_bulk_add_query_count_does_not_grow_with_pieces(
+    office_client, office_user, django_assert_max_num_queries
+):
+    make_pieces(make_item("LG78-150-701"), 30, office_user)
+    tags_ = list(DefectivePiece.objects.filter(status=PieceStatus.IN_STORE).values_list("tag", flat=True))
+    assert len(tags_) >= 30
+    office_client.get(LIST)
+    token = office_client.session["entry_tokens"][-1]
+    with django_assert_max_num_queries(80):
+        office_client.post(BULK, {"action": "batch", "batch": "new", "tag": tags_, "entry_token": token})
+    assert ReturnBatch.objects.get().lines.count() == len(tags_)
+
+
+def test_item_and_outcome_filters(office_client, mixed):
+    item = Item.objects.get(code="LG78-150-700")
+    assert tags(office_client, f"?item={item.pk}") == ["DEF-0002", "DEF-0001"]
+    assert tags(office_client, "?outcome=REPLACED") == []
+
+
+def test_unknown_action_and_unknown_batch_are_refused(office_client, mixed):
+    html = bulk(office_client, {"action": "dance", "tag": ["DEF-0001"]}, follow=True).content.decode()
+    assert "Choose what to do with the ticked pieces." in html
+    html = bulk(
+        office_client, {"action": "batch", "batch": "RB-0099", "tag": ["DEF-0001"]}, follow=True
+    ).content.decode()
+    assert "Choose a draft batch." in html
+
+
+def test_bulk_scrap_refused_for_a_piece_in_a_batch(office_client, office_user, mixed):
+    create_batch(
+        company=Company.objects.get(name="Wipro Lighting"),
+        user=office_user,
+        pieces=list(DefectivePiece.objects.filter(tag="DEF-0001")),
+    )
+    html = bulk(
+        office_client, {"action": "scrap", "reason": "BURNT", "tag": ["DEF-0001"]}, follow=True
+    ).content.decode()
+    assert "remove it from the batch first" in html
+    assert DefectivePiece.objects.get(tag="DEF-0001").status == PieceStatus.IN_BATCH
+
+
+def test_dispatched_batch_is_not_offered_as_a_draft(office_client, office_user, mixed):
+    from apps.defectives.services import dispatch
+
+    wipro = Company.objects.get(name="Wipro Lighting")
+    sent = create_batch(
+        company=wipro, user=office_user, pieces=list(DefectivePiece.objects.filter(tag="DEF-0001"))
+    )
+    dispatch(batch=sent, dispatched_on=sent.created_on, courier="DTDC", docket_no="X1", user=office_user)
+    draft = create_batch(company=wipro, user=office_user, note="bank sites")
+    html = office_client.get(LIST).content.decode()
+    assert f'value="{draft.number}"' in html and f'value="{sent.number}"' not in html
+    assert "bank sites" in html and 'data-company="' in html
+
+
+def test_filtered_inactive_company_stays_in_the_dropdown(office_client, mixed):
+    havells = Company.objects.get(name="Havells")
+    Company.objects.filter(pk=havells.pk).update(is_active=False)
+    assert (
+        f'<option value="{havells.pk}" selected>'
+        in office_client.get(LIST + f"?company={havells.pk}").content.decode()
+    )
+    assert f'<option value="{havells.pk}"' not in office_client.get(LIST).content.decode()
+
+
+def test_tags_sort_numerically_past_9999(office_client, mixed):
+    DefectivePiece.objects.filter(tag="DEF-0001").update(tag="DEF-10000")
+    html = office_client.get(LIST + "?sort=tag&dir=asc").content.decode()
+    assert re.findall(r'href="/defectives/pieces/(DEF-\d+)/"', html)[-1] == "DEF-10000"

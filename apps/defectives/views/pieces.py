@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
@@ -8,6 +9,7 @@ from apps.accounts.decorators import role_required
 from apps.accounts.roles import OFFICE
 from apps.core.tables import sort_and_page
 from apps.core.tokens import guarded_post, page_token
+from apps.inventory.filters import _text
 from apps.inventory.models import Company
 from apps.inventory.services import StockError
 
@@ -69,7 +71,7 @@ def defective_pieces(request):
     rows = selectors.piece_rows(f)
     order = list(PieceStatus.values)
     sorters = {
-        "tag": lambda p: p.tag,
+        "tag": lambda p: (len(p.tag), p.tag),  # DEF-10000 after DEF-9999
         "code": lambda p: p.item.code,
         "company": lambda p: p.company.name,
         "source": lambda p: p.source,
@@ -85,12 +87,15 @@ def defective_pieces(request):
         {
             "f": f,
             "table": table,
-            "companies": Company.objects.filter(is_active=True),
+            "companies": Company.objects.filter(
+                Q(is_active=True) | Q(pk=f.company.pk if f.company else None)
+            ),
             "items": selectors.piece_items(),
             "statuses": PieceStatus.choices,
             "sources": Source.choices,
             "drafts": ReturnBatch.objects.filter(status=BatchStatus.DRAFT)
             .select_related("company")
+            .annotate(n=Count("lines"))
             .order_by("-id"),
             "scrap_reasons": ScrapReason.choices,
             "token": page_token(request.session, request.path),
@@ -106,7 +111,7 @@ def _add_to_batch(request, chosen):
             f"The ticked pieces belong to {len(names)} companies ({', '.join(names)}). A return batch holds "
             "one company's pieces only. Filter the list by company, or untick the others."
         )
-    target = request.POST.get("batch", "new")
+    target = _text(request.POST.get("batch", "new"))
     if target == "new":
         return services.create_batch(company=chosen[0].company, user=request.user, pieces=chosen)
     batch = ReturnBatch.objects.filter(number=target).first()

@@ -22,7 +22,7 @@ def pieces_by_tag(tags):
     """The pieces for typed or ticked tags, in the order given (repeats dropped). Refuses a tag that no piece
     has, so a stale page or a typo is never silently skipped. An empty list is left to the service."""
     wanted = list(dict.fromkeys(normalise_tag(t) for t in tags if (t or "").strip()))
-    found = {p.tag: p for p in DefectivePiece.objects.filter(tag__in=wanted)}
+    found = {p.tag: p for p in DefectivePiece.objects.filter(tag__in=wanted).select_related("company")}
     for tag in wanted:
         if tag not in found:
             raise DefectiveError(f"There is no piece tagged {tag}.")
