@@ -129,3 +129,9 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - Use the date-window convention `__gt=today - N days`.
   - The defectives chart ids are prefixed `def-chart-*`.
   - `workbook_response(filters_label=…)` exists.
+- **From Task 10:**
+  - The user chose **mobile or STD landline** for site and complaint phones; technicians stay mobile-only. Use `apps/complaints/phones.normalise_phone`.
+  - Undo now refuses any entry linked to a complaint, so **Task 11 needs a `undo_visit_parts(visit, reason, user)` service, and Task 13 needs an "Undo parts given" button on the complaint page.** The service posts the reversal with `complaint=` set, so it stays linked and shows on the complaint, and logs a complaint event. Without these, staff can't correct a visit's parts. The spec allowed undoing a visit's parts; this keeps that, just from the complaint page.
+  - `change_status(at=…)` must refuse a date before `reported_on` with a friendly message; the database enforces it too.
+  - Technicians go through `ComplaintTechnician` and `VisitTechnician` (PROTECT on technician).
+  - Visits can't be deleted.
