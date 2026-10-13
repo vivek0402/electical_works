@@ -120,3 +120,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - **Follow-up after Task 13:** merge `static/js/entry-form.js` into `LineEditor` (in/trf/adj modes), or at least share `esc`/`norm`/`lookKey`.
 - **Brand subtitle:** change "Stock" to "Service", as in the mockup. That belongs in Task 16.
 - **Tokens (after 4ee901b):** every write view uses `apps.core.tokens.guarded_post(request, run)`, and pages get their token with `page_token(session, path)`; `new_token` no longer exists. A replay counts only when the same action is posted again (fingerprint of path + POST). Add `@never_cache` to form pages. Defectives views are now a package: `apps/defectives/views/{marking,batches,pieces,common}.py`. `pieces_by_tag` refuses unknown tags.
+- **From Task 9:**
+  - Task 10 must fill `apps.defectives.selectors.complaint_cells` (the complaint number and the company complaint number for the dispatch list), and the complaint link in `templates/defectives/_source.html`.
+  - `UNBUILT` is now an empty set.
+  - Outcome counts come from `BatchLine`.
