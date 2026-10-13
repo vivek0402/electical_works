@@ -65,18 +65,31 @@ def test_nav_anonymous_empty():
     assert nav(request) == {}
 
 
+# Menu entries whose screens later tasks build; they render disabled until their URL name resolves.
+# Remove a name here when its screen is built.
+UNBUILT = {"defectives_dashboard", "defective_pieces", "return_batches"}
+
+
+def test_only_unbuilt_screens_are_disabled_in_the_menu(office_user):
+    from apps.inventory import context_processors as cp
+
+    ctx = cp.nav(request_for("/", office_user))
+    disabled = {e["name"] for _, entries in ctx["nav_sections"] for e in entries if not e["url"]}
+    assert disabled == UNBUILT
+
+
 def test_nav_masters_hidden_and_stock_screens_live(office_client):
     html = office_client.get("/").content.decode()
     assert "Masters" not in html
     for url in ["/stock/in/", "/stock/out/", "/stock/transfer/", "/stock/adjust/"]:
         assert f'href="{url}"' in html
-    assert 'aria-disabled="true"' not in html  # every screen office staff can see is built
+    assert html.count('aria-disabled="true"') == len(UNBUILT)  # only the service screens still to come
 
 
 def test_nav_masters_live_for_admin_only(admin_client, office_client):
     admin_html = admin_client.get("/").content.decode()
     assert 'href="/masters/"' in admin_html
-    assert 'aria-disabled="true"' not in admin_html  # every screen is built now
+    assert admin_html.count('aria-disabled="true"') == len(UNBUILT)
     assert 'href="/masters/"' not in office_client.get("/").content.decode()
 
 

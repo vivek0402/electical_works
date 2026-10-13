@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from django.http import QueryDict
 
@@ -93,3 +95,60 @@ def test_adjust_expected_is_read():
         q.appendlist(f"line_{name}", str(value))
     assert parse_lines(raw_lines(q), "adj")[0].expected == 5
     assert parse_lines(raw_lines(q), "out")[0].expected is None
+
+
+def service_post(prefix, rows):
+    q = QueryDict(mutable=True)
+    for row in rows:
+        for name in ("item", "qty", "batch", "pkd", "fault"):
+            q.appendlist(f"{prefix}_{name}", str(row.get(name, "")))
+    return q
+
+
+def test_raw_lines_reads_a_prefix_and_the_fault():
+    rows = raw_lines(service_post("col", [{"item": 7, "qty": 2, "fault": "no output"}]), "col")
+    assert rows == [{"item": "7", "qty": "2", "batch": "", "pkd": "", "expected": "", "fault": "no output"}]
+
+
+def test_collect_lines_keep_batch_pkd_fault_and_allow_repeats():
+    a = make_item("LG78-150-700")
+    q = service_post(
+        "col",
+        [
+            {"item": a.pk, "qty": 2, "batch": "B2405", "pkd": "2026-03", "fault": "no output"},
+            {"item": a.pk, "qty": 1, "fault": "burnt"},
+        ],
+    )
+    parsed = parse_lines(raw_lines(q, "col"), "collect")
+    assert [(p.qty, p.batch, p.pkd, p.fault) for p in parsed] == [
+        (2, "B2405", date(2026, 3, 1), "no output"),
+        (1, "", None, "burnt"),
+    ]
+
+
+def test_mark_lines_refuse_the_same_item_twice():
+    a = make_item("X9")
+    q = service_post("line", [{"item": a.pk, "qty": 1, "fault": "a"}, {"item": a.pk, "qty": 1, "fault": "b"}])
+    with pytest.raises(StockError, match="The same item is on two lines"):
+        parse_lines(raw_lines(q), "mark")
+
+
+def test_mark_lines_need_a_fault_numbered_as_on_screen():
+    a = make_item("X9")
+    q = service_post("line", [{}, {"item": a.pk, "qty": 1, "fault": "  "}])
+    with pytest.raises(StockError, match="Line 2: write what is wrong with the piece."):
+        parse_lines(raw_lines(q), "mark")
+
+
+def test_a_fault_longer_than_its_field_is_refused_not_cut():
+    a = make_item("X9")
+    q = service_post("line", [{"item": a.pk, "qty": 1, "fault": "x" * 201}])
+    with pytest.raises(StockError, match="Line 1: keep the fault to 200 characters or less."):
+        parse_lines(raw_lines(q), "mark")
+
+
+def test_allow_empty_returns_no_lines():
+    rows = raw_lines(service_post("part", [{}]), "part")
+    assert parse_lines(rows, "out", allow_empty=True) == []
+    with pytest.raises(StockError, match="Add at least one item."):
+        parse_lines(rows, "out")

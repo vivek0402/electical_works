@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
@@ -11,6 +9,7 @@ from django.views.decorators.http import require_POST
 from apps.accounts.decorators import role_required
 from apps.accounts.roles import OFFICE
 from apps.core.tables import sort_and_page
+from apps.core.tokens import EXPIRED, already_saved, is_issued, new_token, spend_token
 
 from . import selectors
 from .entry_lines import parse_lines, raw_lines
@@ -350,22 +349,6 @@ def _save_entry(mode, data, parsed, user):
     )
 
 
-# One-time form tokens stop a resubmitted form (double click, Back + Save) from posting the entry twice.
-TOKENS, SAVED, KEEP_TOKENS = "entry_tokens", "entry_saved", 20
-
-
-def _new_token(session):
-    token = uuid.uuid4().hex
-    session[TOKENS] = [*session.get(TOKENS, []), token][-KEEP_TOKENS:]
-    return token
-
-
-def _spend_token(session, token, number):
-    session[TOKENS] = [t for t in session.get(TOKENS, []) if t != token]
-    saved = {**session.get(SAVED, {}), token: number}
-    session[SAVED] = dict(list(saved.items())[-KEEP_TOKENS:])
-
-
 def _entry_page(request, mode):
     kind, form_class, title, subtitle, icon, button = ENTRY_PAGES[mode]
     initial = {"entry_date": timezone.localdate(), "location": _default_location()}
@@ -381,21 +364,20 @@ def _entry_page(request, mode):
     if request.method == "POST":
         lines = raw_lines(request.POST)
         token = request.POST.get("entry_token", "")
-        saved = request.session.get(SAVED, {})
-        if token in saved:
+        done = already_saved(request.session, token)
+        if done:
             messages.warning(request, "This entry was already saved.")
-            return redirect("entry_detail", number=saved[token])
-        if token not in request.session.get(TOKENS, []):
+            return redirect("entry_detail", number=done)
+        if not is_issued(request.session, token):
             # Missing or expired (not one we issued): save nothing, keep what was typed, ask to save again.
-            token = ""
-            error = "This form had expired, so nothing was saved. Check the details and save again."
+            token, error = "", EXPIRED
         elif form.is_valid():
             try:
                 entry = _save_entry(mode, form.cleaned_data, parse_lines(lines, mode), request.user)
             except StockError as exc:
                 error = f"{exc.message} Nothing was saved."
             else:
-                _spend_token(request.session, token, entry.number)
+                spend_token(request.session, token, entry.number)
                 count = entry.lines.values("item").distinct().count()
                 messages.success(request, f"{entry.number} saved · {count} item(s). Stock updated.")
                 return redirect("entry_detail", number=entry.number)
@@ -415,7 +397,7 @@ def _entry_page(request, mode):
         "icon": icon,
         "button": button,
         "error": error,
-        "token": token or _new_token(request.session),
+        "token": token or new_token(request.session),
         "subtypes": subtypes,
         "items_data": items,
         "balances_data": balances,

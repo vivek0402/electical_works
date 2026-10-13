@@ -23,6 +23,15 @@ NAV = [
             ("low_stock", "Low stock", "alert-triangle", "", False),
         ],
     ),
+    (
+        "Defectives",
+        [  # entries whose page isn't built yet render disabled (their URL name doesn't resolve)
+            ("defectives_dashboard", "Dashboard", "recycle", "", False),
+            ("defective_pieces", "Pieces", "tags", "", False),
+            ("mark_defective", "Mark defective", "alert-octagon", "", False),
+            ("return_batches", "Return batches", "truck-return", "", False),
+        ],
+    ),
     ("Setup", [("items", "Items", "box", "", False), ("masters", "Masters", "settings", "", True)]),
 ]
 EXTRA_URLS = ["global_search"]

@@ -1,5 +1,7 @@
-"""Read the item lines the entry forms post as parallel arrays line_item, line_qty, line_batch, line_pkd
-(and line_expected on the adjust form: the system quantity the user saw when typing the count)."""
+"""Read the item lines a form posts as parallel arrays <prefix>_item, <prefix>_qty, <prefix>_batch,
+<prefix>_pkd and <prefix>_fault (prefix "line" on the stock forms and Mark defective), plus line_expected on
+the adjust form (the system quantity the user saw when typing the count). The visit page will use other
+prefixes: "part" (parts given) and "col" (failed parts collected)."""
 
 import re
 from datetime import date
@@ -8,7 +10,10 @@ from typing import NamedTuple
 from .models import Item
 from .services import StockError
 
-FIELDS = ("item", "qty", "batch", "pkd", "expected")
+FIELDS = ("item", "qty", "batch", "pkd", "expected", "fault")
+TYPED = ("item", "qty", "batch", "pkd", "fault")  # a row with none of these filled in is blank and skipped
+IN_LIKE = ("in", "collect")  # lines that bring stock in: the same item may be on several lines (batches)
+FAULT_MAX = 200  # DefectivePiece.fault
 MAX_QTY = 1_000_000  # far above any real line; keeps typos out of the 32-bit ledger column
 MAX_DIGITS = 9  # never int() an unbounded string
 DIGITS = re.compile(r"[0-9]+")
@@ -21,11 +26,14 @@ class ParsedLine(NamedTuple):
     pkd: date | None
     expected: int | None  # adjust only; None when not sent
     n: int  # the line number the user sees (blank rows still count)
+    fault: str = ""  # mark defective / failed parts collected
 
 
-def raw_lines(post):
-    """[{item, qty, batch, pkd, expected}] exactly as typed (strings); sent back to the page on errors."""
-    columns = [post.getlist(f"line_{name}") for name in FIELDS]
+def raw_lines(post, prefix="line"):
+    """[{item, qty, batch, pkd, expected, fault}] exactly as typed (strings).
+
+    They are sent back to the page on errors."""
+    columns = [post.getlist(f"{prefix}_{name}") for name in FIELDS]
     count = max((len(c) for c in columns), default=0)
     return [
         {name: (col[n].strip() if n < len(col) else "") for name, col in zip(FIELDS, columns, strict=True)}
@@ -65,16 +73,26 @@ def _qty(text, n, mode):
     return qty
 
 
-def parse_lines(rows, mode):
-    """[ParsedLine] for mode in|out|trf|adj. Raises StockError with the first problem.
+def _fault(text, n, mode):
+    if mode == "mark" and not text:
+        raise StockError(f"Line {n}: write what is wrong with the piece.")
+    if len(text) > FAULT_MAX:  # refused, never cut: the user sees what is wrong
+        raise StockError(f"Line {n}: keep the fault to {FAULT_MAX} characters or less.")
+    return text
 
-    Blank rows are skipped but still counted, so "Line 2" is the second row on the screen.
+
+def parse_lines(rows, mode, allow_empty=False):
+    """[ParsedLine] for mode in|out|trf|adj (stock forms) or collect|mark (service forms).
+
+    Raises StockError with the first problem. Blank rows are skipped but still counted, so "Line 2" is the
+    second row on the screen. A fault is required on mark lines. allow_empty returns [] instead of
+    "Add at least one item." (a visit may give no parts).
     """
     ids = [_small(r["item"]) for r in rows]
     items = Item.objects.in_bulk([i for i in ids if i is not None])
     parsed = []
     for n, (row, item_id) in enumerate(zip(rows, ids, strict=True), start=1):
-        if not any(row.get(name) for name in ("item", "qty", "batch", "pkd")):
+        if not any(row.get(name) for name in TYPED):
             continue
         item = items.get(item_id)
         if item is None:
@@ -83,9 +101,13 @@ def parse_lines(rows, mode):
             raise StockError(f"Line {n}: this item is no longer active.")
         qty = _qty(row["qty"], n, mode)
         expected = _small(row.get("expected", "")) if mode == "adj" else None
-        parsed.append(ParsedLine(item, qty, row["batch"][:40], _month(row["pkd"], n), expected, n))
+        batch, pkd = row.get("batch", "")[:40], _month(row.get("pkd", ""), n)
+        fault = _fault(row.get("fault", ""), n, mode)
+        parsed.append(ParsedLine(item, qty, batch, pkd, expected, n, fault))
     if not parsed:
+        if allow_empty:
+            return []
         raise StockError("Add at least one item.")
-    if mode != "in" and len({line.item.pk for line in parsed}) != len(parsed):
+    if mode not in IN_LIKE and len({line.item.pk for line in parsed}) != len(parsed):
         raise StockError("The same item is on two lines. Combine them into one line.")
     return parsed

@@ -30,6 +30,13 @@ class TablerFormMixin:
             if widget is not None:
                 widget.attrs["class"] = widget.attrs.get("class", "") + " is-invalid"
 
+    def first_error(self):
+        """The first problem as one sentence, with the field's label when it belongs to a field."""
+        name, errors = next(iter(self.errors.items()))
+        if name == NON_FIELD_ERRORS:
+            return errors[0]
+        return f"{self.fields[name].label or name.replace('_', ' ').capitalize()}: {errors[0]}"
+
 
 class ItemForm(TablerFormMixin, forms.Form):
     code = forms.CharField(
@@ -129,13 +136,6 @@ class EntryHeaderForm(TablerFormMixin, forms.Form):
         if value > timezone.localdate():
             raise forms.ValidationError("The date can't be in the future.")
         return value
-
-    def first_error(self):
-        """The first problem as one sentence, with the field's label when it belongs to a field."""
-        name, errors = next(iter(self.errors.items()))
-        if name == NON_FIELD_ERRORS:
-            return errors[0]
-        return f"{self.fields[name].label or name.replace('_', ' ').capitalize()}: {errors[0]}"
 
 
 class StockInForm(EntryHeaderForm):

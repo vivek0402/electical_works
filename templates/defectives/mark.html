@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Mark defective{% endblock %}
+{% block pretitle %}Defectives{% endblock %}
+{% block page_title %}<i class="ti ti-alert-octagon"></i> Mark defective from stock{% endblock %}
+{% block content %}
+<form method="post" novalidate data-lines-form>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3>
+    <div class="card-subtitle ms-2 text-secondary">A piece in good stock turned out faulty</div></div>
+    <div class="card-body"><div class="row g-3">
+      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.entry_date.id_for_label }}">Date</label>
+        <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-calendar"></i></span>{{ form.entry_date }}</div></div>
+      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.location.id_for_label }}">Found at location</label>{{ form.location }}</div>
+      <div class="col-12 col-md-6 d-flex align-items-end"><div class="text-secondary small"><i class="ti ti-info-circle"></i> Moves the pieces out of good stock into the <b>{{ store_name }}</b> (a transfer) and gives each piece its own tag. Quantity 2 = 2 tags.</div></div>
+    </div></div></div>
+  <div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-list-details"></i> Faulty pieces</h3></div>
+    <div class="card-body"><div data-lines="line" data-mode="mark" data-loc="id_location" data-initial="initial-lines" data-summary="lines-summary" data-add-label="Add another item" data-max="{{ max_pieces }}"></div></div>
+    <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span id="lines-summary" class="text-secondary"></span>
+      <div class="ms-auto btn-list"><a href="{{ nav_urls.defectives_dashboard|default:'/' }}" class="btn btn-link link-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Mark as defective</button></div></div></div>
+  <div id="form-error" class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+</form>
+{{ items_data|json_script:"items-data" }}{{ balances_data|json_script:"balances-data" }}{{ initial_lines|json_script:"initial-lines" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/line-editor.js' %}"></script>{% endblock %}
