@@ -69,7 +69,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
   - [x] S4 Piece services (create, mark defective, scrap): 4fc893e + fixes fda69cc (407 tests; spec ✅ quality ✅)
   - [x] S5 Batch services (create, add, remove, dispatch, settle): 7f2b895 + settle deadlock fix de0ecc0 (433 tests; spec ✅ quality ✅)
-  - [ ] S6 Shared line editor + Mark defective page
+  - [x] S6 Shared line editor + Mark defective page: 3d21107 + follow-ups bf04da1 (463 tests; walkthrough exit 0; spec ✅ quality ✅)
   - [ ] S7 Return batch screens + piece card
   - [ ] S8 Pieces list + bulk actions
   - [ ] S9 Defectives dashboard + 2 exports
@@ -113,3 +113,9 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - Batch detail should group lines by entry.
   - The Task 17 replay calls `settle` once per (batch, outcome, date, location) group.
 - **Rule:** at most one `post_entry` per service call. **Task 11 `record_visit` breaks it:** it posts the parts-given OUT and the collected IN in one transaction. The implementer and reviewer must check that this order can't deadlock against Stock IN/OUT, mark_defective and settle, and either document why it is safe or restructure it.
+- **Line editor (after bf04da1):**
+  - Task 13 puts the `out` and `collect` editors in one `form[data-lines-form]` with a single `[data-form-error]`, each with its own `data-initial` and `data-summary` id. See the header comment in `static/js/line-editor.js`.
+  - Remove each built screen from `UNBUILT` in `tests/core/test_tags_and_nav.py`.
+  - The Mark defective step is in `e2e/walkthrough.py`.
+- **Follow-up after Task 13:** merge `static/js/entry-form.js` into `LineEditor` (in/trf/adj modes), or at least share `esc`/`norm`/`lookKey`.
+- **Brand subtitle:** change "Stock" to "Service", as in the mockup. That belongs in Task 16.
