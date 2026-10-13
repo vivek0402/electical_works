@@ -168,14 +168,21 @@ def test_complaint_status_and_dates_must_agree(office_user):
     rows.update(status=Status.NOT_COVERED, closed_on=TODAY, not_covered_reason=NotCoveredReason.OTHER)
 
 
-def test_phones_must_be_mobile_numbers_or_blank(office_user):
+def test_phones_are_stored_clean(office_user):
+    """Sites and complaints: mobile or STD landline. Technicians: mobile only."""
     site = make_site(phone="9908127999")
     tech = make_tech(phone="")
     c = complaint(office_user, phone="9908127999")
-    for model, pk in ((Site, site.pk), (Technician, tech.pk), (Complaint, c.pk)):
-        refused(model.objects.filter(pk=pk), phone="12345")
-        refused(model.objects.filter(pk=pk), phone="1234567890")  # not a mobile number
-        model.objects.filter(pk=pk).update(phone="")
+    for model, pk in ((Site, site.pk), (Complaint, c.pk)):
+        rows = model.objects.filter(pk=pk)
+        for bad in ("12345", "1234567890", "9876 54321", "0012345678"):
+            refused(rows, phone=bad)
+        for good in ("", "9876543210", "08912345678", "0891234567"):
+            rows.update(phone=good)
+    rows = Technician.objects.filter(pk=tech.pk)
+    for bad in ("1234567890", "0891234567"):  # a landline is refused for a technician
+        refused(rows, phone=bad)
+    rows.update(phone="9876543210")
 
 
 def test_names_cannot_be_blank():

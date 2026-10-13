@@ -11,6 +11,8 @@ from django.db.models.functions import Lower
 
 from apps.inventory.models import IMMUTABLE, Company, Location, StockEntry
 
+from .phones import MOBILE_OR_LANDLINE_REGEX, MOBILE_REGEX, PHONE_MAX
+
 
 class Status(models.TextChoices):
     NOT_ATTENDED = "NOT_ATTENDED", "Not attended"
@@ -58,14 +60,9 @@ class NotCoveredReason(models.TextChoices):
     OTHER = "OTHER", "Other"
 
 
-# A blank phone, or a 10-digit Indian mobile number with no spaces (services strip them before saving).
-MOBILE_REGEX = r"^[6-9][0-9]{9}$"
-
-
-def _phone_ok(name):
-    return models.CheckConstraint(
-        condition=Q(phone="") | Q(phone__regex=MOBILE_REGEX), name=f"{name}_phone_mobile"
-    )
+def _phone_ok(name, regex):
+    """Blank, or digits in the stored form (phones.normalise_phone cleans them before saving)."""
+    return models.CheckConstraint(condition=Q(phone="") | Q(phone__regex=regex), name=f"{name}_phone_valid")
 
 
 def _tidy(text):
@@ -79,7 +76,7 @@ class Site(models.Model):
     name = models.CharField(max_length=120)
     city = models.CharField(max_length=60)
     contact_name = models.CharField("contact person", max_length=80, blank=True)
-    phone = models.CharField(max_length=10, blank=True)
+    phone = models.CharField(max_length=PHONE_MAX, blank=True)  # mobile or STD landline
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -88,7 +85,7 @@ class Site(models.Model):
         constraints = [
             models.UniqueConstraint(Lower("name"), Lower("city"), name="site_name_city_ci_unique"),
             models.CheckConstraint(condition=~Q(name="") & ~Q(city=""), name="site_name_city_present"),
-            _phone_ok("site"),
+            _phone_ok("site", MOBILE_OR_LANDLINE_REGEX),
         ]
 
     def __str__(self):
@@ -103,7 +100,7 @@ class Technician(models.Model):
     """A technician who visits sites. Names only; technicians don't log in."""
 
     name = models.CharField(max_length=60)
-    phone = models.CharField(max_length=10, blank=True)
+    phone = models.CharField(max_length=10, blank=True)  # mobile only
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -111,7 +108,7 @@ class Technician(models.Model):
         constraints = [
             models.UniqueConstraint(Lower("name"), name="technician_name_ci_unique"),
             models.CheckConstraint(condition=~Q(name=""), name="technician_name_present"),
-            _phone_ok("technician"),
+            _phone_ok("technician", MOBILE_REGEX),
         ]
 
     def __str__(self):
@@ -136,7 +133,7 @@ class Complaint(models.Model):
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NOT_ATTENDED)
     contact_name = models.CharField("contact person", max_length=80, blank=True)  # copied from the site
-    phone = models.CharField(max_length=10, blank=True)
+    phone = models.CharField(max_length=PHONE_MAX, blank=True)
     not_covered_reason = models.CharField(max_length=20, choices=NotCoveredReason.choices, blank=True)
     closed_on = models.DateField(null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
@@ -172,7 +169,7 @@ class Complaint(models.Model):
                 condition=Q(qty_affected__isnull=True) | Q(qty_affected__gte=1),
                 name="complaint_qty_affected_positive",
             ),
-            _phone_ok("complaint"),
+            _phone_ok("complaint", MOBILE_OR_LANDLINE_REGEX),
         ]
 
     def __str__(self):

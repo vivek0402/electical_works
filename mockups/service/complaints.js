@@ -99,7 +99,7 @@ function openSiteModal(name, done) {
       ${fcol(8, lbl("ns-name", "Site name") + `<input id="ns-name" class="form-control" value="${esc(name || "")}" placeholder="e.g. Andhra University">`)}
       ${fcol(4, lbl("ns-city", "City") + `<input id="ns-city" class="form-control" list="ns-cities" placeholder="e.g. Visakhapatnam"><datalist id="ns-cities">${opt(cities())}</datalist>`)}
       ${fcol(6, lbl("ns-contact", "Contact person", false) + `<input id="ns-contact" class="form-control" placeholder="Name at the site">`)}
-      ${fcol(6, lbl("ns-phone", "Phone", false) + `<input id="ns-phone" type="tel" inputmode="numeric" maxlength="10" class="form-control" placeholder="10-digit mobile">`)}
+      ${fcol(6, lbl("ns-phone", "Phone", false) + `<input id="ns-phone" type="tel" inputmode="tel" maxlength="13" class="form-control" placeholder="10-digit mobile or STD landline">`)}
       ${fcol(12, lbl("ns-address", "Address", false) + `<textarea id="ns-address" class="form-control" rows="2" placeholder="Optional"></textarea>`)}
     </div><div id="ns-err" class="mt-3"></div></div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" onclick="closeModal();window._siteDone(null)">Cancel</button>
@@ -123,7 +123,7 @@ ROUTES["complaint-new"] = siteId => {
       <div class="card-subtitle ms-2 text-secondary">Where the problem is</div></div><div class="card-body"><div class="row g-3">
       ${fcol(6, lbl("c-site", "Site") + `<select id="c-site"></select><small class="form-hint">Type to search saved sites, or add a new one.</small>`)}
       ${fcol(3, lbl("c-contact", "Contact person", false) + `<input id="c-contact" class="form-control" placeholder="Filled from the site">`)}
-      ${fcol(3, lbl("c-phone", "Phone", false) + `<input id="c-phone" type="tel" inputmode="numeric" maxlength="10" class="form-control" placeholder="Filled from the site">`)}
+      ${fcol(3, lbl("c-phone", "Phone", false) + `<input id="c-phone" type="tel" inputmode="tel" maxlength="13" class="form-control" placeholder="10-digit mobile or STD landline">`)}
       <div class="col-12 mt-1"><button type="button" class="btn btn-quiet btn-sm" onclick="openSiteModal('', s => { if (s) { cSite.addOption(siteOpt(s)); cSite.setValue(s.id); } })">${icon("plus")} New site</button>
         <span class="small text-secondary ms-2">Contact and phone are copied from the site; change them here for this complaint only.</span></div>
     </div></div></div>

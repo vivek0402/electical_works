@@ -87,8 +87,9 @@ function saveSite(d) {
   if (!d.city.trim()) return { error: "Enter the city." };
   if (DB.sites.some(s => s.name.toLowerCase() === name.toLowerCase() && s.city.toLowerCase() === d.city.trim().toLowerCase()))
     return { error: `${name}, ${d.city.trim()} already exists. Pick it from the list.` };
-  if (d.phone && !/^[6-9]\d{9}$/.test(d.phone.replace(/\s/g, ""))) return { error: "Phone must be a 10-digit mobile number." };
-  const s = { id: ++svcSeq.site, name, city: d.city.trim(), contact: d.contact.trim(), phone: d.phone.replace(/\s/g, ""), address: (d.address || "").trim(), active: true };
+  const phone = d.phone.replace(/[\s\-().]/g, "");
+  if (phone && !/^([6-9]\d{9}|0[1-9]\d{8,9})$/.test(phone)) return { error: "Phone must be a 10-digit mobile number or an STD landline like 0891-2345678." };
+  const s = { id: ++svcSeq.site, name, city: d.city.trim(), contact: d.contact.trim(), phone, address: (d.address || "").trim(), active: true };
   DB.sites.push(s);
   return { site: s };
 }

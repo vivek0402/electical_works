@@ -25,13 +25,13 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=120)),
                 ('city', models.CharField(max_length=60)),
                 ('contact_name', models.CharField(blank=True, max_length=80, verbose_name='contact person')),
-                ('phone', models.CharField(blank=True, max_length=10)),
+                ('phone', models.CharField(blank=True, max_length=11)),
                 ('address', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
             ],
             options={
                 'ordering': ['name', 'city'],
-                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), django.db.models.functions.text.Lower('city'), name='site_name_city_ci_unique'), models.CheckConstraint(condition=models.Q(models.Q(('name', ''), _negated=True), models.Q(('city', ''), _negated=True)), name='site_name_city_present'), models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^[6-9][0-9]{9}$'), _connector='OR'), name='site_phone_mobile')],
+                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), django.db.models.functions.text.Lower('city'), name='site_name_city_ci_unique'), models.CheckConstraint(condition=models.Q(models.Q(('name', ''), _negated=True), models.Q(('city', ''), _negated=True)), name='site_name_city_present'), models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^([6-9][0-9]{9}|0[1-9][0-9]{8,9})$'), _connector='OR'), name='site_phone_valid')],
             },
         ),
         migrations.CreateModel(
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('priority', models.CharField(choices=[('NORMAL', 'Normal'), ('HIGH', 'High'), ('URGENT', 'Urgent')], default='NORMAL', max_length=8)),
                 ('status', models.CharField(choices=[('NOT_ATTENDED', 'Not attended'), ('ATTENDED', 'Attended'), ('MATERIAL_CHECK', 'Material need to check'), ('AWAITING_MATERIAL', 'Awaiting material'), ('RESOLVED', 'Resolved'), ('CLOSED', 'Closed'), ('NOT_COVERED', 'Not covered')], default='NOT_ATTENDED', max_length=20)),
                 ('contact_name', models.CharField(blank=True, max_length=80, verbose_name='contact person')),
-                ('phone', models.CharField(blank=True, max_length=10)),
+                ('phone', models.CharField(blank=True, max_length=11)),
                 ('not_covered_reason', models.CharField(blank=True, choices=[('NOT_OURS', 'Not our product'), ('OUT_OF_WARRANTY', 'Out of warranty'), ('CANCELLED', 'Customer cancelled'), ('OTHER', 'Other')], max_length=20)),
                 ('closed_on', models.DateField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'ordering': ['name'],
-                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), name='technician_name_ci_unique'), models.CheckConstraint(condition=models.Q(('name', ''), _negated=True), name='technician_name_present'), models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^[6-9][0-9]{9}$'), _connector='OR'), name='technician_phone_mobile')],
+                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('name'), name='technician_name_ci_unique'), models.CheckConstraint(condition=models.Q(('name', ''), _negated=True), name='technician_name_present'), models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^[6-9][0-9]{9}$'), _connector='OR'), name='technician_phone_valid')],
             },
         ),
         migrations.CreateModel(
@@ -180,7 +180,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='complaint',
-            constraint=models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^[6-9][0-9]{9}$'), _connector='OR'), name='complaint_phone_mobile'),
+            constraint=models.CheckConstraint(condition=models.Q(('phone', ''), ('phone__regex', '^([6-9][0-9]{9}|0[1-9][0-9]{8,9})$'), _connector='OR'), name='complaint_phone_valid'),
         ),
         migrations.AddConstraint(
             model_name='visittechnician',
