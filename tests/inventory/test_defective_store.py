@@ -1,4 +1,8 @@
+import importlib
+
 import pytest
+from django.apps import apps as django_apps
+from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -150,3 +154,59 @@ def test_entry_page_hides_undo_for_defective_entries(office_client, office_user,
     assert "Undo this entry" not in html and "belongs to the defective pieces" in html
     assert office_client.post(f"/entries/{e.number}/undo/", {"reason": "x"}).status_code == 302
     assert not StockEntry.objects.filter(kind=EntryKind.REV).exists()
+
+
+def test_mark_defective_must_move_good_stock_into_the_store(drv, user):
+    stock(drv, 3, user)
+    collect(drv, 2, user)
+    reverse = (Line(drv, store(), -1), Line(drv, loc(), 1))
+    mixed = (Line(drv, loc(), -1), Line(drv, store(), 2), Line(drv, store(), -1))
+    for lines in (reverse, mixed):
+        with pytest.raises(StockError, match="from a good location into the Defective store"):
+            post(EntryKind.TRF, *lines, user=user, subtype=ServiceSubtype.MARK_DEFECTIVE)
+
+
+def test_scrap_can_only_remove_pieces(drv, user):
+    with pytest.raises(StockError, match="Scrapping can only remove pieces from the Defective store"):
+        post(
+            EntryKind.ADJ,
+            Line(drv, store(), 1),
+            user=user,
+            subtype=ServiceSubtype.SCRAP_DEFECTIVE,
+            reason=AdjustReason.FOUND,
+            note="x",
+        )
+
+
+def test_store_flag_is_read_from_the_database(drv, user):
+    stale = store()
+    stale.is_defective_store = False  # a caller's out-of-date copy
+    with pytest.raises(StockError, match="managed from the Defectives screens"):
+        post(EntryKind.IN, Line(drv, stale, 1), user=user, subtype="SUPPLIER")
+    e = post(EntryKind.IN, Line(drv, stale, 1), user=user, subtype=ServiceSubtype.DEFECTIVE_COLLECTED)
+    assert e.lines.get().location == store()
+
+
+def test_missing_store_is_a_clear_error():
+    Location.objects.filter(is_defective_store=True).update(is_defective_store=False)
+    with pytest.raises(ImproperlyConfigured, match="Defective store location is missing"):
+        Location.defective_store()
+
+
+def _store_migration():
+    return importlib.import_module("apps.inventory.migrations.0006_create_defective_store")
+
+
+def test_store_migration_refuses_a_used_location_with_the_same_name(drv, user):
+    collect(drv, 1, user)
+    Location.objects.filter(is_defective_store=True).update(is_defective_store=False)
+    with pytest.raises(RuntimeError, match="already has stock entries"):
+        _store_migration().create(django_apps, None)
+
+
+def test_store_migration_flags_an_unused_location_with_the_same_name():
+    old = store()
+    Location.objects.filter(pk=old.pk).update(is_defective_store=False, is_active=False)
+    _store_migration().create(django_apps, None)
+    assert Location.defective_store() == old and Location.defective_store().is_active
+    assert Location.objects.filter(name__iexact="defective store").count() == 1

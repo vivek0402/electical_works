@@ -87,18 +87,31 @@ def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
     inactive_item = Item.objects.filter(pk__in={line.item.pk for line in lines}, is_active=False).first()
     if inactive_item:
         raise StockError(f"{inactive_item.code} is inactive.")
-    inactive_place = Location.objects.filter(
-        pk__in={line.location.pk for line in lines}, is_active=False
-    ).first()
+    # One query for the places: active flag and Defective store flag, read from the database (never
+    # from the caller's possibly stale Location objects).
+    places = {
+        pk: (name, is_active, is_store)
+        for pk, name, is_active, is_store in Location.objects.filter(
+            pk__in={line.location.pk for line in lines}
+        ).values_list("pk", "name", "is_active", "is_defective_store")
+    }
+    inactive_place = next((name for name, active, _ in places.values() if not active), None)
     if inactive_place:
-        raise StockError(f"{inactive_place.name} is inactive.")
+        raise StockError(f"{inactive_place} is inactive.")
 
     # Only the defectives services post to the Defective store, and their entries only post there.
-    at_store = [line.location.is_defective_store for line in lines]
+    at_store = [places[line.location.pk][2] for line in lines]
     if subtype in STORE_SUBTYPES and not all(at_store):
         raise StockError(f"{ServiceSubtype(subtype).label} must be posted at the Defective store.")
-    if subtype == ServiceSubtype.MARK_DEFECTIVE and (all(at_store) or not any(at_store)):
+    if subtype == ServiceSubtype.MARK_DEFECTIVE and (
+        all(at_store)
+        or not any(at_store)
+        or any((line.qty > 0) != is_store for line, is_store in zip(lines, at_store, strict=True))
+    ):
+        # Every store line adds (qty > 0) and every good line removes (qty < 0).
         raise StockError("Marking defective moves stock from a good location into the Defective store.")
+    if subtype == ServiceSubtype.SCRAP_DEFECTIVE and any(line.qty > 0 for line in lines):
+        raise StockError("Scrapping can only remove pieces from the Defective store.")
     if any(at_store) and subtype not in STORE_SUBTYPES and subtype != ServiceSubtype.MARK_DEFECTIVE:
         raise StockError("The Defective store is managed from the Defectives screens.")
 

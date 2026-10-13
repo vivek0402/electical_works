@@ -2,6 +2,7 @@ import re
 
 import pgtrigger
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Lower, Upper
@@ -56,7 +57,10 @@ class Location(Master):
 
     @classmethod
     def defective_store(cls):
-        return cls.objects.get(is_defective_store=True)
+        try:
+            return cls.objects.get(is_defective_store=True)
+        except cls.DoesNotExist:
+            raise ImproperlyConfigured("The Defective store location is missing. Run migrations.") from None
 
 
 class Company(Master):
