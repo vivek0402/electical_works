@@ -74,7 +74,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S8 Pieces list + bulk actions: 94c9a46 + fixes 98705c5 (557 tests; spec ✅ quality ✅). Final review: tighten the 30-piece bulk-add query guard (80 is loose)
   - [x] S9 Defectives dashboard + 2 exports: 55d37be + fixes 8ea4969 (581 tests; spec ✅ quality ✅)
   - [x] S10 Complaints models + links: 851d64c + integrity fixes 56d38f8 + landline phones 56f3a92 (624 tests; spec ✅ quality ✅)
-  - [ ] S11 Complaints services
+  - [ ] S11 Complaints services (acc1821, 673 tests; review in progress)
   - [ ] S12 New complaint + complaint page
   - [ ] S13 Record visit page
   - [ ] S14 Complaints list, dashboard + 2 exports
@@ -135,3 +135,20 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - `change_status(at=…)` must refuse a date before `reported_on` with a friendly message; the database enforces it too.
   - Technicians go through `ComplaintTechnician` and `VisitTechnician` (PROTECT on technician).
   - Visits can't be deleted.
+- **From Task 11** (acc1821):
+  - **Service signatures:**
+    - `record_visit(*, complaint, visit_date, technicians, work_done, next_status, user, location=None, parts=[(item, qty)], collected=[(item, qty, batch_code, pkd, fault)])`
+    - `undo_visit_parts(*, visit, reason, user, at=None)`, which returns the REV entry
+    - `change_status(*, complaint, to, user, note="", reason="", at=None)`
+    - `reopen(*, complaint, user, note, at=None)`, Admin only
+    - `close_not_covered`
+    - `save_site(*, data, site=None)`
+    - `save_technician(*, name, phone="", technician=None)`
+    - `file_complaint(..., contact_name=None, phone=None)`, where None means "copy from the site"
+  - **Task 12/13 complaint page:**
+    - Show the REV undo on the timeline or visits (`visit.out_entry.reversed_by`).
+    - The "Undo parts given" button hides when there is no OUT or it is already reversed.
+    - The entry page's notice for a REV with a complaint may need different wording.
+    - Forms offer only active sites and technicians; the services don't refuse hidden ones.
+  - A status change can't be dated before the complaint's latest event.
+  - Tests: use your own `DATABASE_URL` database name if another run is using `test_postgres`.
