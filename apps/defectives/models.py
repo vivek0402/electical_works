@@ -49,6 +49,10 @@ class BatchStatus(models.TextChoices):
     DISPATCHED = "DISPATCHED", "Dispatched"
 
 
+# What a batch shows: the stored DRAFT / DISPATCHED, split by how many lines the company has answered.
+BATCH_LABELS = ("Draft", "Dispatched", "Partly settled", "Settled")
+
+
 class ScrapReason(models.TextChoices):
     NOT_WORTH = "NOT_WORTH", "Not worth returning"
     BURNT = "BURNT", "Burnt / physically damaged"

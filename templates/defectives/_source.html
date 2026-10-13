@@ -1,0 +1,2 @@
+{# Where a piece came from. Needs `p`, a DefectivePiece from selectors.pieces_qs(). Task 10 links the complaint. #}
+{% if p.source == "SITE_VISIT" %}<span><i class="ti ti-map-pin text-secondary"></i> Site visit</span>{% else %}<span class="text-secondary"><i class="ti ti-building-warehouse"></i> Found in stock</span>{% endif %}

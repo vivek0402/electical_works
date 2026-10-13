@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load core_tags defective_tags %}
+{% block title %}Return batches{% endblock %}
+{% block pretitle %}Defectives{% endblock %}
+{% block page_title %}Return batches{% endblock %}
+{% block actions %}<a href="{% url 'batch_new' %}" class="btn btn-primary"><i class="ti ti-plus"></i> New batch</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">
+    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="bf-co">Company</label>
+      <select id="bf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
+        {% for c in companies %}<option value="{{ c.pk }}"{% if f.company == c %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="bf-st">Status</label>
+      <select id="bf-st" name="status" class="form-select" onchange="this.form.submit()"><option value="">Any status</option>
+        {% for label in labels %}<option value="{{ label }}"{% if f.status == label %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  </form></div>
+  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+    <thead><tr>{% sort_th "no" "Batch" %}{% sort_th "company" "Company" %}{% sort_th "created" "Created" %}{% sort_th "status" "Status" %}{% sort_th "pieces" "Pieces" True %}{% sort_th "settled" "Settled" True %}{% sort_th "disp" "Dispatched" %}{% sort_th "wait" "Waiting" True %}<th>Note</th></tr></thead>
+    <tbody>{% for r in table.page %}{% with b=r.batch %}<tr>
+      <td><a class="code" href="{% url 'batch_detail' b.number %}">{{ b.number }}</a></td><td>{{ b.company.name }}</td><td class="nowrap">{{ b.created_on|date }}</td>
+      <td>{{ r.label|batch_badge }}</td><td class="num">{{ b.n_lines }}</td>
+      <td class="num">{% if b.is_draft %}<span class="text-secondary">—</span>{% else %}{{ b.n_settled }} / {{ b.n_lines }}{% endif %}</td>
+      <td class="nowrap">{% if b.dispatched_on %}{{ b.dispatched_on|date }}<div class="small text-secondary">{{ b.courier }} · <span class="code">{{ b.docket_no }}</span></div>{% else %}<span class="text-secondary">Not yet</span>{% endif %}</td>
+      <td class="num">{{ r.waiting|waiting_badge }}</td><td class="cell-wrap text-secondary">{{ b.note }}</td></tr>{% endwith %}
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No return batches match.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "core/_pagination.html" %}
+</div>
+<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> A batch holds one company's pieces. "Partly settled" and "Settled" come from the company's answers for its pieces.</p>
+{% endblock %}

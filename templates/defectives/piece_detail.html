@@ -1,0 +1,45 @@
+{% extends "base.html" %}{% load static defective_tags %}
+{% block title %}{{ piece.tag }}{% endblock %}
+{% block pretitle %}Defective piece · {{ piece.company.name }}{% endblock %}
+{% block page_title %}<span class="code">{{ piece.tag }}</span> {{ piece.status|piece_badge }} {{ piece.outcome|outcome_badge }}{% endblock %}
+{% block actions %}
+  {% if piece.status == "IN_STORE" %}<div class="dropdown"><button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-packages"></i> Add to a return batch</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% for b in drafts %}<form method="post" action="{% url 'batch_add' b.number %}" class="m-0" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="tag" value="{{ piece.tag }}"><input type="hidden" name="next" value="{{ request.path }}">
+        <button class="dropdown-item" type="submit"><i class="ti ti-packages"></i> Draft <span class="code ms-1">{{ b.number }}</span><span class="text-secondary ms-2 small">created {{ b.created_on|date }}</span></button></form>{% endfor %}
+      {% if drafts %}<div class="dropdown-divider"></div>{% endif %}
+      <a class="dropdown-item" href="{% url 'batch_new' %}?company={{ piece.company_id }}&amp;tag={{ piece.tag }}"><i class="ti ti-plus"></i> New batch for {{ piece.company.name }}</a>
+    </div></div>{% endif %}
+  {% if piece.return_batch %}<a href="{% url 'batch_detail' piece.return_batch.number %}" class="btn btn-quiet"><i class="ti ti-truck-return"></i> Batch {{ piece.return_batch.number }}</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row row-cards">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-header"><h3 class="card-title">Details</h3></div><div class="card-body"><div class="datagrid">
+      <div class="datagrid-item"><div class="datagrid-title">Item</div><div class="datagrid-content"><a class="code" href="{% url 'item_detail' piece.item.pk %}">{{ piece.item.code }}</a><div class="small text-secondary">{{ piece.item.spare_type.name }} · {{ piece.item.description }}</div></div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Company</div><div class="datagrid-content">{{ piece.company.name }}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Source</div><div class="datagrid-content">{% include "defectives/_source.html" with p=piece %}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Collected on</div><div class="datagrid-content">{{ piece.collected_on|date }}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Batch code</div><div class="datagrid-content">{% if piece.batch_code %}<span class="code">{{ piece.batch_code }}</span>{% else %}—{% endif %}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">PKD (packed)</div><div class="datagrid-content">{{ piece.pkd|pkd_month|default:"—" }}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Fault</div><div class="datagrid-content">{{ piece.fault|default:"—" }}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Return batch</div><div class="datagrid-content">{% if piece.return_batch %}<a class="code" href="{% url 'batch_detail' piece.return_batch.number %}">{{ piece.return_batch.number }}</a>{% else %}—{% endif %}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Latest answer</div><div class="datagrid-content">{% if piece.outcome %}{{ piece.outcome|outcome_badge }} <span class="text-secondary small">on {{ piece.settled_on|date }}</span>{% else %}—{% endif %}</div></div>
+      <div class="datagrid-item"><div class="datagrid-title">Ledger entries</div><div class="datagrid-content">{% for e in entries %}<a class="code" href="{% url 'entry_detail' e.number %}">{{ e.number }}</a>{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}</div></div>
+    </div></div></div>
+    <div class="card mt-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-truck-return"></i> Return batches</h3>
+      <div class="card-subtitle ms-2 text-secondary">Every batch this piece went into, with that batch's answer</div></div>
+      {% if lines %}<div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Batch</th><th>Dispatched</th><th>Answer</th><th>Entry</th></tr></thead>
+        <tbody>{% for line in lines %}<tr><td><a class="code" href="{% url 'batch_detail' line.batch.number %}">{{ line.batch.number }}</a></td>
+          <td class="nowrap">{% if line.batch.dispatched_on %}{{ line.batch.dispatched_on|date }}<div class="small text-secondary">{{ line.batch.courier }} · <span class="code">{{ line.batch.docket_no }}</span></div>{% else %}<span class="text-secondary">Not yet (draft)</span>{% endif %}</td>
+          <td>{% if line.outcome %}{{ line.outcome|outcome_badge }} <span class="small text-secondary">{{ line.settled_on|date }}{% if line.to_location %} → {{ line.to_location.name }}{% endif %}</span>{% else %}<span class="text-secondary">Waiting</span>{% endif %}</td>
+          <td>{% if line.entry %}<a class="code" href="{% url 'entry_detail' line.entry.number %}">{{ line.entry.number }}</a>{% elif line.outcome %}<span class="text-secondary small">Nothing posted</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+      {% else %}<div class="card-body text-secondary">Not in any return batch yet.</div>{% endif %}</div>
+  </div>
+  <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-timeline"></i> History</h3></div>
+    <div class="card-body"><ul class="tl">{% for ev in events %}<li class="tl-item"><span class="tl-dot {{ ev.to_status|piece_css }}"><i class="ti ti-{{ ev.to_status|piece_icon }}"></i></span>
+      <div class="tl-body"><div class="fw-medium">{% if ev.from_status %}{{ ev.get_from_status_display }} → {% endif %}{{ ev.get_to_status_display }}</div>
+        <div class="small text-secondary">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}{% if ev.entry %} · <a class="code" href="{% url 'entry_detail' ev.entry.number %}">{{ ev.entry.number }}</a>{% endif %}</div>{% if ev.note %}<div class="small">{{ ev.note }}</div>{% endif %}</div></li>{% endfor %}</ul></div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/service.js' %}"></script>{% endblock %}

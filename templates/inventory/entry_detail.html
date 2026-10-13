@@ -15,6 +15,7 @@
     <div class="datagrid-item"><div class="datagrid-title">Date</div><div class="datagrid-content">{{ entry.entry_date|date }}</div></div>
     {% if entry.details %}<div class="datagrid-item"><div class="datagrid-title">Type</div><div class="datagrid-content">{{ entry.details }}</div></div>{% endif %}
     {% if entry.party %}<div class="datagrid-item"><div class="datagrid-title">{% if entry.kind == "IN" %}Received from{% elif entry.kind == "TRF" %}To location{% elif entry.kind == "REV" %}Party{% else %}Issued to{% endif %}</div><div class="datagrid-content">{{ entry.party }}</div></div>{% endif %}
+    {% if entry.return_batch_id %}<div class="datagrid-item"><div class="datagrid-title">Return batch</div><div class="datagrid-content"><a class="code" href="{% url 'batch_detail' entry.return_batch.number %}">{{ entry.return_batch.number }}</a></div></div>{% endif %}
     {% if entry.ref %}<div class="datagrid-item"><div class="datagrid-title">DC / ref no.</div><div class="datagrid-content">{{ entry.ref }}</div></div>{% endif %}
     {% if entry.note %}<div class="datagrid-item"><div class="datagrid-title">{% if entry.kind == "REV" %}Reason{% else %}Note{% endif %}</div><div class="datagrid-content">{{ entry.note|linebreaksbr }}</div></div>{% endif %}
     <div class="datagrid-item"><div class="datagrid-title">Entered by</div><div class="datagrid-content">{{ entry.created_by.first_name|default:entry.created_by.username }} · {{ entry.created_at|date:"d-m-Y H:i" }}</div></div>

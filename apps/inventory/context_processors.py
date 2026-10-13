@@ -41,6 +41,9 @@ ACTIVE_ALIASES = {
     "item_edit": "items",
     "item_detail": "items",
     "entry_detail": "movements",
+    "batch_new": "return_batches",
+    "batch_detail": "return_batches",
+    "piece_detail": "defective_pieces",
 }
 
 

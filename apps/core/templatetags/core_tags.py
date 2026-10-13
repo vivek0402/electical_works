@@ -87,3 +87,9 @@ def export_url(context, name, *args):
         params.pop(key, None)
     query = params.urlencode()
     return reverse(name, args=args) + (f"?{query}" if query else "")
+
+
+@register.simple_tag
+def st_badge(css, icon, word):
+    """A status badge: colour + icon + word (DESIGN.md: colour is never the only signal)."""
+    return format_html('<span class="badge st {}"><i class="ti ti-{}"></i>{}</span>', css, icon, word)
