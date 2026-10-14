@@ -1,8 +1,8 @@
 import pytest
 from django.utils import timezone
 
-from apps.complaints.models import NotCoveredReason, Visit
-from apps.complaints.services import close_not_covered, set_active
+from apps.complaints.models import NotCoveredReason, Status, Visit
+from apps.complaints.services import change_status, close_not_covered, set_active
 from apps.defectives.models import DefectivePiece
 from apps.inventory.models import StockBalance
 from tests.factories import give_stock, loc, make_complaint, make_item, make_site, make_tech, store
@@ -169,7 +169,12 @@ def test_a_technician_hidden_after_the_page_opened_is_named(office_client, setup
 def test_a_status_not_offered_is_refused(office_client, setup):
     drv, tech, c = setup
     html = submit(office_client, c, visit_data(tech, next_status="CLOSED")).content.decode()
-    assert "Status after this visit:" in html and not Visit.objects.exists()
+    assert "Status after this visit: Choose one of the statuses offered." in html
+    assert (
+        'role="radiogroup" aria-labelledby="next-status-label" aria-required="true" aria-invalid="true"'
+        in html
+    )
+    assert not Visit.objects.exists()
 
 
 def test_no_visit_page_for_a_finished_complaint(office_client, office_user, setup):
@@ -206,3 +211,61 @@ def test_visit_page_is_office_only(client, setup):
     drv, tech, c = setup
     r = client.get(url(c))
     assert r.status_code in (302, 403)
+
+
+def two_by_two(tech, drv, other):
+    return visit_data(
+        tech,
+        part_item=[str(drv.pk), str(other.pk)],
+        part_qty=["1", "1"],
+        col_item=[str(drv.pk), str(other.pk)],
+        col_qty=["1", "2"],
+        col_batch=["B1", ""],
+        col_pkd=["2026-03", ""],
+        col_fault=["no output", ""],
+    )
+
+
+def test_visit_page_query_count(office_client, setup, django_assert_max_num_queries):
+    drv, tech, c = setup
+    with django_assert_max_num_queries(20):  # 16 today
+        assert office_client.get(url(c)).status_code == 200
+
+
+def test_saving_two_parts_and_two_collected_lines_query_count(
+    office_client, office_user, setup, django_assert_max_num_queries
+):
+    drv, tech, c = setup
+    other = make_item("LG76-150-700FH")
+    give_stock(other, 5, office_user)
+    office_client.get(url(c))
+    data = {**two_by_two(tech, drv, other), "entry_token": office_client.session["entry_tokens"][-1]}
+    with django_assert_max_num_queries(95):  # 83 today
+        r = office_client.post(url(c), data)
+    assert r.status_code == 302 and DefectivePiece.objects.filter(visit__complaint=c).count() == 3
+
+
+def test_the_same_part_on_two_lines_is_refused(office_client, setup):
+    drv, tech, c = setup
+    data = visit_data(tech, part_item=[str(drv.pk), str(drv.pk)], part_qty=["1", "1"])
+    html = submit(office_client, c, data).content.decode()
+    assert (
+        "Parts given: The same item is on two lines. Combine them into one line. Nothing was saved." in html
+    )
+    assert not Visit.objects.exists()
+
+
+def test_the_defective_store_is_refused_as_the_parts_location(office_client, setup):
+    drv, tech, c = setup
+    data = visit_data(tech, location=store().pk, part_item=[str(drv.pk)], part_qty=["1"])
+    html = submit(office_client, c, data).content.decode()
+    assert "From location: Choose a good-stock location for the parts given." in html
+    assert not Visit.objects.exists()
+
+
+def test_a_later_visit_starts_on_the_current_status(office_client, office_user, setup):
+    drv, tech, c = setup
+    change_status(complaint=c, to=Status.ATTENDED, user=office_user)
+    html = office_client.get(url(c)).content.decode()
+    assert 'value="ATTENDED" class="form-selectgroup-input" checked' in html
+    assert "The first visit also logs" not in html

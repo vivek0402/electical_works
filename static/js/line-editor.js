@@ -18,7 +18,9 @@
                    Use a different id per editor;
      data-summary  id of an element for "2 items · 3 NOS"; optional, a different id per editor;
      data-add-label  text of the "Add another item" button; data-max  most per line (default 1,000,000).
-   - The same item may be on several lines; the over-issue check adds up all lines of an item. */
+   - Repeats: in collect and mark modes the same item may be on several lines (as the server allows for in, collect
+     and mark), and the over-issue check adds up all lines of an item. In out mode a repeated item is an error on
+     each of its lines ("Same item on another line; combine them"), which blocks the save like the server's refusal. */
 (function () {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   // Same rules as apps/inventory/normalise.normalise_code and search_key.
@@ -108,6 +110,9 @@
     qtyProblem(row, it) {
       const v = Number(row.qty.value), unit = it ? it.unit : "";
       if (v > this.maxQty) return `At most ${this.maxQty} per line`;
+      if (it && this.mode === "out" && this.rows.filter(r => r.ts.getValue() === String(it.id)).length > 1) {
+        return "Same item on another line; combine them";
+      }
       if (!it || !this.locSelect || this.mode === "collect") return "";
       const n = this.have(it), same = this.rows.filter(r => r.ts.getValue() === String(it.id));
       const total = same.reduce((sum, r) => sum + (Number(r.qty.value) || 0), 0);

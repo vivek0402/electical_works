@@ -118,7 +118,12 @@ td.c-check, th.c-check { width: 1%; }
 .lines-table td.c-fault { min-width: 12rem; }
 .lines-table td[data-label="Batch code"] { min-width: 8rem; }
 .lines-table td[data-label="PKD (packed)"] { min-width: 10rem; }
+.form-selectgroup-input:focus:not(:focus-visible) + .form-selectgroup-label { outline: 0; } /* focus ring for keyboard users only */
 [data-mode="collect"] .lines-table .ts-wrapper { min-width: 13rem; } /* 3 more columns: fits a 1366px screen */
+/* Focusing a picker that has an item must not grow the row (the code would wrap and a click below would miss). */
+.lines-table .ts-wrapper.single .ts-control { flex-wrap: nowrap; }
+.lines-table .ts-wrapper.single .ts-control > .item { white-space: nowrap; flex-shrink: 0; }
+.lines-table .ts-wrapper.single .ts-control > input { min-width: 0; flex: 1 1 0; }
 .settle-panel { background: #f8fafc; }
 .page-title .badge.st { font-size: .8rem; vertical-align: middle; margin-left: .35rem; }
 @media (max-width: 767.98px) {
