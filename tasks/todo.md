@@ -77,7 +77,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S11 Complaints services: acc1821 + fixes 785f6ba + post_entry hardening 5e7692b (685 tests; deadlock-free lock order verified; spec ✅ quality ✅)
   - [x] S12 New complaint + complaint page: f1f5b95 + fixes 3592178 (724 tests; phone cards at 390px; spec ✅ quality ✅)
   - [x] S13 Record visit page: 09b82d0 + follow-ups e6bd279 (750 tests; full walkthrough exit 0; spec ✅ quality ✅)
-  - [ ] S14 Complaints list, dashboard + 2 exports
+  - [x] S14 Complaints list, dashboard + 2 exports: 0d1adde + fixes b026daf (791 tests; spec ✅ quality ✅)
   - [ ] S15 Sites & technicians screens
   - [ ] S16 Integration (nav, search, dashboard, links, sweep)
   - [ ] S17 Service demo data
@@ -170,3 +170,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - **For Task 18:**
   - The latest Playwright (1.64) needs a browser build that isn't installed here. Run the walkthrough with `uv run --with playwright==1.63.0 …` (or run `playwright install`), and fix the command in CLAUDE.md and the README.
   - Set `PYTHONIOENCODING=utf-8` when printing → on the Windows console.
+- **For Task 16 (from Task 14):** the main dashboard and global search **must reuse** these, never recount:
+  - in `apps/complaints/selectors.py`: `status_counts()`, `open_rows(today, events=False)`, `age_counts(rows)`, `closed_since_count(since)` and `complaint_search_q(q)`;
+  - in `filters.py`: `LATE_DAYS` (the "over 15 days" limit);
+  - for defectives: `piece_counts()`.
