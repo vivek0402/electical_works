@@ -7,4 +7,5 @@ urlpatterns = [
     path("", include("apps.core.urls")),
     path("", include("apps.inventory.urls")),
     path("", include("apps.defectives.urls")),
+    path("", include("apps.complaints.urls")),
 ]

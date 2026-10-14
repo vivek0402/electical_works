@@ -24,6 +24,16 @@ NAV = [
         ],
     ),
     (
+        "Complaints",
+        [  # entries whose page isn't built yet render disabled (their URL name doesn't resolve)
+            ("complaints_dashboard", "Dashboard", "message-report", "", False),
+            ("complaints", "All complaints", "list-details", "", False),
+            ("complaint_new", "New complaint", "plus", "", False),
+            ("sites", "Sites", "building", "", False),
+            ("technicians", "Technicians", "users", "", False),
+        ],
+    ),
+    (
         "Defectives",
         [  # entries whose page isn't built yet render disabled (their URL name doesn't resolve)
             ("defectives_dashboard", "Dashboard", "recycle", "", False),
@@ -44,6 +54,7 @@ ACTIVE_ALIASES = {
     "batch_new": "return_batches",
     "batch_detail": "return_batches",
     "piece_detail": "defective_pieces",
+    "complaint_detail": "complaints",
 }
 
 

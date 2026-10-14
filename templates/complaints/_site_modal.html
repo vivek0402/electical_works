@@ -1,0 +1,13 @@
+{# New site dialog. Needs `site_form` (SiteForm, prefix "ns") and `cities`. Saved through site_quick_create by site-picker.js. #}
+<div class="modal modal-blur fade" id="site-modal" tabindex="-1" aria-labelledby="site-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+  <form id="site-form" data-url="{% url 'site_quick_create' %}" novalidate>{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title" id="site-title"><i class="ti ti-building"></i> New site</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"><div class="row g-3">
+      <div class="col-12 col-md-8"><label class="form-label required" for="{{ site_form.name.id_for_label }}">Site name</label>{{ site_form.name }}</div>
+      <div class="col-12 col-md-4"><label class="form-label required" for="{{ site_form.city.id_for_label }}">City</label>{{ site_form.city }}<datalist id="site-cities">{% for city in cities %}<option value="{{ city }}">{% endfor %}</datalist></div>
+      <div class="col-12 col-md-6"><label class="form-label" for="{{ site_form.contact_name.id_for_label }}">Contact person</label>{{ site_form.contact_name }}</div>
+      <div class="col-12 col-md-6"><label class="form-label" for="{{ site_form.phone.id_for_label }}">Phone</label>{{ site_form.phone }}</div>
+      <div class="col-12"><label class="form-label" for="{{ site_form.address.id_for_label }}">Address</label>{{ site_form.address }}</div>
+    </div><div id="ns-err" class="mt-3" aria-live="polite"></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Save site</button></div>
+  </form></div></div></div>

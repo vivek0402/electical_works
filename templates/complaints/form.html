@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}New complaint{% endblock %}
+{% block pretitle %}Complaints{% endblock %}
+{% block page_title %}<i class="ti ti-message-report"></i> New complaint{% endblock %}
+{% block content %}
+<form method="post" novalidate id="complaint-form" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-building"></i> Site</h3><div class="card-subtitle ms-2 text-secondary">Where the problem is</div></div>
+    <div class="card-body"><div class="row g-3">
+      <div class="col-12 col-md-6"><label class="form-label required" for="id_site">Site</label>{{ form.site }}<small class="form-hint">Type to search saved sites, or add a new one.</small></div>
+      <div class="col-12 col-sm-6 col-md-3"><label class="form-label" for="id_contact_name">Contact person</label>{{ form.contact_name }}</div>
+      <div class="col-12 col-sm-6 col-md-3"><label class="form-label" for="id_phone">Phone</label>{{ form.phone }}</div>
+      <div class="col-12"><button type="button" class="btn btn-quiet btn-sm" id="new-site-btn"><i class="ti ti-plus"></i> New site</button>
+        <span class="small text-secondary ms-2">Contact and phone are copied from the site; change them here for this complaint only.</span></div>
+    </div></div></div>
+  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Complaint</h3></div>
+    <div class="card-body"><div class="row g-3">
+      <div class="col-12 col-md-4"><label class="form-label required" for="id_company">Company (whose product failed)</label>{{ form.company }}<small class="form-hint">Only a starting value. Change it for other companies' products.</small></div>
+      <div class="col-12 col-md-4"><label class="form-label" for="id_company_ref">Company complaint no.</label>{{ form.company_ref }}</div>
+      <div class="col-6 col-md-2"><label class="form-label required" for="id_reported_on">Reported on</label>{{ form.reported_on }}</div>
+      <div class="col-6 col-md-2"><label class="form-label" for="id_qty_affected">Qty affected</label>{{ form.qty_affected }}</div>
+      <div class="col-12"><label class="form-label required" for="id_fault">Fault</label>{{ form.fault }}</div>
+      <div class="col-12 col-md-5"><div class="form-label required" id="prio-label">Priority</div><div class="form-selectgroup" role="radiogroup" aria-labelledby="prio-label">{% for value, label in form.priority.field.choices %}<label class="form-selectgroup-item"><input type="radio" name="priority" value="{{ value }}" class="form-selectgroup-input"{% if form.priority.value == value %} checked{% endif %}><span class="form-selectgroup-label"><i class="ti ti-{% if value == 'URGENT' %}urgent{% elif value == 'HIGH' %}arrow-up{% else %}minus{% endif %}"></i> {{ label }}</span></label>{% endfor %}</div></div>
+      <div class="col-12 col-md-7"><label class="form-label" for="id_technicians">Technicians</label>{{ form.technicians }}</div>
+    </div></div>
+    <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span class="text-secondary small"><i class="ti ti-info-circle"></i> Saved as <b>Not attended</b>. Every status change is logged.</span>
+      <div class="ms-auto btn-list"><a href="{{ nav_urls.complaints|default:'/' }}" class="btn btn-link link-secondary">Cancel</a><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Save complaint</button></div></div></div>
+  <div id="form-error" class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+</form>
+{% include "complaints/_site_modal.html" %}
+{{ sites_data|json_script:"sites-data" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/service.js' %}"></script><script src="{% static 'js/site-picker.js' %}"></script>{% endblock %}
