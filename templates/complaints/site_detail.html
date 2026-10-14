@@ -3,9 +3,9 @@
 {% block pretitle %}Site · {{ site.city }}{% endblock %}
 {% block page_title %}{{ site.name }}{% if not site.is_active %} <span class="badge st st-done"><i class="ti ti-eye-off" aria-hidden="true"></i>Hidden</span>{% endif %}{% endblock %}
 {% block actions %}
-  <a href="{% url 'complaint_new' %}?site={{ site.pk }}" class="btn btn-primary"><i class="ti ti-plus"></i> New complaint for this site</a>
+  {% if site.is_active %}<a href="{% url 'complaint_new' %}?site={{ site.pk }}" class="btn btn-primary"><i class="ti ti-plus"></i> New complaint for this site</a>{% endif %}
   <a href="{% url 'site_edit' site.pk %}" class="btn btn-quiet"><i class="ti ti-edit"></i> Edit</a>
-  {% if is_admin %}<form method="post" action="{% url 'site_toggle' site.pk %}" data-once class="d-inline">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><button type="submit" class="btn btn-outline-secondary">{% if site.is_active %}<i class="ti ti-eye-off"></i> Hide{% else %}<i class="ti ti-eye"></i> Show{% endif %}</button></form>{% endif %}
+  {% if is_admin %}<form method="post" action="{% url 'site_toggle' site.pk %}" data-once class="d-inline">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="active" value="{% if site.is_active %}0{% else %}1{% endif %}"><button type="submit" class="btn btn-outline-secondary">{% if site.is_active %}<i class="ti ti-eye-off"></i> Hide{% else %}<i class="ti ti-eye"></i> Show{% endif %}</button></form>{% endif %}
 {% endblock %}
 {% block content %}
 <div class="row row-cards">

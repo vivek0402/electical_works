@@ -15,14 +15,14 @@ PHONE_TYPED_MAX = (
 )
 
 
-def phone_widget():
+def phone_widget(placeholder="10-digit mobile or STD landline"):
     return forms.TextInput(
         attrs={
             "type": "tel",
             "inputmode": "tel",
             "maxlength": PHONE_TYPED_MAX,
             "autocomplete": "off",
-            "placeholder": "10-digit mobile or STD landline",
+            "placeholder": placeholder,
         }
     )
 
@@ -195,15 +195,5 @@ class TechnicianForm(TablerFormMixin, forms.Form):
         widget=forms.TextInput(attrs={"placeholder": "e.g. Suresh", "autocomplete": "off"}),
     )
     phone = forms.CharField(
-        max_length=PHONE_TYPED_MAX,
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "type": "tel",
-                "inputmode": "tel",
-                "maxlength": PHONE_TYPED_MAX,
-                "autocomplete": "off",
-                "placeholder": "10-digit mobile",
-            }
-        ),
+        max_length=PHONE_TYPED_MAX, required=False, widget=phone_widget(placeholder="10-digit mobile")
     )

@@ -33,6 +33,7 @@ from apps.inventory.models import EntryKind, Location, ServiceSubtype, StockEntr
 from apps.inventory.services import Line, StockError, _reverse_entry, lock_balances, post_entry
 
 from .models import (
+    OPEN_STATUSES,
     TRANSITIONS,
     WORK_STATUSES,
     Complaint,
@@ -162,7 +163,13 @@ def save_technician(*, name, phone="", technician=None):
 
 
 def set_active(obj, *, active):
-    """Show or hide a site or technician in the dropdowns (Admin only; the view checks the role)."""
+    """Show or hide a site or technician in the dropdowns (Admin only; the view checks the role).
+    A site with open complaints can't be hidden: record_visit refuses hidden sites, so those complaints
+    would be stuck. A technician can be hidden while assigned (the view says how many are still open)."""
+    if not active and isinstance(obj, Site):
+        n = obj.complaints.filter(status__in=OPEN_STATUSES).count()
+        if n:
+            raise ComplaintError(f"{obj} has {n} open complaint(s). Close them before hiding the site.")
     obj.is_active = active
     obj.save(update_fields=["is_active"])
     return obj

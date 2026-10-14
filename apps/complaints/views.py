@@ -23,7 +23,17 @@ from apps.inventory.services import StockError
 from . import selectors, services
 from .filters import AGE_BUCKETS, CLOSED_SINCE_TABS, FINISHED, complaint_filters
 from .forms import ComplaintForm, SiteForm, TechnicianForm, VisitForm
-from .models import TRANSITIONS, Complaint, NotCoveredReason, Priority, Site, Status, Technician, Visit
+from .models import (
+    OPEN_STATUSES,
+    TRANSITIONS,
+    Complaint,
+    NotCoveredReason,
+    Priority,
+    Site,
+    Status,
+    Technician,
+    Visit,
+)
 from .services import ComplaintError
 
 SAVED_ALREADY = "This was already saved."
@@ -503,10 +513,22 @@ def site_edit(request, pk):
 def _toggle(request, obj, page, noun):
     """Hide or show a site or technician (Admin only; the decorators check it). Back to `page`."""
 
+    wanted = request.POST.get("active")
+    if wanted not in ("0", "1"):
+        messages.error(request, "Nothing was changed: the form did not say whether to hide or show.")
+        return redirect(page)
+
     def run():
-        services.set_active(obj, active=not obj.is_active)
+        # The page says which way to go, so a stale page can't flip the record back.
+        services.set_active(obj, active=wanted == "1")
         if obj.is_active:
             messages.success(request, f"{obj.name} is shown again.")
+        elif isinstance(obj, Technician):
+            n = obj.complaints.filter(status__in=OPEN_STATUSES).count()
+            text = f"{obj.name} is hidden from the {noun} lists."
+            if n:
+                text = f"{obj.name} is hidden. Still assigned to {n} open complaint(s)."
+            messages.success(request, text)
         else:
             messages.success(request, f"{obj.name} is hidden from the {noun} lists.")
         return page

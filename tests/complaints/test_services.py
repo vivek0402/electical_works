@@ -6,7 +6,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
-from apps.complaints.models import Complaint, NotCoveredReason, Priority, Status, Visit
+from apps.complaints.models import Complaint, NotCoveredReason, Priority, Site, Status, Visit
 from apps.complaints.phones import MOBILE_ERROR, MOBILE_OR_LANDLINE_ERROR
 from apps.complaints.services import (
     ComplaintError,
@@ -740,7 +740,8 @@ def test_hidden_site_or_technician_is_refused_on_a_visit(office_user):
         ComplaintError, match="Suresh is hidden. Show it again in Technicians, or choose another."
     ):
         visit(c, office_user, technicians=[tech])
-    set_active(c.site, active=False)
+    Site.objects.filter(pk=c.site.pk).update(is_active=False)  # set_active refuses while complaints are open
+    c.site.refresh_from_db()
     with pytest.raises(
         ComplaintError, match="BARC, Visakhapatnam is hidden. Show it again in Sites, or choose another."
     ):
