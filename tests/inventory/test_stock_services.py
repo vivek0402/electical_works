@@ -8,7 +8,15 @@ from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.utils import timezone
 
 from apps.inventory.models import AdjustReason, EntryKind, StockBalance, StockEntry, StockLine
-from apps.inventory.services import Line, StockError, adjust_counts, balance_drift, post_entry, undo_entry
+from apps.inventory.services import (
+    Line,
+    StockError,
+    adjust_counts,
+    balance_drift,
+    lock_balances,
+    post_entry,
+    undo_entry,
+)
 from tests.factories import loc, make_item, make_user
 
 pytestmark = pytest.mark.django_db
@@ -388,3 +396,18 @@ def test_backdated_transfer_checks_the_source_history(pcb, user):
             lines=[Line(pcb, loc(), -4), Line(pcb, loc("TV Shop"), 4)],
             user=user,
         )
+
+
+def test_post_entry_with_locked_balances_must_cover_every_row(pcb, user):
+    """locked= (from lock_balances) skips re-locking, so it must name every balance row the entry touches."""
+    with transaction.atomic():
+        locked = lock_balances([Line(pcb, loc(), 4)])
+        post(EntryKind.IN, Line(pcb, loc(), 4), user=user, subtype="SUPPLIER", locked=locked)
+        assert qty(pcb) == 4
+        with pytest.raises(ValueError, match="must cover every balance row"):
+            post(EntryKind.IN, Line(pcb, loc("TV Shop"), 1), user=user, subtype="SUPPLIER", locked=locked)
+        with pytest.raises(ValueError, match="must cover every balance row"):
+            post(
+                EntryKind.IN, Line(pcb, loc(), 1), user=user, subtype="SUPPLIER", locked={(pcb.pk, loc().pk)}
+            )
+    assert balance_drift() == []

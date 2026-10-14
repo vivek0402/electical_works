@@ -149,10 +149,15 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
     - Show the REV undo on the timeline or visits (`visit.out_entry.reversed_by`).
     - The "Undo parts given" button hides when there is no OUT or it is already reversed.
     - The entry page's notice for a REV with a complaint may need different wording.
-    - Forms offer only active sites and technicians; the services don't refuse hidden ones.
+    - Forms offer only active sites and technicians, and `file_complaint` / `record_visit` refuse a hidden one: "{name} is hidden. Show it again in Sites (or Technicians), or choose another."
   - A status change can't be dated before the complaint's latest event.
   - Tests: use your own `DATABASE_URL` database name if another run is using `test_postgres`.
 - **From the Task 11 spec review:**
   - Task 15's plan test expects "Phone must be a 10-digit mobile number." for a *site*. Site phones now allow landlines, so assert the new message ("…or an STD landline like 0891-2345678.").
   - Task 13 must keep the plan's view-level message "Failed parts collected: Line 1: choose an item. Nothing was saved." (from `entry_lines`).
   - `undo_visit_parts` records the undo as a REV entry linked to the complaint, not as a ComplaintEvent (events are status moves only). The complaint page shows it from `visit.out_entry.reversed_by`.
+- **From the Task 11 review fixes:**
+  - `reverse_entry` is now `_reverse_entry` (private; only `undo_entry` and `complaints.undo_visit_parts` call it). It refuses defectives-owned entries unless they belong to a complaint visit, and takes `used_message=`.
+  - `lock_balances(lines)` returns a `LockedBalances`; pass it to `post_entry(locked=…)` so the rows are read, not re-locked. `record_visit` does this, so every balance lock comes before the first EntryCounter.
+  - A visit's entries carry the site name cut to `StockEntry.party`'s 120 characters; the `ref` (complaint number) is the link.
+  - New message: "The parts given on VIS-xxxx have already been used, so they can't be undone." (a guard: an OUT's reversal only adds stock).

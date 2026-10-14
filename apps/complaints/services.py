@@ -27,7 +27,7 @@ from apps.defectives.services import (
     collect_pieces,
 )
 from apps.inventory.models import EntryKind, Location, ServiceSubtype, StockEntry
-from apps.inventory.services import Line, StockError, lock_balances, post_entry, reverse_entry
+from apps.inventory.services import Line, StockError, _reverse_entry, lock_balances, post_entry
 
 from .models import (
     TRANSITIONS,
@@ -46,6 +46,7 @@ from .phones import normalise_phone
 # Field lengths (the model's), refused rather than cut.
 SITE_NAME_MAX, CITY_MAX, CONTACT_MAX, COMPANY_REF_MAX, TECH_NAME_MAX, NOTE_MAX = 120, 60, 80, 60, 60, 300
 REOPENED = "Reopened: "
+PARTY_MAX = StockEntry._meta.get_field("party").max_length  # a visit's entries name the site, cut to fit
 
 
 class ComplaintError(ValidationError):
@@ -55,6 +56,11 @@ class ComplaintError(ValidationError):
 def _tidy(text):
     """Typed text on one line: NUL bytes dropped (Postgres rejects them), runs of spaces made one."""
     return " ".join((text or "").replace(chr(0), "").split())
+
+
+def _clean(text):
+    """Typed text that may run over several lines: NUL bytes dropped (Postgres rejects them), ends trimmed."""
+    return (text or "").replace(chr(0), "").strip()
 
 
 def _limit(text, limit, what):
@@ -72,6 +78,16 @@ def _phone(text, *, allow_landline):
 
 def _label(status):
     return Status(status).label
+
+
+def _check_shown(*, site=None, technicians=()):
+    """Refuse a hidden site or technician (read from the database, not the caller's possibly stale copy)."""
+    if site is not None and not Site.objects.filter(pk=site.pk, is_active=True).exists():
+        raise ComplaintError(f"{site} is hidden. Show it again in Sites, or choose another.")
+    pks = [t.pk for t in technicians]
+    hidden = Technician.objects.filter(pk__in=pks, is_active=False).order_by("name").first()
+    if hidden:
+        raise ComplaintError(f"{hidden.name} is hidden. Show it again in Technicians, or choose another.")
 
 
 def _check_day(complaint, day, *, what, last_change=True):
@@ -190,7 +206,8 @@ def file_complaint(
         raise ComplaintError("Choose the site.")
     if company is None:
         raise ComplaintError("Choose the company whose product failed.")
-    fault = (fault or "").replace(chr(0), "").strip()
+    _check_shown(site=site, technicians=technicians)
+    fault = _clean(fault)
     if not fault:
         raise ComplaintError("Describe the fault.")
     if reported_on is None:
@@ -240,7 +257,7 @@ def reopen(*, complaint, user, note, at=None):
         raise ComplaintError("Only a closed complaint can be reopened.")
     if not has_role(user, ADMIN):
         raise ComplaintError("A closed complaint can't move to Attended. Only Admin can reopen it.")
-    note = (note or "").strip()
+    note = _clean(note)
     if not note:
         raise ComplaintError("Write why the complaint is being reopened.")
     _limit(note, NOTE_MAX - len(REOPENED), "note")
@@ -268,7 +285,7 @@ def change_status(*, complaint, to, user, note="", reason="", at=None):
         if allowed:
             message += f" Allowed: {', '.join(_label(s) for s in allowed)}."
         raise ComplaintError(message)
-    note = _limit((note or "").replace(chr(0), "").strip(), NOTE_MAX, "note")
+    note = _limit(_clean(note), NOTE_MAX, "note")
     if to == Status.NOT_COVERED:
         if reason not in NotCoveredReason.values:
             raise ComplaintError("Choose why the complaint is not covered.")
@@ -324,7 +341,7 @@ def _clean_collected(collected):
             raise ComplaintError(f"{where}: choose the item.")
         if not _qty_ok(qty, MAX_PIECES_PER_LINE):
             raise ComplaintError(f"{where}: quantity must be between 1 and {MAX_PIECES_PER_LINE}.")
-        batch_code, fault = _tidy(batch_code), (fault or "").replace(chr(0), "").strip()
+        batch_code, fault = _tidy(batch_code), _clean(fault)
         if len(batch_code) > BATCH_CODE_MAX:
             raise ComplaintError(f"{where}: keep the batch code to {BATCH_CODE_MAX} characters or less.")
         if len(fault) > FAULT_MAX:
@@ -352,8 +369,8 @@ def record_visit(
     then EntryCounter(OUT)) or `mark_defective` (good and store balances in one sorted pass) can be holding
     exactly those rows while waiting for ours: a cycle. So this service first locks EVERY balance row both
     entries need, good locations and the Defective store together, in one sorted pass (lock_balances), and
-    only then posts. The two post_entry calls re-lock rows this transaction already holds (no waiting), so the
-    only new locks after the balances are EntryCounter(OUT), then EntryCounter(IN), then the DEF counter.
+    only then posts. The two post_entry calls get `locked=` and read those rows without locking them again, so
+    the only new locks after the balances are EntryCounter(OUT), then EntryCounter(IN), then the DEF counter.
     The order is then: Complaint row, VIS counter, all balances (sorted), EntryCounter OUT, EntryCounter IN,
     DEF counter. Checked against every other writer:
     - Stock IN / OUT / Transfer / Adjust / Undo, mark_defective, scrap, dispatch, settle, undo_visit_parts:
@@ -371,7 +388,8 @@ def record_visit(
     _check_day(complaint, visit_date, what="The visit date", last_change=False)
     if not technicians:
         raise ComplaintError("Choose who attended.")
-    work_done = (work_done or "").replace(chr(0), "").strip()
+    _check_shown(site=complaint.site, technicians=technicians)
+    work_done = _clean(work_done)
     if not work_done:
         raise ComplaintError("Write what work was done.")
     if next_status not in Status.values:
@@ -401,14 +419,15 @@ def record_visit(
     store = Location.defective_store() if collected else None
     out_lines = [Line(item, location, -qty) for item, qty in parts]
     in_lines = [Line(item, store, qty, batch_code, pkd) for item, qty, batch_code, pkd, _ in collected]
-    lock_balances(out_lines + in_lines)  # every balance row, one sorted pass, before any EntryCounter
+    locked = lock_balances(out_lines + in_lines)  # every balance row, one sorted pass, before any counter
     common = {
         "entry_date": visit_date,
         "user": user,
-        "party": str(complaint.site),
+        "party": str(complaint.site)[:PARTY_MAX],  # the ref (complaint number) is the link; this is a label
         "ref": complaint.number,
         "note": f"Visit {number}",
         "complaint": complaint,
+        "locked": locked,
     }
     out = col = None
     if out_lines:
@@ -472,7 +491,7 @@ def undo_visit_parts(*, visit, reason, user, at=None):
     events are status moves only). The collected pieces and the complaint's status are not touched; pieces
     are corrected from the Defectives screens. Allowed on a finished complaint too (it corrects stock only).
 
-    Lock order: Complaint row, then the OUT entry and its balances (reverse_entry -> post_entry).
+    Lock order: Complaint row, then the OUT entry and its balances (_reverse_entry -> post_entry).
     """
     complaint = _locked(visit.complaint)
     visit = Visit.objects.select_related("out_entry").get(pk=visit.pk)
@@ -491,13 +510,15 @@ def undo_visit_parts(*, visit, reason, user, at=None):
     done = StockEntry.objects.filter(reverses=out).first()
     if done:
         raise ComplaintError(f"The parts given on {visit.number} were already undone ({done.number}).")
+    used = f"The parts given on {visit.number} have already been used, so they can't be undone."
     try:
-        return reverse_entry(
+        return _reverse_entry(
             entry=out,
             note=f"Parts given on {visit.number} undone: {reason}",
             user=user,
             entry_date=at,
             complaint=complaint,
+            used_message=used,
         )
     except StockError as exc:
         raise ComplaintError(exc.message) from exc

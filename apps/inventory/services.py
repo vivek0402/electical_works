@@ -137,14 +137,21 @@ def _validate(*, kind, entry_date, lines, subtype, reason, note, reverses):
             raise StockError("Write a short note explaining the adjustment.")
 
 
-def lock_balances(lines):
+class LockedBalances(frozenset):
+    """The (item_id, location_id) balance keys that lock_balances locked in the current transaction."""
+
+
+def lock_balances(lines) -> LockedBalances:
     """Lock the balance rows of every line, in one sorted pass. Must be called inside a transaction.
 
     For a service that posts more than one entry in one transaction (complaints.record_visit): call this
-    with all the lines first, so every balance lock is taken before any EntryCounter, as in a single
-    post_entry. The post_entry calls then re-lock rows this transaction already holds, which never waits.
+    with all the lines first, then pass the result to each post_entry as `locked=`. Every balance lock is
+    then taken before any EntryCounter, as in a single post_entry, and post_entry reads those rows without
+    locking them again.
     """
-    _lock_balances(sorted({(line.item.pk, line.location.pk) for line in lines}))
+    keys = sorted({(line.item.pk, line.location.pk) for line in lines})
+    _lock_balances(keys)
+    return LockedBalances(keys)
 
 
 def _lock_balances(keys):
@@ -217,10 +224,13 @@ def post_entry(
     reverses=None,
     return_batch=None,
     complaint=None,
+    locked=None,
 ) -> StockEntry:
     """Post a stock entry.
 
-    Raises StockError (and saves nothing) if a rule is broken or stock would go negative.
+    Raises StockError (and saves nothing) if a rule is broken or stock would go negative. `locked` is what
+    lock_balances returned earlier in this transaction, when the caller has already locked every balance row
+    this entry touches (see lock_balances); the rows are then read, not locked again.
     """
     _validate(
         kind=kind,
@@ -235,7 +245,13 @@ def post_entry(
     for line in lines:
         deltas[(line.item.pk, line.location.pk)] += line.qty
     keys = sorted(deltas)
-    balances = _lock_balances(keys)
+    if locked is None:
+        balances = _lock_balances(keys)
+    elif not isinstance(locked, LockedBalances) or not locked.issuperset(keys):
+        raise ValueError("post_entry(locked=...) must cover every balance row of the entry.")
+    else:  # already locked by this transaction (lock_balances), so a plain read sees the latest qty
+        match = reduce(or_, (Q(item_id=i, location_id=loc) for i, loc in keys))
+        balances = {(r.item_id, r.location_id): r for r in StockBalance.objects.filter(match)}
     items = {line.item.pk: line.item for line in lines}
     places = {line.location.pk: line.location for line in lines}
     now = timezone.now()
@@ -320,6 +336,11 @@ def adjust_counts(*, entry_date, location, counts, reason, note, user, line_numb
     )
 
 
+DEFECTIVE_UNDO_MESSAGE = (
+    "This entry belongs to the defective pieces. Use the Defectives screens instead of Undo."
+)
+
+
 @transaction.atomic
 def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
     """Cancel an entry by posting its exact opposite. Both stay on record."""
@@ -329,23 +350,27 @@ def undo_entry(*, entry, reason, user, entry_date=None) -> StockEntry:
     if entry.is_complaint_visit:  # checked first: a visit's collection IN is also a defectives entry
         raise StockError("This entry belongs to a complaint visit. Correct it from the complaint.")
     if entry.is_defective:
-        raise StockError(
-            "This entry belongs to the defective pieces. Use the Defectives screens instead of Undo."
-        )
-    return reverse_entry(entry=entry, note=reason, user=user, entry_date=entry_date)
+        raise StockError(DEFECTIVE_UNDO_MESSAGE)
+    return _reverse_entry(entry=entry, note=reason, user=user, entry_date=entry_date)
 
 
 @transaction.atomic
-def reverse_entry(*, entry, note, user, entry_date=None, complaint=None) -> StockEntry:
+def _reverse_entry(*, entry, note, user, entry_date=None, complaint=None, used_message=None) -> StockEntry:
     """Post the exact opposite of `entry` (kind REV, `reverses=entry`); both stay on record.
 
     The undo mechanics only. The caller decides whether this entry may be undone at all: undo_entry for the
     stock screens, complaints.services.undo_visit_parts for a visit's parts given (which passes `complaint`
-    so the reversal stays linked to the complaint). Don't call it from anywhere else.
+    so the reversal stays linked to the complaint). Don't call it from anywhere else. As a guard it refuses
+    an entry the defectives screens own, unless it belongs to a complaint visit.
+
+    `used_message` replaces the default "That stock has already been used..." sentence when the reversal
+    would take stock below zero.
     """
     entry = StockEntry.objects.select_for_update().get(pk=entry.pk)
     if entry.kind == EntryKind.REV:
         raise StockError("An undo can't be undone. Make a new entry instead.")
+    if entry.is_defective and not entry.is_complaint_visit:
+        raise StockError(DEFECTIVE_UNDO_MESSAGE)
     if StockEntry.objects.filter(reverses=entry).exists():
         raise StockError("This entry was already undone.")
     if not note.strip():
@@ -371,9 +396,8 @@ def reverse_entry(*, entry, note, user, entry_date=None, complaint=None) -> Stoc
             complaint=complaint,
         )
     except NotEnoughStock as exc:
-        raise StockError(
-            f"{exc.message} That stock has already been used, so this entry can't be undone."
-        ) from exc
+        used = used_message or "That stock has already been used, so this entry can't be undone."
+        raise StockError(f"{exc.message} {used}") from exc
 
 
 @transaction.atomic
