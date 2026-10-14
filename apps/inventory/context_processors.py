@@ -45,8 +45,10 @@ NAV = [
     ("Setup", [("items", "Items", "box", "", False), ("masters", "Masters", "settings", "", True)]),
 ]
 EXTRA_URLS = ["global_search"]
+# "?status=..." for the pieces list: the menu entry and the dashboard's piece tiles all build on it.
+PIECES_STATUS_QUERY = "?status={}"
 # Menu entries that open on a filtered list, so the badge beside them counts exactly the rows shown.
-NAV_QUERY = {"defective_pieces": "?status=IN_STORE"}
+NAV_QUERY = {"defective_pieces": PIECES_STATUS_QUERY.format("IN_STORE")}
 # URL names that should highlight a menu entry other than their own.
 ACTIVE_ALIASES = {
     "item_new": "items",
@@ -71,20 +73,31 @@ def _url(name):
         return None
 
 
-def _open_complaints():
-    """Open complaints (the "All complaints" list opens on the Open tab), from the shared status counts."""
-    from apps.complaints.models import OPEN_STATUSES  # imported here: complaints depends on inventory
-    from apps.complaints.selectors import status_counts
+def service_counts(request):
+    """(complaint status counts, piece counts), counted once per request (one query each, only when asked)
+    and shared by the menu badges and the main dashboard's service tiles."""
+    from apps.complaints.selectors import status_counts  # imported here: both apps depend on inventory
+    from apps.defectives.selectors import piece_counts
 
-    counts = status_counts()
+    cache = request.__dict__.setdefault("_service_counts", {})
+    if "status" not in cache:
+        cache["status"] = status_counts()
+    if "pieces" not in cache:
+        cache["pieces"] = piece_counts()
+    return cache["status"], cache["pieces"]
+
+
+def _open_complaints(request):
+    """Open complaints (the "All complaints" list opens on the Open tab)."""
+    from apps.complaints.models import OPEN_STATUSES
+
+    counts, _ = service_counts(request)
     return sum(counts[s] for s in OPEN_STATUSES)
 
 
-def _pieces_in_store():
-    """Pieces In store (the "Pieces" menu entry opens on that filter), from the shared piece counts."""
-    from apps.defectives.selectors import piece_counts
-
-    return piece_counts()["in_store"]
+def _pieces_in_store(request):
+    """Pieces In store (the "Pieces" menu entry opens on that filter)."""
+    return service_counts(request)[1]["in_store"]
 
 
 def nav(request):
@@ -119,6 +132,6 @@ def nav(request):
         "nav_sections": sections,
         "nav_urls": urls,
         "nav_low_count": SimpleLazyObject(low_stock_count),
-        "nav_open_complaints": SimpleLazyObject(_open_complaints),
-        "nav_pieces_in_store": SimpleLazyObject(_pieces_in_store),
+        "nav_open_complaints": SimpleLazyObject(lambda: _open_complaints(request)),
+        "nav_pieces_in_store": SimpleLazyObject(lambda: _pieces_in_store(request)),
     }

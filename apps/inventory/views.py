@@ -13,6 +13,7 @@ from apps.core.tables import sort_and_page
 from apps.core.tokens import guarded_post, page_token
 
 from . import selectors
+from .context_processors import PIECES_STATUS_QUERY, service_counts
 from .entry_lines import parse_lines, raw_lines
 from .filters import _text, history_filters, item_filters, movement_filters, stock_filters
 from .forms import AdjustForm, ItemForm, StockInForm, StockOutForm, TransferForm, UndoForm
@@ -55,7 +56,11 @@ def dashboard(request):
             "weeks_chart": [{"label": w["label"], "in": w["qty_in"], "out": w["qty_out"]} for w in weeks],
             "locations": selectors.location_unit_totals(),
             "recent": selectors.recent_entries(),
-            "service": selectors.service_stats(today),
+            "service": selectors.service_stats(today, *service_counts(request)),
+            "pieces_urls": {
+                status: reverse("defective_pieces") + PIECES_STATUS_QUERY.format(status)
+                for status in ("IN_STORE", "SENT")
+            },
             "today": today,
         },
     )
@@ -503,7 +508,7 @@ def global_search(request):
     )
     sites = Site.objects.filter(
         Q(name__icontains=q) | Q(city__icontains=q) | Q(contact_name__icontains=q)
-    ).order_by("name", "city")[:4]
+    ).order_by("-is_active", "name", "city")[:4]  # active sites first
     pieces = pieces_qs().filter(piece_search_q(q)).order_by("-id")[:5]
     return JsonResponse(
         {
@@ -530,7 +535,9 @@ def global_search(request):
                 {
                     "name": s.name,
                     "url": reverse("site_detail", args=[s.pk]),
-                    "label": s.city + (f" · {s.contact_name}" if s.contact_name else ""),
+                    "label": s.city
+                    + (f" · {s.contact_name}" if s.contact_name else "")
+                    + ("" if s.is_active else " (hidden)"),
                 }
                 for s in sites
             ],

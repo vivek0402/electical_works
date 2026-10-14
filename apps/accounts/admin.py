@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group, User
 from unfold.admin import ModelAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
-admin.site.site_header = "SVKML Stock · Admin"
+admin.site.site_header = "SVKML Service · Admin"
 admin.site.site_title = "SVKML Admin"
 admin.site.unregister(User)
 admin.site.unregister(Group)

@@ -88,8 +88,10 @@ def test_global_search_groups_stay_small(office_client, office_user):
 
 def test_menu_badges_and_brand(office_client, visited):
     html = office_client.get("/").content.decode()
-    assert 'title="Open complaints">1</span>' in html
-    assert 'title="Pieces in the Defective store">2</span>' in html
+    assert 'title="Open complaints">1<span class="visually-hidden"> open</span></span>' in html
+    assert (
+        'title="Pieces in the Defective store">2<span class="visually-hidden"> in store</span></span>' in html
+    )
     assert '<span class="brand-sub">Service</span>' in html
     # each badge sits on a menu link whose list shows exactly that many rows
     assert 'href="/complaints/list/"' in html and 'href="/defectives/pieces/?status=IN_STORE"' in html
@@ -116,15 +118,34 @@ def _tile(html, label):
 
 
 def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_client, office_user, visited):
-    # a second complaint (not attended), a piece sent to a company, and an old visit outside the 7-day window
+    # a complaint not attended yet, and a piece sent to a company
     make_complaint(office_user, site=make_site("BARC"))
     pieces = make_pieces(make_item("X1"), 1, office_user)
     b = create_batch(company=Company.objects.get(name="Wipro Lighting"), user=office_user, pieces=pieces)
     dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    # CMP-0001 visited again today: still one complaint, two visits
+    record_visit(
+        complaint=visited,
+        visit_date=TODAY,
+        technicians=[make_tech()],
+        work_done="Checked again",
+        next_status=Status.ATTENDED,
+        user=office_user,
+    )
+    # a visit exactly 7 days ago is on the window's edge and is left out (visit_date > today - 7)
+    old = make_complaint(office_user, site=make_site("Old Site"), reported_on=TODAY - timedelta(days=10))
+    record_visit(
+        complaint=old,
+        visit_date=TODAY - timedelta(days=7),
+        technicians=[make_tech()],
+        work_done="Looked at it",
+        next_status=Status.ATTENDED,
+        user=office_user,
+    )
     html = office_client.get("/").content.decode()
 
     n, href = _tile(html, "Open complaints")
-    assert n == 2 and "1 not attended yet" in html
+    assert n == 3 and "1 not attended yet" in html
     path, _, query = href.partition("?")
     assert path == "/complaints/list/"
     rows, _ = complaint_rows(complaint_filters(QueryDict(query)), TODAY)
@@ -138,9 +159,21 @@ def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_cl
 
     n, href = _tile(html, "Complaints visited")
     path, _, query = href.partition("?")
-    assert path == "/complaints/list/" and n == 1 and "1 visit recorded" in html
+    assert path == "/complaints/list/" and n == 1 and "2 visits recorded" in html
     rows, _ = complaint_rows(complaint_filters(QueryDict(query)), TODAY)
     assert [r["c"].number for r in rows] == ["CMP-0001"]
+    listed = office_client.get(href).content.decode()
+    assert listed.count('<a class="code" href="/complaints/CMP-') == 1
+
+
+def test_global_search_lists_active_sites_first_and_marks_hidden_ones(office_client):
+    make_site("Zeta Alpha", "Vizag", is_active=False)
+    make_site("Zeta Beta", "Vizag")
+    sites = office_client.get("/search/?q=zeta").json()["sites"]
+    assert [(s["name"], s["label"]) for s in sites] == [
+        ("Zeta Beta", "Vizag"),
+        ("Zeta Alpha", "Vizag (hidden)"),
+    ]
 
 
 def test_visited_since_filter_uses_the_window(office_client, office_user, visited):

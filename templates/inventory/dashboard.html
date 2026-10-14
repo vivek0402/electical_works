@@ -20,10 +20,10 @@
   {% if nav_urls.complaints %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.complaints }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar {% if service.not_attended %}kpi-alert{% else %}kpi-brand{% endif %}"><i class="ti ti-message-report"></i></span></div>
     <div class="col"><div class="fw-medium fs-3">{{ service.open }}</div><div class="text-secondary">Open complaints</div><div class="small text-secondary">{% if service.not_attended %}{{ service.not_attended }} not attended yet{% else %}all attended{% endif %}</div></div></div></div></a></div>{% endif %}
-  {% if nav_urls.defective_pieces %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.defective_pieces }}?status=IN_STORE" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
+  {% if nav_urls.defective_pieces %}<div class="col-sm-6 col-lg-3"><a href="{{ pieces_urls.IN_STORE }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-recycle"></i></span></div>
     <div class="col"><div class="fw-medium fs-3">{{ service.in_store }}</div><div class="text-secondary">Defective pieces in store</div><div class="small text-secondary">not counted in stock above</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.defective_pieces }}?status=SENT" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
+  <div class="col-sm-6 col-lg-3"><a href="{{ pieces_urls.SENT }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar {% if service.sent %}kpi-wait{% else %}kpi-brand{% endif %}"><i class="ti ti-truck-return"></i></span></div>
     <div class="col"><div class="fw-medium fs-3">{{ service.sent }}</div><div class="text-secondary">Pieces with companies</div><div class="small text-secondary">sent, awaiting the company's answer</div></div></div></div></a></div>{% endif %}
   {% if nav_urls.complaints %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.complaints }}?tab=all&amp;visited_since={{ service.since|date:'Y-m-d' }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">

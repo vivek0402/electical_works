@@ -79,7 +79,7 @@ def workbook_response(
     wb = xlsxwriter.Workbook(
         buffer, {"in_memory": True, "strings_to_formulas": False, "strings_to_urls": False}
     )
-    wb.set_properties({"title": title, "company": COMPANY, "author": "SVKML Stock"})
+    wb.set_properties({"title": title, "company": COMPANY, "author": "SVKML Service"})
     ws = wb.add_worksheet(SHEET_BAD.sub("-", title)[:31].strip("'") or "Report")
     f = _formats(wb)
     last = len(columns) - 1

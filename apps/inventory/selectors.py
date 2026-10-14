@@ -91,18 +91,16 @@ def dashboard_stats(today):
 SERVICE_WINDOW_DAYS = 7  # "Complaints visited" tile: visits dated after today - 7 days
 
 
-def service_stats(today):
-    """The service tiles on the main dashboard, from the complaints and defectives selectors (never recounted
-    here), so both module dashboards and the menu badges always agree. Three queries. Each figure is the row
-    count of the list its tile links to."""
+def service_stats(today, counts, pieces):
+    """The service tiles on the main dashboard. `counts` and `pieces` are the complaints' status_counts() and
+    the defectives' piece_counts(), never recounted here (the view shares them with the menu badges), so both
+    module dashboards and the badges always agree. Each figure is the row count of the list its tile links to.
+    """
     from apps.complaints.models import OPEN_STATUSES, Status  # imported here: complaints depends on inventory
-    from apps.complaints.selectors import status_counts, visits_since
-    from apps.defectives.selectors import piece_counts
+    from apps.complaints.selectors import visits_since
 
-    counts = status_counts()
     since = today - timedelta(days=SERVICE_WINDOW_DAYS)
     visits = visits_since(since)
-    pieces = piece_counts()
     return {
         "open": sum(counts[s] for s in OPEN_STATUSES),
         "not_attended": counts[Status.NOT_ATTENDED],

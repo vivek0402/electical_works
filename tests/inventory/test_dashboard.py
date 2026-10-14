@@ -122,8 +122,8 @@ def test_dashboard_query_count(office_client, office_user, django_assert_max_num
             lines=[Line(a, loc(), 2), Line(b, loc(), 1)],
             user=office_user,
         )
-    # measured 21: the stock figures, three service figures and the two menu badges
-    with django_assert_max_num_queries(22):
+    # measured 19: the stock figures and the service figures (status and piece counts shared with the badges)
+    with django_assert_max_num_queries(20):
         assert office_client.get("/").status_code == 200
 
 
