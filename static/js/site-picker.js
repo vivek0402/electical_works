@@ -20,6 +20,7 @@
   const showError = msg => {
     errBox.innerHTML = `<div class="alert alert-danger mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>${esc(msg)}</div></div></div>`;
   };
+  const EXPIRED = "Your session expired. Reload the page.";
   let pending = null, picker = null;
 
   function openModal(name) {
@@ -47,7 +48,7 @@
         option_create: d => `<div class="create">＋ New site <b>${esc(d.input)}</b>…</div>`,
         no_results: () => `<div class="no-results">No saved site. Keep typing to add it.</div>`,
       },
-      onChange: v => { const s = sites.get(String(v)); if (s) { contact.value = s.contact; phone.value = s.phone; } },
+      onChange: v => { const s = sites.get(String(v)); if (s) { contact.value = s.contact; phone.value = s.phone_display; } },
     });
   }
 
@@ -56,7 +57,9 @@
     const button = siteForm.querySelector("[type=submit]");
     button.disabled = true;
     try {
-      const r = await fetch(siteForm.dataset.url, { method: "POST", body: new FormData(siteForm), headers: { Accept: "application/json" } });
+      const r = await fetch(siteForm.dataset.url, { method: "POST", body: new FormData(siteForm), headers: { Accept: "application/json" }, redirect: "manual" });
+      // A logged-out session answers with a redirect to the login page, a 403 or an HTML page, not JSON.
+      if (!r.ok || !(r.headers.get("content-type") || "").includes("application/json")) { showError(EXPIRED); return; }
       const res = await r.json();
       if (!res.ok) { showError(res.error); return; }
       if (!picker) { location.reload(); return; } // Sites page: show the new row

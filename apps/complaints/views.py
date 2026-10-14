@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from apps.accounts.decorators import role_required
 from apps.accounts.roles import ADMIN, OFFICE, has_role
 from apps.core.tokens import guarded_post, page_token
+from apps.inventory.models import StockEntry
 
 from . import selectors, services
 from .forms import ComplaintForm, SiteForm
@@ -21,6 +22,9 @@ SAVED_ALREADY = "This was already saved."
 @never_cache
 @role_required(OFFICE)
 def complaint_new(request):
+    """File a complaint. The site picker fills contact and phone from the site; a contact or phone left
+    blank means "copy it from the site" (file_complaint gets None), a typed one is kept for this complaint
+    only and doesn't change the site."""
     initial = {"reported_on": timezone.localdate()}
     if request.GET.get("site", "").isdecimal():
         initial["site"] = request.GET["site"]
@@ -83,12 +87,39 @@ def site_quick_create(request):
     return JsonResponse({"ok": True, "site": selectors.site_option(site)})
 
 
+def _dialogs(c, visits):
+    """The keys of the dialogs the complaint page draws in its current state."""
+    keys = {f"undo-{v.number}" for v in visits if v.out_entry_id and not _undone(v.out_entry)}
+    if c.status != Status.NOT_COVERED:
+        keys.add("status")
+    if c.is_open:
+        keys.add("nc")
+    return keys
+
+
+def _undone(entry):
+    try:
+        return entry.reversed_by is not None
+    except StockEntry.reversed_by.RelatedObjectDoesNotExist:
+        return False
+
+
 def _detail(request, c, token="", errors=None):
     """Render the complaint page. After a refused POST, `errors` holds the message under the dialog's key
-    (status / nc / undo-VIS-0001); that dialog opens again with the message and what was typed."""
-    errors = errors or {}
+    (status / nc / undo-VIS-0001); that dialog opens again with the message and what was typed. When that
+    dialog isn't drawn any more (another tab closed the complaint or undid the parts), the message is shown
+    at the top of the page instead, so a refusal is never silent."""
+    errors = dict(errors or {})
     today = timezone.localdate()
     page = reverse("complaint_detail", args=[c.number])
+    visits = selectors.complaint_visits(c)
+    drawn = _dialogs(c, visits)
+    page_errors = [
+        msg if "nothing was saved" in msg.lower() else f"{msg} Nothing was saved."
+        for key, msg in errors.items()
+        if key not in drawn
+    ]
+    errors = {key: msg for key, msg in errors.items() if key in drawn}
     return render(
         request,
         "complaints/detail.html",
@@ -97,11 +128,12 @@ def _detail(request, c, token="", errors=None):
             "age": selectors.age_days(c, today),
             "awaiting": selectors.awaiting_days(c, today),
             "events": list(reversed(c.events.all())),
-            "visits": selectors.complaint_visits(c),
+            "visits": visits,
             "next_statuses": [s for s in TRANSITIONS[c.status] if s != Status.NOT_COVERED],
             "reasons": NotCoveredReason.choices,
             "can_reopen": c.status == Status.CLOSED and has_role(request.user, ADMIN),
             "errors": errors,
+            "page_errors": page_errors,
             "posted": request.POST if errors else {},
             "token": token or page_token(request.session, page),
         },

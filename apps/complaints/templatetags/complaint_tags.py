@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from apps.core.templatetags.core_tags import st_badge
 
 from ..models import Priority, Status
+from ..phones import format_phone
 
 register = template.Library()
 
@@ -50,3 +51,15 @@ def age_badge(days, is_open):
     if is_open and days > 15:
         return format_html('<span class="badge st st-alert">{} d</span>', days)
     return f"{days} d"
+
+
+@register.filter
+def phone_display(phone):
+    """A stored phone, spaced for reading (98765 43210, 0891-2345678). tel: links keep the raw digits."""
+    return format_phone(phone)
+
+
+@register.filter(name="abs")
+def abs_value(number):
+    """A quantity without its sign (an OUT line's qty is negative)."""
+    return abs(number)

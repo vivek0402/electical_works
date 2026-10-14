@@ -1,0 +1,2 @@
+{# A visit's failed parts collected: one tag link per piece. Needs `v`. #}
+{% for p in v.pieces.all %}<span class="nowrap"><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a> <span class="small text-secondary">{{ p.item.code }}</span></span>{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="text-secondary">None</span>{% endfor %}

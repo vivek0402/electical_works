@@ -8,6 +8,7 @@
   {% if c.is_open %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#nc-modal"><i class="ti ti-ban"></i> Close as Not covered</button>{% endif %}
 {% endblock %}
 {% block content %}
+{% for msg in page_errors %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ msg }}</div></div></div>{% endfor %}
 <div class="row row-cards">
   <div class="col-12"><div class="d-flex flex-wrap gap-2">
     <span class="chip"><i class="ti ti-calendar"></i> Reported {{ c.reported_on|date }}</span>
@@ -21,7 +22,7 @@
     <div class="datagrid-item"><div class="datagrid-title">Site</div><div class="datagrid-content">{% if site_url %}<a href="{{ site_url }}">{{ c.site.name }}</a>{% else %}{{ c.site.name }}{% endif %}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">City</div><div class="datagrid-content">{{ c.site.city }}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Contact</div><div class="datagrid-content">{{ c.contact_name|default:"—" }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Phone</div><div class="datagrid-content">{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone }}</a>{% else %}—{% endif %}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Phone</div><div class="datagrid-content">{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone_display }}</a>{% else %}—{% endif %}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Company</div><div class="datagrid-content">{{ c.company.name }}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Company complaint no.</div><div class="datagrid-content">{% if c.company_ref %}<span class="code">{{ c.company_ref }}</span>{% else %}—{% endif %}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Qty affected</div><div class="datagrid-content">{{ c.qty_affected|default:"—" }}</div></div>
@@ -34,20 +35,25 @@
         <div class="small text-secondary">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}</div>
         {% if ev.reason %}<div class="small">Reason: <b>{{ ev.get_reason_display }}</b></div>{% endif %}{% if ev.note %}<div class="small">{{ ev.note }}</div>{% endif %}</div></li>{% endfor %}</ul></div></div></div>
   <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clipboard-list"></i> Visits</h3><span class="badge bg-secondary-lt ms-2">{{ visits|length }}</span></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table">
+    <div class="table-responsive d-none d-md-block"><table class="table table-vcenter card-table">
       <thead><tr><th>Visit</th><th>Technicians</th><th>Work done</th><th>Parts given</th><th>Failed parts collected</th><th>Status after</th></tr></thead>
       <tbody>{% for v in visits %}<tr>
         <td><span class="code">{{ v.number }}</span><div class="small text-secondary nowrap">{{ v.visit_date|date }}</div></td>
         <td>{{ v.technicians.all|join:", " }}</td><td class="cell-wrap">{{ v.work_done|linebreaksbr }}</td>
-        <td>{% if v.out_entry %}<a class="code" href="{% url 'entry_detail' v.out_entry.number %}">{{ v.out_entry.number }}</a>
-          <div class="small">{% for line in v.out_entry.lines.all %}<span class="code">{{ line.item.code }}</span> × {{ line.qty|stringformat:"d"|slice:"1:" }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
-          {% with rev=v.out_entry.reversed_by %}{% if rev %}<div class="small mt-1"><span class="badge bg-secondary-lt"><i class="ti ti-arrow-back-up"></i> Undone</span> by <a class="code" href="{% url 'entry_detail' rev.number %}">{{ rev.number }}</a> · {{ rev.entry_date|date }}</div>
-          {% else %}<button type="button" class="btn btn-sm btn-ghost-danger mt-1 px-1" data-bs-toggle="modal" data-bs-target="#undo-{{ v.number }}"><i class="ti ti-arrow-back-up"></i> Undo parts given</button>{% endif %}{% endwith %}
-          {% else %}<span class="text-secondary">None</span>{% endif %}</td>
-        <td>{% for p in v.pieces.all %}<span class="nowrap"><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a> <span class="small text-secondary">{{ p.item.code }}</span></span>{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="text-secondary">None</span>{% endfor %}</td>
+        <td>{% include "complaints/_visit_parts.html" %}</td>
+        <td>{% include "complaints/_visit_pieces.html" %}</td>
         <td>{{ v.next_status|status_badge }}</td></tr>
       {% empty %}<tr><td colspan="6" class="text-center text-secondary py-4">No visits yet.</td></tr>{% endfor %}</tbody>
-    </table></div></div></div>
+    </table></div>
+    <div class="list-group list-group-flush d-md-none">{% for v in visits %}
+      <div class="list-group-item visit-card"><div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="code">{{ v.number }}</span><span class="small text-secondary">{{ v.visit_date|date }}</span><span class="ms-auto">{{ v.next_status|status_badge }}</span></div>
+        <dl class="visit-facts mb-0">
+          <dt>Technicians</dt><dd>{{ v.technicians.all|join:", " }}</dd>
+          <dt>Work done</dt><dd>{{ v.work_done|linebreaksbr }}</dd>
+          <dt>Parts given</dt><dd>{% include "complaints/_visit_parts.html" %}</dd>
+          <dt>Failed parts collected</dt><dd>{% include "complaints/_visit_pieces.html" %}</dd>
+        </dl></div>
+    {% empty %}<div class="list-group-item text-center text-secondary py-4">No visits yet.</div>{% endfor %}</div></div></div>
 </div>
 {% if c.status != "NOT_COVERED" %}
 <div class="modal modal-blur fade" id="status-modal" tabindex="-1" aria-labelledby="status-title" aria-hidden="true"{% if errors.status %} data-show-on-load{% endif %}><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
@@ -55,15 +61,15 @@
   {% if c.status == "CLOSED" %}
     <div class="modal-header"><h5 class="modal-title" id="status-title"><i class="ti ti-lock"></i> {{ c.number }} is Closed</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
     <div class="modal-body"><p class="text-secondary">A closed complaint is final. Only Admin can reopen it; reopening moves it back to <b>Attended</b> and is logged.</p>
-      {% if can_reopen %}<input type="hidden" name="to" value="ATTENDED"><label class="form-label required" for="st-note">Why is it being reopened?</label><textarea id="st-note" name="note" class="form-control{% if errors.status %} is-invalid{% endif %}" rows="2" maxlength="290" required>{{ posted.note }}</textarea>{% endif %}
+      {% if can_reopen %}<input type="hidden" name="to" value="ATTENDED"><label class="form-label required" for="st-note">Why is it being reopened?</label><textarea id="st-note" name="note" class="form-control{% if errors.status %} is-invalid{% endif %}" rows="2" maxlength="290" required>{% if errors.status %}{{ posted.note }}{% endif %}</textarea>{% endif %}
       {% if errors.status %}<div class="alert alert-danger mt-3 mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.status }}</div></div></div>{% endif %}</div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">{% if can_reopen %}Cancel{% else %}Close{% endif %}</button>
       {% if can_reopen %}<button type="submit" class="btn btn-outline-danger ms-auto"><i class="ti ti-arrow-back-up"></i> Reopen (move to Attended)</button>{% endif %}</div>
   {% else %}
     <div class="modal-header"><h5 class="modal-title" id="status-title"><i class="ti ti-arrows-right-left"></i> Change status of {{ c.number }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
     <div class="modal-body"><div class="mb-2 text-secondary">Now: {{ c.status|status_badge }}. Only the moves allowed from here are offered.</div>
-      <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column gap-2" role="radiogroup" aria-label="New status">{% for value in next_statuses %}<label class="form-selectgroup-item flex-fill"><input type="radio" name="to" value="{{ value }}" class="form-selectgroup-input"{% if posted.to %}{% if posted.to == value %} checked{% endif %}{% elif forloop.first %} checked{% endif %}><div class="form-selectgroup-label d-flex align-items-center p-2"><span class="form-selectgroup-check me-2"></span>{{ value|status_badge }}</div></label>{% endfor %}</div>
-      <label class="form-label mt-3" for="st-note">Note</label><textarea id="st-note" name="note" class="form-control" rows="2" maxlength="300" placeholder="Optional: what happened">{{ posted.note }}</textarea>
+      <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column gap-2" role="radiogroup" aria-label="New status">{% for value in next_statuses %}<label class="form-selectgroup-item flex-fill"><input type="radio" name="to" value="{{ value }}" class="form-selectgroup-input"{% if errors.status and posted.to %}{% if posted.to == value %} checked{% endif %}{% elif forloop.first %} checked{% endif %}><div class="form-selectgroup-label d-flex align-items-center p-2"><span class="form-selectgroup-check me-2"></span>{{ value|status_badge }}</div></label>{% endfor %}</div>
+      <label class="form-label mt-3" for="st-note">Note</label><textarea id="st-note" name="note" class="form-control" rows="2" maxlength="300" placeholder="Optional: what happened">{% if errors.status %}{{ posted.note }}{% endif %}</textarea>
       {% if errors.status %}<div class="alert alert-danger mt-3 mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.status }}</div></div></div>{% endif %}</div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Change status</button></div>
   {% endif %}
@@ -74,8 +80,8 @@
   <form method="post" action="{% url 'complaint_not_covered' c.number %}" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
     <div class="modal-header"><h5 class="modal-title" id="nc-title"><i class="ti ti-ban"></i> Close {{ c.number }} as Not covered</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
     <div class="modal-body"><p class="text-secondary">Use this when the job is not ours to do. It can be done from any open status and is logged.</p>
-      <label class="form-label required" for="nc-reason">Reason</label><select id="nc-reason" name="reason" class="form-select" required><option value="">Choose…</option>{% for value, label in reasons %}<option value="{{ value }}"{% if posted.reason == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
-      <label class="form-label mt-3" for="nc-note">Note</label><textarea id="nc-note" name="note" class="form-control" rows="2" maxlength="300" placeholder="Required when the reason is Other">{{ posted.note }}</textarea>
+      <label class="form-label required" for="nc-reason">Reason</label><select id="nc-reason" name="reason" class="form-select" required><option value="">Choose…</option>{% for value, label in reasons %}<option value="{{ value }}"{% if errors.nc and posted.reason == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <label class="form-label mt-3" for="nc-note">Note</label><textarea id="nc-note" name="note" class="form-control" rows="2" maxlength="300" placeholder="Required when the reason is Other">{% if errors.nc %}{{ posted.note }}{% endif %}</textarea>
       {% if errors.nc %}<div class="alert alert-danger mt-3 mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.nc }}</div></div></div>{% endif %}</div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger ms-auto"><i class="ti ti-ban"></i> Close as Not covered</button></div>
   </form></div></div></div>

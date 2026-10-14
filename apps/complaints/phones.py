@@ -37,3 +37,20 @@ def normalise_phone(text, allow_landline=True):
     if not re.fullmatch(MOBILE_OR_LANDLINE_REGEX if allow_landline else MOBILE_REGEX, phone):
         raise ValueError(error)
     return phone
+
+
+# Two-digit STD codes (Delhi, Pune, Mumbai, Kolkata, Hyderabad, Chennai, Ahmedabad, Bengaluru). Other
+# codes are shown as three digits (0891-2345678 for Visakhapatnam); the digits are the same either way.
+METRO_STD = {"11", "20", "22", "33", "40", "44", "79", "80"}
+
+
+def format_phone(phone):
+    """A stored phone for reading: '9876543210' -> '98765 43210', '08912345678' -> '0891-2345678',
+    '01123456789' -> '011-23456789'. Anything else (blank, an old value) is returned unchanged."""
+    phone = phone or ""
+    if re.fullmatch(MOBILE_REGEX, phone):
+        return f"{phone[:5]} {phone[5:]}"
+    if re.fullmatch(MOBILE_OR_LANDLINE_REGEX, phone):  # a landline: 0 + STD code + number
+        cut = 3 if phone[1:3] in METRO_STD else 4
+        return f"{phone[:cut]}-{phone[cut:]}"
+    return phone

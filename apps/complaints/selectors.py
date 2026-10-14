@@ -5,6 +5,7 @@ from django.db.models import Count, Max, Prefetch
 from apps.defectives.models import DefectivePiece
 
 from .models import Complaint, ComplaintEvent, Site, Status
+from .phones import format_phone
 
 
 def age_days(c, today):
@@ -57,6 +58,7 @@ def site_option(site):
         "city": site.city,
         "contact": site.contact_name,
         "phone": site.phone,
+        "phone_display": format_phone(site.phone),  # what the picker types into the phone box
     }
 
 

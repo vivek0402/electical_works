@@ -1,0 +1,6 @@
+{# A visit's parts given: the OUT link, its lines, then "Undone by REV-…" or the Undo button. Needs `v`. #}
+{% load complaint_tags %}{% if v.out_entry %}<a class="code" href="{% url 'entry_detail' v.out_entry.number %}">{{ v.out_entry.number }}</a>
+<div class="small">{% for line in v.out_entry.lines.all %}<span class="code">{{ line.item.code }}</span> × {{ line.qty|abs }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+{% with rev=v.out_entry.reversed_by %}{% if rev %}<div class="small mt-1"><span class="badge bg-secondary-lt"><i class="ti ti-arrow-back-up"></i> Undone</span> by <a class="code" href="{% url 'entry_detail' rev.number %}">{{ rev.number }}</a> · {{ rev.entry_date|date }}</div>
+{% else %}<button type="button" class="btn btn-sm btn-ghost-danger mt-1 px-1" data-bs-toggle="modal" data-bs-target="#undo-{{ v.number }}"><i class="ti ti-arrow-back-up"></i> Undo parts given</button>{% endif %}{% endwith %}
+{% else %}<span class="text-secondary">None</span>{% endif %}

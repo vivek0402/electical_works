@@ -2,7 +2,9 @@ import pytest
 from django.utils import timezone
 
 from apps.complaints.models import Complaint, Status
-from apps.complaints.services import change_status, record_visit, set_active
+from apps.complaints.phones import format_phone
+from apps.complaints.services import change_status, close_not_covered, record_visit, set_active
+from apps.complaints.templatetags.complaint_tags import phone_display
 from apps.inventory.models import Company, EntryKind, StockEntry
 from tests.factories import give_stock, loc, make_complaint, make_item, make_site, make_tech
 
@@ -277,3 +279,87 @@ def test_nav_links_new_complaint(office_client):
 
 def test_unknown_complaint_is_404(office_client):
     assert office_client.get("/complaints/CMP-9999/").status_code == 404
+
+
+def page_token_for(client, c):
+    page = f"/complaints/{c.number}/"
+    client.get(page)
+    return client.session["entry_token_pages"][page]
+
+
+def test_stale_page_refusal_is_visible(office_client, office_user):
+    """Another tab closed the complaint, so the status dialog isn't drawn any more: the refusal shows at the
+    top of the page instead of inside a dialog that isn't there."""
+    c = make_complaint(office_user)
+    token = page_token_for(office_client, c)
+    close_not_covered(complaint=c, reason="CANCELLED", user=office_user)  # the other tab
+    r = office_client.post(f"/complaints/{c.number}/status/", {"to": "ATTENDED", "entry_token": token})
+    html = r.content.decode()
+    assert 'id="status-modal"' not in html
+    assert "A complaint that is Not covered can&#x27;t move to Attended. Nothing was saved." in html
+    assert c.events.count() == 2
+
+
+def test_undo_url_refuses_a_visit_of_another_complaint(office_client, office_user):
+    c = make_complaint(office_user)
+    v = visit_with_parts(office_user, c)
+    other = make_complaint(office_user, site=make_site("NTPC"))
+    token = page_token_for(office_client, other)
+    r = office_client.post(
+        f"/complaints/{other.number}/visits/{v.number}/undo-parts/", {"reason": "x", "entry_token": token}
+    )
+    assert r.status_code == 404 and not StockEntry.objects.filter(kind=EntryKind.REV).exists()
+
+
+def test_double_submitted_status_change_logs_once(office_client, office_user):
+    c = make_complaint(office_user)
+    data = {"to": "ATTENDED", "note": "Called", "entry_token": page_token_for(office_client, c)}
+    url = f"/complaints/{c.number}/status/"
+    office_client.post(url, data)
+    html = office_client.post(url, data, follow=True).content.decode()
+    assert "This was already saved." in html
+    assert c.events.filter(to_status=Status.ATTENDED).count() == 1
+
+
+def test_refused_post_reopens_its_own_dialog_with_the_note(office_client, office_user):
+    c = make_complaint(office_user)
+    change_status(complaint=c, to=Status.ATTENDED, user=office_user)
+    html = detail_post(office_client, c, "status", {"to": "CLOSED", "note": "Typed note 42"}).content.decode()
+    status = html[html.index('id="status-modal"') : html.index('id="nc-modal"')]
+    nc = html[html.index('id="nc-modal"') :]
+    assert "data-show-on-load" in status and "Typed note 42</textarea>" in status
+    assert "data-show-on-load" not in nc and "Typed note 42" not in nc
+    html = detail_post(office_client, c, "not-covered", {"reason": "OTHER", "note": ""}).content.decode()
+    nc = html[html.index('id="nc-modal"') :]
+    assert "data-show-on-load" in nc and 'value="OTHER" selected' in nc
+    assert "data-show-on-load" not in html[html.index('id="status-modal"') : html.index('id="nc-modal"')]
+
+
+def test_visits_show_as_cards_on_phones(office_client, office_user):
+    c = make_complaint(office_user)
+    v = visit_with_parts(office_user, c)
+    html = office_client.get(f"/complaints/{c.number}/").content.decode()
+    assert (
+        'class="table-responsive d-none d-md-block"' in html and 'class="list-group-item visit-card"' in html
+    )
+    assert html.count(f'data-bs-target="#undo-{v.number}"') == 2  # the table row and the phone card
+    assert "LG78-150-700</span> × 2" in html  # the OUT line's quantity without its minus sign
+
+
+def test_phone_display():
+    assert format_phone("9876543210") == "98765 43210"
+    assert format_phone("08912345678") == "0891-2345678"
+    assert format_phone("01123456789") == "011-23456789"
+    assert format_phone("04023456789") == "040-23456789"
+    assert format_phone("") == "" and format_phone("12") == "12"
+    assert phone_display("08912345678") == "0891-2345678"
+
+
+def test_phones_are_shown_formatted(office_client, office_user):
+    c = make_complaint(office_user, site=make_site(phone="9876543210"))
+    html = office_client.get(f"/complaints/{c.number}/").content.decode()
+    assert '<a href="tel:9876543210">98765 43210</a>' in html
+    made = office_client.post(
+        "/sites/quick-create/", {"ns-name": "AU", "ns-city": "Vizag", "ns-phone": "08912345678"}
+    )
+    assert made.json()["site"]["phone_display"] == "0891-2345678"
