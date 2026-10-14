@@ -7,9 +7,10 @@ from django.core.management import call_command
 from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.utils import timezone
 
-from apps.inventory.models import AdjustReason, EntryKind, StockBalance, StockEntry, StockLine
+from apps.inventory.models import AdjustReason, EntryKind, OutTarget, StockBalance, StockEntry, StockLine
 from apps.inventory.services import (
     Line,
+    NotEnoughStock,
     StockError,
     adjust_counts,
     balance_drift,
@@ -411,3 +412,13 @@ def test_post_entry_with_locked_balances_must_cover_every_row(pcb, user):
                 EntryKind.IN, Line(pcb, loc(), 1), user=user, subtype="SUPPLIER", locked={(pcb.pk, loc().pk)}
             )
     assert balance_drift() == []
+
+
+def test_post_entry_with_locked_reads_its_own_earlier_write(pcb, user):
+    """Two posts on one pre-locked key in one transaction: the second sees the first one's balance."""
+    with transaction.atomic():
+        locked = lock_balances([Line(pcb, loc(), 1)])
+        post(EntryKind.IN, Line(pcb, loc(), 4), user=user, subtype="SUPPLIER", locked=locked)
+        with pytest.raises(NotEnoughStock, match="Only 4 NOS of EIO6006 at Vizag Office."):
+            post(EntryKind.OUT, Line(pcb, loc(), -5), user=user, subtype=OutTarget.values[0], locked=locked)
+    assert qty(pcb) == 4 and StockEntry.objects.count() == 1

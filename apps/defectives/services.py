@@ -3,13 +3,19 @@ piece. Every stock effect goes through inventory's post_entry (append-only ledge
 
 Lock order. Every service here, and every caller that combines them, takes row locks in this order:
 
-    ReturnBatch row, then pieces in tag order, then post_entry, then next_number(s)
+    Complaint row, then the VIS number, then ReturnBatch row, then pieces in tag order, then post_entry,
+    then next_number(s)
 
+- Complaint row and VIS number: only the complaints services (apps/complaints/services.py), one complaint per
+  call, first; record_visit takes its own VIS number next (see the exception below).
 - ReturnBatch row: `_lock_batch`, one batch per call.
 - Pieces: `_lock`, always in tag order.
 - post_entry: StockBalance rows in (item, location) order, then the EntryCounter row for the entry kind.
   At most ONE post_entry per service call: a second one would lock balances while holding an EntryCounter
   row, the reverse of an ordinary stock entry (so settle posts one entry for all its pieces).
+  Exception: complaints.record_visit posts two entries (parts OUT, collection IN) safely. It first locks
+  every balance row of both with inventory's lock_balances (one sorted pass) and passes the result to each
+  post_entry as `locked=`, so all balance locks come before the first EntryCounter.
 - next_number / next_numbers: the core Counter row (DEF tags last of all).
 
 One exception: a service that creates a document may take that document's own new number first (create_batch

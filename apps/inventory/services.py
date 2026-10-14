@@ -146,8 +146,9 @@ def lock_balances(lines) -> LockedBalances:
 
     For a service that posts more than one entry in one transaction (complaints.record_visit): call this
     with all the lines first, then pass the result to each post_entry as `locked=`. Every balance lock is
-    then taken before any EntryCounter, as in a single post_entry, and post_entry reads those rows without
-    locking them again.
+    then taken before any EntryCounter, as in a single post_entry. post_entry still locks those rows again
+    (FOR UPDATE), which never waits for rows this transaction already holds, so the order is kept; a stale
+    or hand-built LockedBalances therefore still takes a real lock instead of reading unlocked rows.
     """
     keys = sorted({(line.item.pk, line.location.pk) for line in lines})
     _lock_balances(keys)
@@ -230,7 +231,7 @@ def post_entry(
 
     Raises StockError (and saves nothing) if a rule is broken or stock would go negative. `locked` is what
     lock_balances returned earlier in this transaction, when the caller has already locked every balance row
-    this entry touches (see lock_balances); the rows are then read, not locked again.
+    this entry touches (see lock_balances); it must cover every row, which is re-locked without waiting.
     """
     _validate(
         kind=kind,
@@ -249,9 +250,10 @@ def post_entry(
         balances = _lock_balances(keys)
     elif not isinstance(locked, LockedBalances) or not locked.issuperset(keys):
         raise ValueError("post_entry(locked=...) must cover every balance row of the entry.")
-    else:  # already locked by this transaction (lock_balances), so a plain read sees the latest qty
+    else:  # held by this transaction already (lock_balances), so re-locking never waits; never read unlocked
         match = reduce(or_, (Q(item_id=i, location_id=loc) for i, loc in keys))
-        balances = {(r.item_id, r.location_id): r for r in StockBalance.objects.filter(match)}
+        rows = StockBalance.objects.select_for_update().filter(match).order_by("item_id", "location_id")
+        balances = {(r.item_id, r.location_id): r for r in rows}
     items = {line.item.pk: line.item for line in lines}
     places = {line.location.pk: line.location for line in lines}
     now = timezone.now()

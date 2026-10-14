@@ -1,3 +1,4 @@
+import re
 from datetime import date, timedelta
 
 import pytest
@@ -474,9 +475,17 @@ def test_visit_takes_every_balance_lock_before_any_entry_counter(office_user, st
     sqls = [q["sql"] for q in ctx.captured_queries]
     balance_locks = [i for i, s in enumerate(sqls) if '"inventory_stockbalance"' in s and "FOR UPDATE" in s]
     counter_locks = [i for i, s in enumerate(sqls) if '"inventory_entrycounter"' in s and "FOR UPDATE" in s]
-    assert len(counter_locks) == 2 and balance_locks and balance_locks[-1] < counter_locks[0]
-    first = sqls[balance_locks[0]]
-    assert f'"location_id" = {loc().pk}' in first and f'"location_id" = {store().pk}' in first
+    assert len(counter_locks) == 2 and balance_locks and balance_locks[0] < counter_locks[0]
+
+    def keys(sql):
+        pairs = re.findall(r'"item_id" = (\d+) AND "inventory_stockbalance"\."location_id" = (\d+)', sql)
+        return {(int(i), int(place)) for i, place in pairs}
+
+    prelocked = set().union(*(keys(sqls[i]) for i in balance_locks if i < counter_locks[0]))
+    assert prelocked == {(stocked.pk, loc().pk), (stocked.pk, store().pk)}
+    # After the first counter, a balance FOR UPDATE only re-locks rows already held (it never waits).
+    later = [keys(sqls[i]) for i in balance_locks if i > counter_locks[0]]
+    assert later and all(k and k <= prelocked for k in later)
 
 
 # ---------------------------------------------------------------- undo a visit's parts given
@@ -737,3 +746,31 @@ def test_hidden_site_or_technician_is_refused_on_a_visit(office_user):
     ):
         visit(c, office_user)
     assert not Visit.objects.exists()
+
+
+def test_a_backdated_visit_cant_give_parts_that_were_moved_out_later(office_user):
+    """The parts OUT is checked against the stock history on the visit date, not only today's balance."""
+    drv = make_item("LG78-150-700")
+    post_entry(
+        kind=EntryKind.IN,
+        entry_date=TODAY - timedelta(days=4),
+        lines=[Line(drv, loc(), 5)],
+        user=office_user,
+        subtype="SUPPLIER",
+    )
+    post_entry(
+        kind=EntryKind.OUT,
+        entry_date=TODAY - timedelta(days=2),
+        lines=[Line(drv, loc(), -4)],
+        user=office_user,
+        subtype=OutTarget.values[0],
+    )
+    give_stock(drv, 10, office_user)  # plenty today, but only 1 left after the OUT two days ago
+    c = make_complaint(office_user, reported_on=TODAY - timedelta(days=4))
+    day = TODAY - timedelta(days=2)
+    with pytest.raises(
+        ComplaintError,
+        match=f"Parts given: Only 1 NOS of LG78-150-700 at Vizag Office on {day:%d-%m-%Y}.",
+    ):
+        visit(c, office_user, visit_date=TODAY - timedelta(days=3), location=loc(), parts=[(drv, 2)])
+    assert not Visit.objects.exists() and qty(drv, loc()) == 11

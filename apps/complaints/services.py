@@ -27,6 +27,9 @@ from apps.defectives.services import (
     collect_pieces,
 )
 from apps.inventory.models import EntryKind, Location, ServiceSubtype, StockEntry
+
+# _reverse_entry is private to inventory on purpose; this cross-app import is intentional and used only by
+# undo_visit_parts (the general Undo refuses a visit's entries).
 from apps.inventory.services import Line, StockError, _reverse_entry, lock_balances, post_entry
 
 from .models import (
@@ -369,8 +372,9 @@ def record_visit(
     then EntryCounter(OUT)) or `mark_defective` (good and store balances in one sorted pass) can be holding
     exactly those rows while waiting for ours: a cycle. So this service first locks EVERY balance row both
     entries need, good locations and the Defective store together, in one sorted pass (lock_balances), and
-    only then posts. The two post_entry calls get `locked=` and read those rows without locking them again, so
-    the only new locks after the balances are EntryCounter(OUT), then EntryCounter(IN), then the DEF counter.
+    only then posts. The two post_entry calls get `locked=` and re-lock only rows this transaction already
+    holds (no waiting), so the only new locks after the balances are EntryCounter(OUT), then EntryCounter(IN),
+    then the DEF counter.
     The order is then: Complaint row, VIS counter, all balances (sorted), EntryCounter OUT, EntryCounter IN,
     DEF counter. Checked against every other writer:
     - Stock IN / OUT / Transfer / Adjust / Undo, mark_defective, scrap, dispatch, settle, undo_visit_parts:
