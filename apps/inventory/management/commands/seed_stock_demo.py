@@ -20,6 +20,7 @@ from apps.inventory.models import (
     EntryKind,
     FittingType,
     InSource,
+    Item,
     Location,
     SpareType,
     StockEntry,
@@ -91,6 +92,11 @@ class Command(BaseCommand):
         if StockEntry.objects.exists():
             raise CommandError(
                 "The database already has stock entries. Demo data is only for an empty system."
+            )
+        if Item.objects.exists():
+            raise CommandError(
+                "The database already has items. Demo items would mix with the real item master. "
+                "Demo data is only for an empty system."
             )
         db = json.loads(DEMO.read_text(encoding="utf-8"))
         users = {"Admin": _user(ADMIN), "Office": _user(OFFICE)}

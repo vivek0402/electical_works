@@ -33,8 +33,8 @@ from apps.complaints.models import Complaint, NotCoveredReason, Priority, Site, 
 from apps.defectives import services as defectives
 from apps.defectives.models import DefectivePiece, Outcome, ReturnBatch, ScrapReason
 from apps.inventory.management.commands.seed_stock_demo import REASONS, _user, load_masters_and_items
-from apps.inventory.models import EntryKind, InSource, ServiceSubtype, StockEntry
-from apps.inventory.services import Line, post_entry, undo_entry
+from apps.inventory.models import EntryKind, InSource, Item, ServiceSubtype, StockEntry
+from apps.inventory.services import Line, balance_drift, post_entry, undo_entry
 
 DEMO = Path(__file__).resolve().parents[2] / "demo" / "service-demo.json"
 REASON_VALUES = {label: value for value, label in NotCoveredReason.choices}
@@ -46,6 +46,26 @@ def load_demo():
     return json.loads(DEMO.read_text(encoding="utf-8"))
 
 
+def _replaying(label, call):
+    """Run one demo step; any failure becomes a CommandError that names the step."""
+    try:
+        return call()
+    except CommandError as exc:
+        raise CommandError(f"Replaying {label}: {exc}") from exc
+    except Exception as exc:
+        message = getattr(exc, "message", None) or str(exc)  # a ValidationError's own text, not its repr
+        raise CommandError(f"Replaying {label}: {message}") from exc
+
+
+def _pieces(tags):
+    """The demo pieces with these tags; every tag must exist."""
+    found = list(DefectivePiece.objects.filter(tag__in=tags))
+    missing = sorted(set(tags) - {p.tag for p in found})
+    if missing:
+        raise CommandError(f"Demo pieces missing: {', '.join(missing)}.")
+    return found
+
+
 def _month(text):
     """'2026-03' -> date(2026, 3, 1); '' -> None."""
     return date(int(text[:4]), int(text[5:7]), 1) if text else None
@@ -55,7 +75,9 @@ class Replay:
     def __init__(self, db, users):
         self.db, self.users = db, users
         self.shift = timezone.localdate() - date.fromisoformat(db["today"])
-        self.places, self.companies, self.items = load_masters_and_items(db)
+        self.places, self.companies, self.items = _replaying(
+            "the demo items and masters", partial(load_masters_and_items, db)
+        )
         self.by_no = {e["no"]: e for e in db["entries"]}
         self.demo_pieces = {p["tag"]: p for p in db["pieces"]}
         self.sites, self.techs, self.complaints, self.batches, self.entries = {}, {}, {}, {}, {}
@@ -92,28 +114,34 @@ class Replay:
                 complaints.set_active(self.techs[t["name"]], active=False)
 
     def actions(self):
-        """Every demo action as (date, phase, kind, order, callable), in the order the demo made them."""
+        """Every demo action as (date, phase, kind, order, label, callable), in the order the demo made them.
+        The label names the action in an error ("entry IN-0024", "visit VIS-0007", "batch RB-0002 settle")."""
         db = self.db
         index = {e["no"]: n for n, e in enumerate(db["entries"])}
         in_visits = {no for v in db["visits"] for no in (v["outEntry"], v["collectEntry"]) if no}
-        acts = [(c["reportedOn"], 0, 0, n, partial(self.file, c)) for n, c in enumerate(db["complaints"])]
+        acts = [
+            (c["reportedOn"], 0, 0, n, f"complaint {c['no']}", partial(self.file, c))
+            for n, c in enumerate(db["complaints"])
+        ]
         for n, v in enumerate(db["visits"]):
             posted = [index[no] for no in (v["outEntry"], v["collectEntry"]) if no]
             if posted:
-                acts.append((v["date"], 1, 0, min(posted), partial(self.visit, v)))
+                acts.append((v["date"], 1, 0, min(posted), f"visit {v['no']}", partial(self.visit, v)))
             else:
-                acts.append((v["date"], 2, 1, n, partial(self.visit, v)))
+                acts.append((v["date"], 2, 1, n, f"visit {v['no']}", partial(self.visit, v)))
         for e in db["entries"]:
             if e["no"] not in in_visits:
-                acts.append((e["date"], 1, 0, index[e["no"]], partial(self.entry, e)))
+                acts.append((e["date"], 1, 0, index[e["no"]], f"entry {e['no']}", partial(self.entry, e)))
         for n, ev in enumerate(db["complaintEvents"]):
             if ev["from"] is not None and not ev["note"].startswith("Visit VIS-"):
-                acts.append((ev["at"], 2, 0, n, partial(self.status, ev)))
+                label = f"status change {ev['complaint']} to {ev['to']}"
+                acts.append((ev["at"], 2, 0, n, label, partial(self.status, ev)))
         for n, b in enumerate(db["batches"]):
-            acts.append((b["createdOn"], 3, 0, n, partial(self.create_batch, b)))
+            acts.append((b["createdOn"], 3, 0, n, f"batch {b['no']}", partial(self.create_batch, b)))
             for (outcome, settled_on, _), lines in self.groups(b).items():
                 if outcome == Outcome.REJECTED_SCRAPPED:  # posts nothing, so it has no place in the ledger
-                    acts.append((settled_on, 3, 1, n, partial(self.settle, b, lines, self.users["Office"])))
+                    settle = partial(self.settle, b, lines, self.users["Office"])
+                    acts.append((settled_on, 3, 1, n, f"batch {b['no']} settle", settle))
         return sorted(acts, key=lambda a: a[:4])
 
     @staticmethod
@@ -207,7 +235,8 @@ class Replay:
                 entry_date=when,
                 user=user,
             )
-            # A demo piece's "entry" is its latest entry (a scrap overwrites it), so match on how it arrived.
+            # A demo piece's "entry" is not reliably the entry it arrived with (a scrap overwrites it with
+            # the scrap entry), so match the pieces on how and when they arrived instead.
             demo_tags = sorted(
                 p["tag"]
                 for p in self.db["pieces"]
@@ -222,7 +251,7 @@ class Replay:
             head, why = e["note"].split(": ", 1)
             tags = head.removeprefix("Scrapped ").split(", ")
             posted = defectives.scrap(
-                pieces=list(DefectivePiece.objects.filter(tag__in=tags)),
+                pieces=_pieces(tags),
                 reason=ScrapReason.NOT_WORTH,
                 note=why,
                 user=user,
@@ -275,7 +304,7 @@ class Replay:
         made = defectives.create_batch(
             company=self.companies[b["company"]],
             user=self.users["Office"],
-            pieces=list(DefectivePiece.objects.filter(tag__in=[ln["tag"] for ln in b["lines"]])),
+            pieces=_pieces([ln["tag"] for ln in b["lines"]]),
             note=b["note"],
             created_on=self.day(b["createdOn"]),
         )
@@ -288,7 +317,7 @@ class Replay:
         [(outcome, settled_on, to_loc)] = {(ln["outcome"], ln["settledOn"], ln["toLoc"]) for ln in lines}
         return defectives.settle(
             batch=self.batches[b["no"]],
-            pieces=list(DefectivePiece.objects.filter(tag__in=[ln["tag"] for ln in lines])),
+            pieces=_pieces([ln["tag"] for ln in lines]),
             outcome=outcome,
             settled_on=self.day(settled_on),
             to_location=self.places[to_loc] if to_loc else None,
@@ -308,6 +337,9 @@ class Replay:
                     f"{p['tag']} ended {piece.status} ({piece.item.code}); "
                     f"the demo says {p['status']} ({p['code']})."
                 )
+        drift = balance_drift()
+        if drift:
+            raise CommandError(f"The stock balances don't match the ledger after the replay: {drift[:5]}.")
         posted, expected = StockEntry.objects.count(), len(self.db["entries"])
         if posted != expected:
             raise CommandError(f"The replay posted {posted} entries; the demo has {expected}.")
@@ -341,11 +373,16 @@ class Command(BaseCommand):
                 "load it into an empty ledger instead of seed_stock_demo. "
                 "Demo data is only for an empty system."
             )
+        if Item.objects.exists():
+            raise CommandError(
+                "The database already has items. Demo items would mix with the real item master. "
+                "Demo data is only for an empty system."
+            )
         db = load_demo()
         replay = Replay(db, {"Admin": _user(ADMIN), "Office": _user(OFFICE)})
-        replay.load_people()
-        for *_, action in replay.actions():
-            action()
+        _replaying("the sites and technicians", replay.load_people)
+        for *_, label, action in replay.actions():
+            _replaying(label, action)
         replay.hide_people()
         replay.verify()
         self.stdout.write(

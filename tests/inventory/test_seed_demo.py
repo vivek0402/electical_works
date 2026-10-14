@@ -11,6 +11,7 @@ from django.utils import timezone
 from apps.inventory.management.commands import seed_stock_demo
 from apps.inventory.models import Item, StockEntry
 from apps.inventory.services import balance_drift
+from tests.factories import make_item
 
 pytestmark = pytest.mark.django_db
 
@@ -65,6 +66,14 @@ def test_seed_demo_runs_without_force_when_debug_is_on(settings, admin_user, off
     settings.DEBUG = True
     call_command("seed_stock_demo", stdout=io.StringIO())
     assert StockEntry.objects.count() == 35
+
+
+def test_seed_demo_refuses_a_system_with_items(admin_user, office_user):
+    """Demo items must not mix with a real item master."""
+    make_item("REAL-ITEM-1")
+    with pytest.raises(CommandError, match="already has items"):
+        seed()
+    assert StockEntry.objects.count() == 0 and Item.objects.count() == 1
 
 
 def test_seed_demo_needs_users(db):
