@@ -59,12 +59,12 @@ Playwright is pinned to 1.63.0 because newer releases need a newer browser build
 
 On a desktop-sized window the walkthrough goes through:
 - **Stock:** global search, Stock IN with a new item created from the picker, a refused over-issue, a transfer, an adjustment, and sorting and exporting current stock.
-- **Complaints:** marks a piece defective; files a complaint; records a visit that gives a part and collects a failed piece; undoes the parts given. It then shows a disallowed status move being refused and moves the complaint through Awaiting material, Resolved and Closed. It files a second complaint and closes it as Not covered.
+- **Complaints:** marks a piece defective; files a complaint at a new site created from the site picker; records a visit that gives a part and collects two failed pieces; undoes the parts given. It then shows a disallowed status move being refused and moves the complaint through Awaiting material, Resolved and Closed. It files a second complaint and closes it as Not covered.
 - **Search and stock:** global search for the complaint number and the new defective tag. Current stock shows the Defective store column, and its total leaves the column out.
 - **Return batch:** creates a batch for one company, where a piece from another company is refused, and dispatches it. It settles one piece as Replaced (its Stock IN raises good stock) and one as Rejected (returned).
-- **Reports and clean-up:** downloads the pending complaints, defective list and dispatch list reports, then undoes the stock entries it can.
+- **Reports and clean-up:** downloads the pending complaints, complaint list, defective list and dispatch list reports, then undoes the stock entries it can.
 
-At 390px wide it checks the phone menu, current stock, a complaint page and its Record visit page (no sideways scrolling).
+At 390px wide it checks the phone menu, current stock, a complaint page, its Record visit page and the defective pieces list (no sideways scrolling).
 
 It can be run again and again. Each run works on its own new item, complaints and batch, and its docstring lists what a run leaves behind. Re-seed the demo database afterwards if you want clean demo data. It exits 0 only if every step passes and the browser logs no JS errors. Screenshots are saved as `e2e/screen-*.png` (git-ignored). On a failure it saves `e2e/screen-<width>-FAIL.png` and prints the failing step.
 

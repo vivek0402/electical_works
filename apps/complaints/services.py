@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from apps.accounts.roles import ADMIN, has_role
 from apps.core.numbers import next_number
+from apps.core.text import clean_text
 from apps.defectives.models import Source
 from apps.defectives.services import (
     BATCH_CODE_MAX,
@@ -60,11 +61,6 @@ class ComplaintError(ValidationError):
 def _tidy(text):
     """Typed text on one line: NUL bytes dropped (Postgres rejects them), runs of spaces made one."""
     return " ".join((text or "").replace(chr(0), "").split())
-
-
-def _clean(text):
-    """Typed text that may run over several lines: NUL bytes dropped (Postgres rejects them), ends trimmed."""
-    return (text or "").replace(chr(0), "").strip()
 
 
 def _limit(text, limit, what):
@@ -217,7 +213,7 @@ def file_complaint(
     if company is None:
         raise ComplaintError("Choose the company whose product failed.")
     _check_shown(site=site, technicians=technicians)
-    fault = _clean(fault)
+    fault = clean_text(fault)
     if not fault:
         raise ComplaintError("Describe the fault.")
     if reported_on is None:
@@ -267,7 +263,7 @@ def reopen(*, complaint, user, note, at=None):
         raise ComplaintError("Only a closed complaint can be reopened.")
     if not has_role(user, ADMIN):
         raise ComplaintError("A closed complaint can't move to Attended. Only Admin can reopen it.")
-    note = _clean(note)
+    note = clean_text(note)
     if not note:
         raise ComplaintError("Write why the complaint is being reopened.")
     _limit(note, NOTE_MAX - len(REOPENED), "note")
@@ -295,7 +291,7 @@ def change_status(*, complaint, to, user, note="", reason="", at=None):
         if allowed:
             message += f" Allowed: {', '.join(_label(s) for s in allowed)}."
         raise ComplaintError(message)
-    note = _limit(_clean(note), NOTE_MAX, "note")
+    note = _limit(clean_text(note), NOTE_MAX, "note")
     if to == Status.NOT_COVERED:
         if reason not in NotCoveredReason.values:
             raise ComplaintError("Choose why the complaint is not covered.")
@@ -351,7 +347,7 @@ def _clean_collected(collected):
             raise ComplaintError(f"{where}: choose the item.")
         if not _qty_ok(qty, MAX_PIECES_PER_LINE):
             raise ComplaintError(f"{where}: quantity must be between 1 and {MAX_PIECES_PER_LINE}.")
-        batch_code, fault = _tidy(batch_code), _clean(fault)
+        batch_code, fault = _tidy(batch_code), clean_text(fault)
         if len(batch_code) > BATCH_CODE_MAX:
             raise ComplaintError(f"{where}: keep the batch code to {BATCH_CODE_MAX} characters or less.")
         if len(fault) > FAULT_MAX:
@@ -400,7 +396,7 @@ def record_visit(
     if not technicians:
         raise ComplaintError("Choose who attended.")
     _check_shown(site=complaint.site, technicians=technicians)
-    work_done = _clean(work_done)
+    work_done = clean_text(work_done)
     if not work_done:
         raise ComplaintError("Write what work was done.")
     if next_status not in Status.values:

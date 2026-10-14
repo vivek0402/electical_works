@@ -38,6 +38,7 @@ from django.db.models import Max, Sum
 from django.utils import timezone
 
 from apps.core.numbers import next_number, next_numbers
+from apps.core.text import clean_text
 from apps.inventory.models import AdjustReason, EntryKind, Location, ServiceSubtype, StockLine
 from apps.inventory.services import Line, post_entry
 
@@ -66,14 +67,9 @@ class DefectiveError(ValidationError):
     """A defectives rule was broken. The message is safe to show to staff as-is."""
 
 
-def _clean(text):
-    """Typed text without NUL bytes (Postgres rejects them) and surrounding spaces."""
-    return (text or "").replace(chr(0), "").strip()
-
-
 def normalise_tag(text):
     """'def-42' or 'DEF0042' -> 'DEF-0042' (what staff type or scan). Anything else comes back upper-cased."""
-    raw = _clean(text).upper()
+    raw = clean_text(text).upper()
     match = TAG.match(raw)
     return f"DEF-{int(match.group(1)):04d}" if match else raw
 
@@ -224,7 +220,7 @@ def collect_pieces(
     if visit is not None and visit.collect_entry_id != entry.pk:
         raise DefectiveError(f"{entry.number} is not the collection entry of visit {visit.number}.")
     _check_qty(qty)
-    batch_code, fault, note = (_clean(value) for value in (batch_code, fault, note))
+    batch_code, fault, note = (clean_text(value) for value in (batch_code, fault, note))
     _check_length(fault, FAULT_MAX, "fault")
     _check_length(batch_code, BATCH_CODE_MAX, "batch code")
     _check_length(note, NOTE_MAX, "note")
@@ -298,7 +294,7 @@ def mark_defective(*, location, lines, entry_date, user):
     cleaned, per_item = [], {}  # per_item: {item_pk: [item, total qty]} in first-seen order
     for n, (item, qty, fault) in enumerate(lines, start=1):
         _check_qty(qty, n)
-        fault = _clean(fault)
+        fault = clean_text(fault)
         if not fault:
             raise DefectiveError(f"Line {n}: write what is wrong with the piece.")
         _check_length(fault, FAULT_MAX, "fault", n)
@@ -357,7 +353,7 @@ def scrap(*, pieces, reason, user, note="", entry_date=None):
         raise DefectiveError("Tick at least one piece.")
     if reason not in ScrapReason.values:
         raise DefectiveError("Choose why the pieces are scrapped.")
-    note = _clean(note)
+    note = clean_text(note)
     _check_length(note, NOTE_MAX, "note")
     if reason == ScrapReason.OTHER and not note:
         raise DefectiveError("Write a note when the reason is Other.")
@@ -405,7 +401,7 @@ def create_batch(*, company, user, pieces=(), note="", created_on=None):
         raise DefectiveError("Choose the company the pieces go back to.")
     created_on = created_on or timezone.localdate()
     _check_date(created_on, "The batch date", "Choose the batch date.")
-    note = _clean(note)
+    note = clean_text(note)
     _check_length(note, BATCH_NOTE_MAX, "note")
     batch = ReturnBatch.objects.create(
         number=next_number("RB"),
@@ -496,7 +492,7 @@ def dispatch(*, batch, dispatched_on, courier, docket_no, user):
         raise DefectiveError(
             f"The dispatch date can't be before the batch was created ({batch.created_on:%d-%m-%Y})."
         )
-    courier, docket_no = _clean(courier), _clean(docket_no)
+    courier, docket_no = clean_text(courier), clean_text(docket_no)
     if not courier:
         raise DefectiveError("Choose the courier.")
     if not docket_no:

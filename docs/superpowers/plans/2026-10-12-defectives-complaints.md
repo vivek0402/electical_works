@@ -57,7 +57,7 @@ Taken from the spec and the approved mockup. Where this plan adds or changes som
 
 ## Local test environment (this Windows machine has no Docker)
 
-PostgreSQL 16 runs locally; pytest creates its own test database on it. **The port changes after a reboot:** check line 4 of `scratchpad/pgdata2/postmaster.pid` and use that port in place of `<port>` below (it was 65030 when this plan was written, later 61579 and 52207).
+PostgreSQL 16 runs locally; pytest creates its own test database on it. **The port changes after a reboot:** check the port your local PostgreSQL is listening on (line 4 of its data directory's `postmaster.pid`) and use it in place of `<port>` below.
 
 ```bash
 DATABASE_URL="postgresql://postgres:@127.0.0.1:<port>/postgres" uv run pytest -q

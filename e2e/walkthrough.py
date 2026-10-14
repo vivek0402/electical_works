@@ -1,20 +1,23 @@
 """End-to-end walkthrough against a running dev server with demo data (ports mockups/stock/walkthrough.py).
 
-    uv run --with playwright==1.63.0 python e2e/walkthrough.py http://127.0.0.1:8000 office [password]
+    PYTHONIOENCODING=utf-8 uv run --with playwright==1.63.0 python e2e/walkthrough.py \
+        http://127.0.0.1:8000 office [password]
 
 The password comes from argv, or from the E2E_PASSWORD environment variable.
 
 Re-runnable on a freshly seeded svkml_demo (`seed_service_demo`), and again on top of an earlier run. Each
-run creates a new item TEST-<timestamp>, new complaints and a new return batch; demo pieces and batches are
-only read. It undoes the stock entries it can (the Stock IN, the transfer, the adjustment and the visit's
-parts given), so the demo items' stock ends where it started. Left behind on purpose, per run:
+run creates a new item TEST-<timestamp>, a new site, new complaints and a new return batch; demo pieces and
+batches are only read. It undoes the stock entries it can (the Stock IN, the transfer, the adjustment and
+the visit's parts given), so the demo items' stock ends where it started. Left behind on purpose, per run:
   - item TEST-<timestamp> with 1 NOS at Vizag Office: the replacement the company sent for its marked piece
     (settled as Replaced, which posts a Stock IN that can't be undone);
-  - two TEST-<timestamp> defective pieces: one marked from stock, one collected at the visit. Both go in a new
-    return batch for Wipro Lighting that is dispatched and settled: the first Replaced, the second Rejected
-    (returned), so it is back in the Defective store;
-  - two complaints at the first demo site: one moved Awaiting material, Resolved, Closed; one closed as Not
-    covered. Closed complaints don't count as open anywhere;
+  - three TEST-<timestamp> defective pieces: one marked from stock and two collected at the visit. The
+    marked piece and the first collected one go in a new return batch for Wipro Lighting that is dispatched
+    and settled: the first Replaced, the second Rejected (returned), so it is back in the Defective store.
+    The second collected piece stays in the Defective store, so the item ends with 2 pieces there;
+  - site "Walkthrough Site <timestamp>" (Visakhapatnam), created from the New complaint site picker;
+  - two complaints: one at the new site, moved Awaiting material, Resolved, Closed; one at the first demo
+    site, closed as Not covered. Closed complaints don't count as open anywhere;
   - the entry/undo pairs, which stay on record by design.
 
 Screenshots go to e2e/screen-<width>.png, plus e2e/screen-390-complaint.png and e2e/screen-390-visit.png.
@@ -37,7 +40,8 @@ if len(sys.argv) < 3 or (len(sys.argv) < 4 and not os.environ.get("E2E_PASSWORD"
 BASE, USER = sys.argv[1].rstrip("/"), sys.argv[2]
 PASSWORD = sys.argv[3] if len(sys.argv) > 3 else os.environ["E2E_PASSWORD"]
 OUT = Path(__file__).resolve().parent
-NEW = f"TEST-{int(time.time())}"  # a fresh item code per run
+STAMP = int(time.time())
+NEW = f"TEST-{STAMP}"  # a fresh item code per run
 COMPANY, OTHER = "Wipro Lighting", "Havells"  # the new item's company; a company with demo pieces in store
 errors = []
 current = {"step": "start"}
@@ -97,11 +101,12 @@ def undo(page, number, reason):
     expect(page.locator("body")).to_contain_text(f"{number} undone by")
 
 
-def ts_pick(page, select_id, text):
-    """Type into a Tom Select box (not a line's item picker) and pick the first match."""
+def ts_pick(page, select_id, text, create=False):
+    """Type into a Tom Select box (not a line's item picker); pick the first match, or its create option."""
     page.locator(f"#{select_id} + .ts-wrapper .ts-control").click()  # its input is tiny once a value is set
     page.locator(f"#{select_id}-ts-control").fill(text)
-    option = page.locator(f"#{select_id}-ts-dropdown .option", has_text=text).first
+    dropdown = page.locator(f"#{select_id}-ts-dropdown")
+    option = dropdown.locator(".create") if create else dropdown.locator(".option", has_text=text).first
     expect(option).to_be_visible()
     option.click()
 
@@ -234,16 +239,28 @@ def run(page):
     )
     marked = re.search(r"DEF-\d{4}", success_text(page)).group(0)
 
-    step("file a complaint, then Record visit: 1 part given, 1 failed part collected")
+    site = f"Walkthrough Site {STAMP}"
+    step(f"file a complaint at a new site ({site}) created from the site picker")
     page.goto(f"{BASE}/complaints/new/")
-    page.locator("#id_site-ts-control").click()
-    site = page.locator("#id_site-ts-dropdown .option").first
-    expect(site).to_be_visible()
-    site.click()
+    ts_pick(page, "id_site", site, create=True)
+    site_modal = page.locator("#site-modal")
+    expect(site_modal).to_be_visible()
+    expect(page.locator("#id_ns-name")).to_have_value(site)
+    page.fill("#id_ns-city", "Visakhapatnam")
+    page.fill("#id_ns-contact_name", "Walkthrough contact")
+    page.fill("#id_ns-phone", "9876543210")
+    page.click("#site-form button[type=submit]")
+    expect(site_modal).to_be_hidden()
+    expect(page.locator("#id_site + .ts-wrapper .ts-control .item")).to_have_text(f"{site}, Visakhapatnam")
+    expect(page.locator("#id_contact_name")).to_have_value("Walkthrough contact")
+    expect(page.locator("#id_phone")).to_have_value(re.compile(r"98765\s?43210"))
     page.fill("#id_fault", "Walkthrough: 1 driver dead")
     page.click("#complaint-form button[type=submit]")
     expect(page).to_have_url(re.compile(r"/complaints/CMP-\d{4}/$"))
     cmp_no = page.locator(".page-title .code").inner_text().strip()
+    expect(page.locator("body")).to_contain_text(site)
+
+    step(f"{cmp_no}: Record visit: 1 part given, 2 failed pieces collected")
     page.locator(".page-header").get_by_role("link", name="Record visit").click()
     expect(page).to_have_url(re.compile(rf"/complaints/{cmp_no}/visit/$"))
     expect(page.locator("#id_location option", has_text="Defective store")).to_have_count(0)
@@ -261,7 +278,7 @@ def run(page):
     expect(page.locator("#form-error")).to_contain_text("Fix the highlighted lines")
     page.locator("input[name=part_qty]").fill("1")
     pick_item(page, NEW, row=1)  # Failed parts collected
-    page.locator("input[name=col_qty]").fill("1")
+    page.locator("input[name=col_qty]").fill("2")
     page.locator("input[name=col_batch]").fill("B2405")
     page.locator("input[name=col_pkd]").fill("2026-03")
     page.locator("input[name=col_fault]").fill("No output (walkthrough)")
@@ -269,9 +286,13 @@ def run(page):
     page.click("form[data-lines-form] button[type=submit]")
     expect(page).to_have_url(re.compile(rf"/complaints/{cmp_no}/$"))
     expect(page.locator(".alert-success").first).to_contain_text(
-        re.compile(r"Visit VIS-\d{4} saved\. Parts given: OUT-\d{4}\. New defective tags: DEF-\d{4}\.")
+        re.compile(
+            r"Visit VIS-\d{4} saved\. Parts given: OUT-\d{4}\. New defective tags: DEF-\d{4}, DEF-\d{4}\."
+        )
     )
-    collected = re.search(r"DEF-\d{4}", success_text(page)).group(0)
+    tags = re.findall(r"DEF-\d{4}", success_text(page))
+    check(len(tags) == 2, f"expected 2 new defective tags from the visit, got {tags}")
+    collected = tags[0]  # goes into the return batch; tags[1] stays in the Defective store
     row = page.locator("table.card-table tbody tr").first
     expect(row.locator("a.code", has_text=re.compile(r"^OUT-\d{4}$"))).to_be_visible()
     expect(row.locator("a.code", has_text=collected)).to_be_visible()
@@ -390,7 +411,7 @@ def search_service(page, cmp_no, tag):
 def stock_columns(page):
     step(f"current stock shows the Defective store column for {NEW}; the total leaves it out")
     places, total, defective = stock_row(page, NEW)
-    check(defective == 2, f"{NEW} should have 2 pieces in the Defective store, has {defective}")
+    check(defective == 3, f"{NEW} should have 3 pieces in the Defective store, has {defective}")
     check("DEFECTIVE STORE" not in places, f"the Defective store is a stock column: {list(places)}")
     check(total == sum(places.values()) == 5, f"{NEW} total {total}, locations {places}: expected 5 good")
 
@@ -440,12 +461,16 @@ def return_batch(page, marked, collected):
     download(page, f"{BASE}/defectives/batches/{rb_no}/", "Export dispatch list", f"Return_Batch_{rb_no}_")
     after, defective = stock_row(page, NEW)[1:]
     check(after == before + 1, f"good stock of {NEW} went {before} -> {after}, expected +1")
-    check(defective == 1, f"the rejected piece should be back in the Defective store ({defective})")
+    check(
+        defective == 2,
+        f"the rejected piece and the unbatched one should be in the Defective store ({defective})",
+    )
 
 
 def service_exports(page):
-    step("download the pending complaints and defective list reports")
+    step("download the pending complaints, complaint list and defective list reports")
     download(page, f"{BASE}/complaints/", "Pending complaints", "Pending_Complaints_")
+    download(page, f"{BASE}/complaints/list/?tab=all", "Export to Excel", "Complaint_List_")
     download(page, f"{BASE}/defectives/", "Defective list", "Defective_List_")
 
 
@@ -473,6 +498,11 @@ def phone(page):
     expect(page.locator("#id_work_done")).to_be_visible()
     no_side_scroll(page, "the visit page")
     page.screenshot(path=str(OUT / "screen-390-visit.png"), full_page=True)
+
+    step("defective pieces list on a phone")
+    page.goto(f"{BASE}/defectives/pieces/")
+    expect(page.locator(".page-title")).to_be_visible()
+    no_side_scroll(page, "the defective pieces list")
 
 
 with sync_playwright() as p:

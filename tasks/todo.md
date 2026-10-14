@@ -63,7 +63,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
 - [x] Clickable mockup `mockups/service/`, one linked app with Stock, Complaints and Defectives, commit 2b5c8be. Walkthrough exits 0 with 0 JS errors and covers 11 flows plus the phone layout. Exports were read back with openpyxl. No company is hard-coded.
 - [x] User approved the mockup (2026-10-12: "yes it is good enough")
 - [x] Implementation plan `docs/superpowers/plans/2026-10-12-defectives-complaints.md` (18 tasks, 119b2ca; self-reviewed against the real code; demo replay simulated with 107 actions and 0 errors)
-- [x] Build with subagent-driven development, 18 tasks (2026-10-15: 850 tests pass, ruff clean, `makemigrations --check` clean; walkthrough exit 0 with 0 JS errors, twice in a row on a fresh `svkml_demo`; `svkml_demo` re-seeded fresh for review. Postgres now on port 52207; it may move after a reboot, so check `scratchpad/pgdata2/postmaster.pid` line 4)
+- [ ] Build with subagent-driven development, 18 tasks (2026-10-15: 850 tests pass, ruff clean, `makemigrations --check` clean; walkthrough exit 0 with 0 JS errors, twice in a row on a fresh `svkml_demo`; `svkml_demo` re-seeded fresh for review. Postgres now on port 52207; it may move after a reboot, so check `scratchpad/pgdata2/postmaster.pid` line 4) (awaiting user review)
   - [x] S1 Defective store location + entry subtypes: deac8d2 + fixes 0fbeade (323 tests; spec ✅ quality ✅)
   - [x] S2 Good stock excludes the Defective store: 0c0a23b + fixes acd8aef (342 tests; fits 1366px; spec ✅ quality ✅)
   - [x] S3 Counter, defectives models, batch link: 26da1e8 + DB constraints 49df2cc (359 tests; spec ✅ quality ✅)
@@ -81,12 +81,13 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S15 Sites & technicians screens: 4af578e + fixes 8e2e9a7 (826 tests; spec ✅ quality ✅)
   - [x] S16 Integration (nav, search, dashboard, links, sweep): a1ea0c0 + follow-ups a08dfda (839 tests; spec ✅ quality ✅)
   - [x] S17 Service demo data: 6aeb4e9 + fixes db41602 (849 tests; svkml_demo fresh: 26 complaints, 60 pieces, 3 batches; spec ✅ quality ✅)
-  - [x] S18 Walkthrough, docs, todo: "feat: e2e service walkthrough, docs and todo for the service modules" (850 tests; walkthrough exit 0, 0 JS errors, 2 runs; dashboard Movements tile now matches its list; review pending)
+  - [x] S18 Walkthrough, docs, todo: "feat: e2e service walkthrough, docs and todo for the service modules" (850 tests; walkthrough exit 0, 0 JS errors, 2 runs; dashboard Movements tile now matches its list). Final whole-branch review done: verdict ready after fixes. Fixes: walkthrough creates a new site from the picker, collects 2 pieces, downloads the Complaint list export and checks the pieces list on a phone; `_clean` moved to `apps/core/text.clean_text` (850 tests; walkthrough exit 0, 0 JS errors, 2 runs; `svkml_demo` re-seeded, cache matches ledger)
 
 ### Follow-ups (after the service build)
 - [ ] Merge `static/js/entry-form.js` into `LineEditor` (in/trf/adj modes), or at least share `esc`/`norm`/`lookKey`.
 - [ ] Tighten the loose query-count guards noted in the reviews (e.g. the 30-piece bulk-add guard allows 80 queries).
 - [ ] A one-step `svkml_demo` reseed command (drop + create + migrate + seed_users + seed_service_demo + rebuild_stock_balances check) instead of the manual steps in CLAUDE.md.
+- [ ] Ask user: Admin-only 'return to good stock' for IN_STORE defective pieces marked by mistake (today the only fix is scrap + Adjust)
 
 ### Brief notes for the service tasks (historical: kept for reference, all 18 tasks are built)
 - Postgres for tests: `postgresql://postgres:@127.0.0.1:52207/postgres`. Any `transaction=True` test needs `serialized_rollback=True`.

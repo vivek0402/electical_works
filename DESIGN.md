@@ -40,7 +40,7 @@
   - Never use purple or other decorative colours for actions.
   - Secondary actions (Transfer, Adjust, Cancel) are white "quiet" buttons.
   - Status always pairs colour with an icon or word, never colour alone.
-- **Status pills** (complaints, pieces, batches, outcomes) are tinted badges with an icon and a word, never colour alone. Five tints (`.st-*` in `static/css/app.css`): `st-alert` red `#fde8e8`/`#b42318` (Not attended, Urgent, rejected outcomes); `st-wait` amber `#fef3c7`/`#854d0e` (Awaiting material, High, Sent/Dispatched, Partly settled); `st-ok` green `#e7f6ec`/`#1e7e34` (Resolved, Settled, Replaced, Repaired); `st-neutral` slate (Attended, Material need to check, In store, Draft); `st-done` grey `#eef0f3`/`#475569` (Closed, Not covered, Scrapped).
+- **Status pills** (complaints, pieces, batches, outcomes) are tinted badges with an icon and a word, never colour alone. Five tints (`.st-*` in `static/css/app.css`): `st-alert` red `#fde8e8`/`#b42318` (Not attended, Urgent, rejected outcomes); `st-wait` amber `#fef3c7`/`#854d0e` (Awaiting material, High, Sent/Dispatched, Partly settled); `st-ok` green `#e7f6ec`/`#1e7e34` (Resolved, Settled, Replaced, Repaired); `st-neutral` slate `rgba(71,85,105,.12)`/`#334155` (Attended, Material need to check, In store, Draft); `st-done` grey `#eef0f3`/`#475569` (Closed, Not covered, Scrapped).
 - **Defective store:** shown next to stock as its own shaded column (dashed left border, "not counted" under the heading; a recycle icon marks it in Movements), never part of a total or low-stock check.
 - **Excel exports:** company title in navy `#0F2744`, header in Excel's "Table Style Medium 2" (blue).
 - **Dark mode:** not in v1.
