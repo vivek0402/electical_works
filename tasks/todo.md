@@ -161,3 +161,9 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - `lock_balances(lines)` returns a `LockedBalances`; pass it to `post_entry(locked=…)`, which must cover every row and re-locks them (never waits; never reads unlocked). `record_visit` does this, so every balance lock comes before the first EntryCounter.
   - A visit's entries carry the site name cut to `StockEntry.party`'s 120 characters; the `ref` (complaint number) is the link.
   - New message: "The parts given on VIS-xxxx have already been used, so they can't be undone." (a guard: an OUT's reversal only adds stock).
+- **For Task 13 (from the Task 12 review):**
+  - The URL must be named exactly `visit_new` and take one positional `number`, so the complaint page's Record visit button resolves. Assert the href in a test.
+  - The visit page uses its own `page_token`.
+  - After saving, redirect to `complaint_detail`.
+  - Show refused saves on the visit page itself.
+  - Use `phone_display` for any phone shown.
