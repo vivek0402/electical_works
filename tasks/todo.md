@@ -80,7 +80,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S14 Complaints list, dashboard + 2 exports: 0d1adde + fixes b026daf (791 tests; spec ✅ quality ✅)
   - [x] S15 Sites & technicians screens: 4af578e + fixes 8e2e9a7 (826 tests; spec ✅ quality ✅)
   - [x] S16 Integration (nav, search, dashboard, links, sweep): a1ea0c0 + follow-ups a08dfda (839 tests; spec ✅ quality ✅)
-  - [ ] S17 Service demo data
+  - [x] S17 Service demo data: 6aeb4e9 + fixes db41602 (849 tests; svkml_demo fresh: 26 complaints, 60 pieces, 3 batches; spec ✅ quality ✅)
   - [ ] S18 Walkthrough, docs, todo
 
 ### Brief notes for the remaining service tasks (from reviews; give these to each implementer)
