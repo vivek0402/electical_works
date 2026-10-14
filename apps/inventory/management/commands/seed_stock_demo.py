@@ -48,6 +48,36 @@ def _masters(model, names):
     return rows
 
 
+def load_masters_and_items(db):
+    """(places, companies, items) from a demo file: masters created if missing, items saved through save_item.
+
+    Shared by seed_stock_demo and seed_service_demo. `items` is {code: Item}.
+    """
+    places = _masters(Location, db["locations"])
+    spare_types = _masters(SpareType, db["spareTypes"])
+    fitting_types = _masters(FittingType, db["fittingTypes"])
+    companies = _masters(Company, db["companies"])
+    items = {}
+    for d in db["items"]:
+        items[d["code"]] = save_item(
+            data={
+                "code": d["code"],
+                "spare_type": spare_types[d["type"]],
+                "company": companies[d["company"]],
+                "description": d["desc"],
+                "cat_ref": d["catRef"],
+                "fitting_type": fitting_types[d["fittingType"]] if d["fittingType"] else None,
+                "wattage_w": d["watt"],
+                "current_ma": d["ma"],
+                "unit": d["unit"],
+                "reorder_level": d["reorder"],
+                "aliases": d["aliases"],
+                "is_active": d["active"],
+            }
+        )
+    return places, companies, items
+
+
 class Command(BaseCommand):
     help = "Load demo items and stock history (only into an empty ledger, and only with DEBUG or --force)."
 
@@ -65,29 +95,7 @@ class Command(BaseCommand):
         db = json.loads(DEMO.read_text(encoding="utf-8"))
         users = {"Admin": _user(ADMIN), "Office": _user(OFFICE)}
         shift = timezone.localdate() - date.fromisoformat(db["today"])
-        places = _masters(Location, db["locations"])
-        spare_types = _masters(SpareType, db["spareTypes"])
-        fitting_types = _masters(FittingType, db["fittingTypes"])
-        companies = _masters(Company, db["companies"])
-
-        items = {}
-        for d in db["items"]:
-            items[d["code"]] = save_item(
-                data={
-                    "code": d["code"],
-                    "spare_type": spare_types[d["type"]],
-                    "company": companies[d["company"]],
-                    "description": d["desc"],
-                    "cat_ref": d["catRef"],
-                    "fitting_type": fitting_types[d["fittingType"]] if d["fittingType"] else None,
-                    "wattage_w": d["watt"],
-                    "current_ma": d["ma"],
-                    "unit": d["unit"],
-                    "reorder_level": d["reorder"],
-                    "aliases": d["aliases"],
-                    "is_active": d["active"],
-                }
-            )
+        places, companies, items = load_masters_and_items(db)
 
         # Post in the file's order: that is the order the entries were made in the demo, so every
         # entry gets the same number as in the file (late corrections like OUT-0018 are back-dated).

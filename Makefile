@@ -13,7 +13,7 @@ seed:
 	$(RUN) python manage.py seed_users
 demo:
 	$(RUN) python manage.py seed_users
-	$(RUN) python manage.py seed_stock_demo
+	$(RUN) python manage.py seed_service_demo
 test:
 	$(RUN) pytest --cov=apps --cov-report=term-missing $(ARGS)
 lint:

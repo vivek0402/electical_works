@@ -1,0 +1,5859 @@
+{
+ "today": "2026-10-12",
+ "locations": [
+  "Vizag Office",
+  "Svkml",
+  "TV Shop",
+  "Kartika Class"
+ ],
+ "defStore": "Defective store",
+ "spareTypes": [
+  "Driver",
+  "PCB / LED module",
+  "Lens",
+  "Complete fitting",
+  "Controller",
+  "Switch",
+  "Wire / cable",
+  "Accessory",
+  "Other"
+ ],
+ "fittingTypes": [
+  "Flood light",
+  "Linear / batten",
+  "Street light",
+  "High bay",
+  "Downlight",
+  "Well glass",
+  "Bulkhead",
+  "Panel"
+ ],
+ "units": [
+  "NOS",
+  "MTR",
+  "ROLL",
+  "BOX",
+  "PKT"
+ ],
+ "companies": [
+  "Wipro Lighting",
+  "Havells",
+  "Finolex Cables",
+  "Sri Sai Electricals",
+  "Lakshmi Traders"
+ ],
+ "technicians": [
+  "Ramu",
+  "Apparao",
+  "Srinuvas",
+  "Jagadeesh"
+ ],
+ "customers": [
+  "Laurus Labs Unit-2, Vizag",
+  "Dr Reddys, Vizag",
+  "GMR Airport, Vizag",
+  "BARC, Vizag",
+  "IISER, Tirupati",
+  "NACIN, Anantapur",
+  "Punjab National Bank, Gudivada",
+  "Siri Filling Station, Nellore",
+  "Master Minds, Guntur"
+ ],
+ "couriers": [
+  "DTDC",
+  "Professional Couriers",
+  "ST Courier",
+  "VRL Logistics",
+  "By hand"
+ ],
+ "notCoveredReasons": [
+  "Not our product",
+  "Out of warranty",
+  "Customer cancelled",
+  "Other"
+ ],
+ "config": {
+  "defaultCompany": "Wipro Lighting"
+ },
+ "items": [
+  {
+   "code": "LG78-150-700",
+   "type": "Driver",
+   "desc": "LED driver 150W 700mA",
+   "catRef": "LF40-192-060-57-HE",
+   "fittingType": "Flood light",
+   "watt": 150,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "EDC-150-S105SV-3007"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG76-150-700FH",
+   "type": "Driver",
+   "desc": "LED driver 150W 700mA (FH)",
+   "catRef": "LR22-781-XXX-57-XX",
+   "fittingType": "Street light",
+   "watt": 150,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG76-200-700F",
+   "type": "Driver",
+   "desc": "LED driver 200W 700mA",
+   "catRef": "LF40-502-060-57-HE2",
+   "fittingType": "Flood light",
+   "watt": 200,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG75-150-215-70E",
+   "type": "Driver",
+   "desc": "LED driver 150W",
+   "catRef": "LR40-272-060-7-XX",
+   "fittingType": "High bay",
+   "watt": 150,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG83-072-103-0700",
+   "type": "Driver",
+   "desc": "LED driver 72W 700mA",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": 72,
+   "ma": 700,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG30-018-054-0300",
+   "type": "Driver",
+   "desc": "LED driver 18W 300mA",
+   "catRef": "LL20-111-XXX-65AL",
+   "fittingType": "Linear / batten",
+   "watt": 18,
+   "ma": 300,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [
+    "LG30-018-054-300"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG26-048-0720",
+   "type": "Driver",
+   "desc": "LED driver 48W 720mA",
+   "catRef": "LD80-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": 48,
+   "ma": 720,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "LG26-048-720"
+   ],
+   "active": true
+  },
+  {
+   "code": "LG66-036-036-900S",
+   "type": "Driver",
+   "desc": "LED driver 36W 900mA",
+   "catRef": "LR08-132-XXX-57-XX",
+   "fittingType": "Street light",
+   "watt": 36,
+   "ma": 900,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LG66-040-078-480IT",
+   "type": "Driver",
+   "desc": "LED driver 40W 480mA",
+   "catRef": "LW07-141-XXX57G1",
+   "fittingType": "Well glass",
+   "watt": 40,
+   "ma": 480,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "15WATT (190MA)",
+   "type": "Driver",
+   "desc": "LED driver 15W 190mA (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": 15,
+   "ma": 190,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [
+    "15WATT DRIVERS"
+   ],
+   "active": true
+  },
+  {
+   "code": "18WATT DRIVERS",
+   "type": "Driver",
+   "desc": "LED driver 18W (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": 18,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO6006",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LD80-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO9326",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LL20-111-XXX-65AL",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "EIO8437",
+   "type": "PCB / LED module",
+   "desc": "LED module",
+   "catRef": "LD81-171-XXX-60-XX",
+   "fittingType": "Downlight",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "EI08437"
+   ],
+   "active": true
+  },
+  {
+   "code": "WPWG-5050-15SIP",
+   "type": "PCB / LED module",
+   "desc": "LED strip PCB",
+   "catRef": "LL20-281-XXX-65AL1",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "FTS-KC-60-57K",
+   "type": "PCB / LED module",
+   "desc": "LED PCB 5700K",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 50,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LH21-200-180-30S6P",
+   "type": "PCB / LED module",
+   "desc": "LED module 6P",
+   "catRef": "LR40-272-060-7-XX",
+   "fittingType": "High bay",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LF40-192-060-57-HE",
+   "type": "Complete fitting",
+   "desc": "Flood light 192W",
+   "catRef": "LF40-192-060-57-HE",
+   "fittingType": "Flood light",
+   "watt": 192,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "LL20-111-XXX-65-NE3",
+   "type": "Complete fitting",
+   "desc": "Linear fitting",
+   "catRef": "LL20-111-XXX-65-NE3",
+   "fittingType": "Linear / batten",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 0,
+   "aliases": [
+    "LL20-111-XXX-65NE3"
+   ],
+   "active": true
+  },
+  {
+   "code": "LF20-102-060-57-G3",
+   "type": "Complete fitting",
+   "desc": "Flood light 102W",
+   "catRef": "LF20-102-060-57-G3",
+   "fittingType": "Flood light",
+   "watt": 102,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "BULKHEAD 12W",
+   "type": "Complete fitting",
+   "desc": "Bulkhead fitting 12W",
+   "catRef": "",
+   "fittingType": "Bulkhead",
+   "watt": 12,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [
+    "BULCK HEAD"
+   ],
+   "active": true
+  },
+  {
+   "code": "LENS",
+   "type": "Lens",
+   "desc": "Lens (generic)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WCS-IS-DA4",
+   "type": "Controller",
+   "desc": "iSense DALI controller",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [
+    "ISENSE DALI CONTROLLER"
+   ],
+   "active": true
+  },
+  {
+   "code": "ISENSE 8BUTTON SWITCH",
+   "type": "Switch",
+   "desc": "iSense 8-button switch",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Wipro Lighting",
+   "unit": "NOS",
+   "reorder": 2,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WIRE 1.5 SQMM",
+   "type": "Wire / cable",
+   "desc": "Copper wire 1.5 sq.mm",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Finolex Cables",
+   "unit": "MTR",
+   "reorder": 100,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "WIRE 2.5 SQMM",
+   "type": "Wire / cable",
+   "desc": "Copper wire 2.5 sq.mm",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Finolex Cables",
+   "unit": "MTR",
+   "reorder": 100,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "MCB 16A SP",
+   "type": "Accessory",
+   "desc": "MCB 16A single pole",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Havells",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "CABLE TIE 200MM",
+   "type": "Accessory",
+   "desc": "Cable ties 200mm (pack of 100)",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Lakshmi Traders",
+   "unit": "PKT",
+   "reorder": 3,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "HV-BATTEN-20W",
+   "type": "Complete fitting",
+   "desc": "LED batten 20W",
+   "catRef": "",
+   "fittingType": "Linear / batten",
+   "watt": 20,
+   "ma": null,
+   "company": "Havells",
+   "unit": "NOS",
+   "reorder": 3,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "FX-MODSW-6A",
+   "type": "Switch",
+   "desc": "Modular switch 6A",
+   "catRef": "",
+   "fittingType": "",
+   "watt": null,
+   "ma": null,
+   "company": "Finolex Cables",
+   "unit": "NOS",
+   "reorder": 10,
+   "aliases": [],
+   "active": true
+  },
+  {
+   "code": "SSE-DRV-24W",
+   "type": "Driver",
+   "desc": "LED driver 24W 500mA",
+   "catRef": "",
+   "fittingType": "",
+   "watt": 24,
+   "ma": 500,
+   "company": "Sri Sai Electricals",
+   "unit": "NOS",
+   "reorder": 5,
+   "aliases": [],
+   "active": true
+  }
+ ],
+ "entries": [
+  {
+   "no": "IN-0001",
+   "kind": "IN",
+   "date": "2026-09-02",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG78-150-700",
+     "loc": "Vizag Office",
+     "qty": 29,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-150-700FH",
+     "loc": "Vizag Office",
+     "qty": 7,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 39,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Vizag Office",
+     "qty": 15,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG83-072-103-0700",
+     "loc": "Vizag Office",
+     "qty": 20,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Vizag Office",
+     "qty": 24,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": 8,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG66-036-036-900S",
+     "loc": "Vizag Office",
+     "qty": 4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 24,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 24,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "18WATT DRIVERS",
+     "loc": "Vizag Office",
+     "qty": 29,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 11,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO8437",
+     "loc": "Vizag Office",
+     "qty": 4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": 9,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Vizag Office",
+     "qty": 220,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LF40-192-060-57-HE",
+     "loc": "Vizag Office",
+     "qty": 32,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LL20-111-XXX-65-NE3",
+     "loc": "Vizag Office",
+     "qty": 34,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 14,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Vizag Office",
+     "qty": 12,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": 15,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "ISENSE 8BUTTON SWITCH",
+     "loc": "Vizag Office",
+     "qty": 35,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 300,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 2.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 200,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 14,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "HV-BATTEN-20W",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "FX-MODSW-6A",
+     "loc": "Vizag Office",
+     "qty": 12,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "SSE-DRV-24W",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "OPENING",
+   "party": "Opening stock (first count)",
+   "ref": "Count sheet 02-09-2026"
+  },
+  {
+   "no": "IN-0002",
+   "kind": "IN",
+   "date": "2026-09-02",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": 8,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "TV Shop",
+     "qty": 6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Kartika Class",
+     "qty": 50,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": 12,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "OPENING",
+   "party": "Opening stock (first count)",
+   "ref": "Count sheet 02-09-2026"
+  },
+  {
+   "no": "IN-0003",
+   "kind": "IN",
+   "date": "2026-09-03",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Defective store",
+     "qty": 4,
+     "batch": "B2448",
+     "pkd": "2026-03"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Punjab National Bank, Gudivada",
+   "ref": "CMP-0001",
+   "complaint": "CMP-0001"
+  },
+  {
+   "no": "OUT-0001",
+   "kind": "OUT",
+   "date": "2026-09-05",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Ramu",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0002",
+   "kind": "OUT",
+   "date": "2026-09-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Anna Olea, Nellore",
+   "ref": "CMP-0003",
+   "complaint": "CMP-0003"
+  },
+  {
+   "no": "IN-0004",
+   "kind": "IN",
+   "date": "2026-09-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2437",
+     "pkd": "2025-09"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Anna Olea, Nellore",
+   "ref": "CMP-0003",
+   "complaint": "CMP-0003"
+  },
+  {
+   "no": "TRF-0001",
+   "kind": "TRF",
+   "date": "2026-09-07",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: Dead on arrival from last delivery"
+  },
+  {
+   "no": "OUT-0003",
+   "kind": "OUT",
+   "date": "2026-09-07",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "TV Shop",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "BARC, Vizag",
+   "ref": "Job 115"
+  },
+  {
+   "no": "OUT-0004",
+   "kind": "OUT",
+   "date": "2026-09-08",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "IN-0005",
+   "kind": "IN",
+   "date": "2026-09-09",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2608",
+     "pkd": "2025-07"
+    },
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "B2516",
+     "pkd": "2025-01"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "BARC, Visakhapatnam",
+   "ref": "CMP-0004",
+   "complaint": "CMP-0004"
+  },
+  {
+   "no": "OUT-0005",
+   "kind": "OUT",
+   "date": "2026-09-09",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "TRF-0002",
+   "kind": "TRF",
+   "date": "2026-09-10",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Vizag Office",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Defective store",
+     "qty": 5,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: LEDs dead, found during count"
+  },
+  {
+   "no": "OUT-0006",
+   "kind": "OUT",
+   "date": "2026-09-11",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Master Minds, Guntur",
+   "ref": "CMP-0005",
+   "complaint": "CMP-0005"
+  },
+  {
+   "no": "IN-0006",
+   "kind": "IN",
+   "date": "2026-09-11",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2536",
+     "pkd": "2025-01"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Master Minds, Guntur",
+   "ref": "CMP-0005",
+   "complaint": "CMP-0005"
+  },
+  {
+   "no": "IN-0007",
+   "kind": "IN",
+   "date": "2026-09-11",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": 12,
+     "batch": "B2590",
+     "pkd": "2026-05"
+    },
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 18,
+     "batch": "B2553",
+     "pkd": "2026-05"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4476"
+  },
+  {
+   "no": "TRF-0003",
+   "kind": "TRF",
+   "date": "2026-09-14",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: Does not latch"
+  },
+  {
+   "no": "IN-0008",
+   "kind": "IN",
+   "date": "2026-09-14",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Vizag Office",
+     "qty": 11,
+     "batch": "B2453",
+     "pkd": "2025-02"
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "B2506",
+     "pkd": "2026-04"
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "B2412",
+     "pkd": "2025-05"
+    },
+    {
+     "code": "LG66-040-078-480IT",
+     "loc": "Vizag Office",
+     "qty": 16,
+     "batch": "B2536",
+     "pkd": "2025-02"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4494"
+  },
+  {
+   "no": "IN-0009",
+   "kind": "IN",
+   "date": "2026-09-15",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": 21,
+     "batch": "B2550",
+     "pkd": "2025-01"
+    },
+    {
+     "code": "ISENSE 8BUTTON SWITCH",
+     "loc": "Vizag Office",
+     "qty": 5,
+     "batch": "B2522",
+     "pkd": "2026-05"
+    },
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": 6,
+     "batch": "B2406",
+     "pkd": "2025-08"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4511"
+  },
+  {
+   "no": "IN-0010",
+   "kind": "IN",
+   "date": "2026-09-16",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "B2410",
+     "pkd": "2025-04"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "IISER, Tirupati",
+   "ref": "CMP-0007",
+   "complaint": "CMP-0007"
+  },
+  {
+   "no": "OUT-0007",
+   "kind": "OUT",
+   "date": "2026-09-16",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 854"
+  },
+  {
+   "no": "OUT-0008",
+   "kind": "OUT",
+   "date": "2026-09-17",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "IOCL Holiday Home, Tirupati",
+   "ref": "CMP-0002",
+   "complaint": "CMP-0002"
+  },
+  {
+   "no": "IN-0011",
+   "kind": "IN",
+   "date": "2026-09-17",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG26-048-0720",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2425",
+     "pkd": "2026-05"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "IOCL Holiday Home, Tirupati",
+   "ref": "CMP-0002",
+   "complaint": "CMP-0002"
+  },
+  {
+   "no": "IN-0012",
+   "kind": "IN",
+   "date": "2026-09-17",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO8437",
+     "loc": "Vizag Office",
+     "qty": 20,
+     "batch": "B2547",
+     "pkd": "2025-07"
+    },
+    {
+     "code": "LG78-150-700",
+     "loc": "Vizag Office",
+     "qty": 17,
+     "batch": "B2550",
+     "pkd": "2025-02"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4529"
+  },
+  {
+   "no": "IN-0013",
+   "kind": "IN",
+   "date": "2026-09-18",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG78-150-700",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2554",
+     "pkd": "2025-08"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Vaishaki Bio Marine, Visakhapatnam",
+   "ref": "CMP-0008",
+   "complaint": "CMP-0008"
+  },
+  {
+   "no": "OUT-0009",
+   "kind": "OUT",
+   "date": "2026-09-18",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Defective store",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "BULKHEAD 12W",
+     "loc": "Defective store",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "RETURN_TO_COMPANY",
+   "party": "Wipro Lighting",
+   "ref": "D51243817",
+   "batch": "RB-0001"
+  },
+  {
+   "no": "IN-0014",
+   "kind": "IN",
+   "date": "2026-09-21",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "B2484",
+     "pkd": "2026-04"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Sanvira Industries, Visakhapatnam",
+   "ref": "CMP-0010",
+   "complaint": "CMP-0010"
+  },
+  {
+   "no": "OUT-0010",
+   "kind": "OUT",
+   "date": "2026-09-21",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Master Minds, Guntur",
+   "ref": "Job 130"
+  },
+  {
+   "no": "OUT-0011",
+   "kind": "OUT",
+   "date": "2026-09-22",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Punjab National Bank, Gudivada",
+   "ref": "CMP-0001",
+   "complaint": "CMP-0001"
+  },
+  {
+   "no": "TRF-0004",
+   "kind": "TRF",
+   "date": "2026-09-22",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: Strip cut, half dark"
+  },
+  {
+   "no": "IN-0015",
+   "kind": "IN",
+   "date": "2026-09-22",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "B2403",
+     "pkd": "2026-05"
+    },
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": 9,
+     "batch": "B2574",
+     "pkd": "2025-09"
+    },
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "B2593",
+     "pkd": "2026-08"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4535"
+  },
+  {
+   "no": "IN-0016",
+   "kind": "IN",
+   "date": "2026-09-23",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-150-700FH",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2533",
+     "pkd": "2025-05"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Laurus Labs Unit-2, Visakhapatnam",
+   "ref": "CMP-0011",
+   "complaint": "CMP-0011"
+  },
+  {
+   "no": "OUT-0012",
+   "kind": "OUT",
+   "date": "2026-09-23",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "NACIN, Anantapur",
+   "ref": "Job 314"
+  },
+  {
+   "no": "IN-0017",
+   "kind": "IN",
+   "date": "2026-09-24",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": 13,
+     "batch": "B2444",
+     "pkd": "2025-08"
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": 20,
+     "batch": "B2471",
+     "pkd": "2025-07"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4549"
+  },
+  {
+   "no": "OUT-0013",
+   "kind": "OUT",
+   "date": "2026-09-25",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WIRE 2.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": -21,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "WCS-IS-DA4",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Srinuvas",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0014",
+   "kind": "OUT",
+   "date": "2026-09-26",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "SSE-DRV-24W",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "IISER, Tirupati",
+   "ref": "CMP-0013",
+   "complaint": "CMP-0013"
+  },
+  {
+   "no": "IN-0018",
+   "kind": "IN",
+   "date": "2026-09-26",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "SSE-DRV-24W",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2518",
+     "pkd": "2026-07"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "IISER, Tirupati",
+   "ref": "CMP-0013",
+   "complaint": "CMP-0013"
+  },
+  {
+   "no": "OUT-0015",
+   "kind": "OUT",
+   "date": "2026-09-26",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Laurus Labs Unit-2, Vizag",
+   "ref": "Job 887"
+  },
+  {
+   "no": "IN-0019",
+   "kind": "IN",
+   "date": "2026-09-27",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG66-036-036-900S",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2528",
+     "pkd": "2025-02"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "NACIN, Anantapur",
+   "ref": "CMP-0012",
+   "complaint": "CMP-0012"
+  },
+  {
+   "no": "OUT-0016",
+   "kind": "OUT",
+   "date": "2026-09-27",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "GMR Airport, Visakhapatnam",
+   "ref": "CMP-0014",
+   "complaint": "CMP-0014"
+  },
+  {
+   "no": "IN-0020",
+   "kind": "IN",
+   "date": "2026-09-27",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2542",
+     "pkd": "2025-05"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "GMR Airport, Visakhapatnam",
+   "ref": "CMP-0014",
+   "complaint": "CMP-0014"
+  },
+  {
+   "no": "ADJ-0001",
+   "kind": "ADJ",
+   "date": "2026-09-27",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "FTS-KC-60-57K",
+     "loc": "Defective store",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reason": "Damaged",
+   "note": "Scrapped DEF-0013: Physically broken, not worth returning"
+  },
+  {
+   "no": "OUT-0017",
+   "kind": "OUT",
+   "date": "2026-09-28",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG30-018-054-0300",
+     "loc": "Svkml",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Siri Filling Station, Nellore",
+   "ref": "Job 362"
+  },
+  {
+   "no": "OUT-0018",
+   "kind": "OUT",
+   "date": "2026-09-29",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "GMR Airport, Visakhapatnam",
+   "ref": "CMP-0015",
+   "complaint": "CMP-0015"
+  },
+  {
+   "no": "IN-0021",
+   "kind": "IN",
+   "date": "2026-09-29",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "B2481",
+     "pkd": "2025-09"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "GMR Airport, Visakhapatnam",
+   "ref": "CMP-0015",
+   "complaint": "CMP-0015"
+  },
+  {
+   "no": "OUT-0019",
+   "kind": "OUT",
+   "date": "2026-09-29",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG66-036-036-900S",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0020",
+   "kind": "OUT",
+   "date": "2026-09-30",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LH21-200-180-30S6P",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "BARC, Visakhapatnam",
+   "ref": "CMP-0004",
+   "complaint": "CMP-0004"
+  },
+  {
+   "no": "IN-0022",
+   "kind": "IN",
+   "date": "2026-09-30",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": 25,
+     "batch": "B2402",
+     "pkd": "2026-09"
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": 23,
+     "batch": "B2568",
+     "pkd": "2026-08"
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Wipro Lighting",
+   "ref": "DC 4564"
+  },
+  {
+   "no": "OUT-0021",
+   "kind": "OUT",
+   "date": "2026-10-01",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": -6,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Ramu",
+   "ref": ""
+  },
+  {
+   "no": "IN-0023",
+   "kind": "IN",
+   "date": "2026-10-02",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "HV-BATTEN-20W",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2474",
+     "pkd": "2025-02"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Dr Reddys, Visakhapatnam",
+   "ref": "CMP-0017",
+   "complaint": "CMP-0017"
+  },
+  {
+   "no": "IN-0024",
+   "kind": "IN",
+   "date": "2026-10-02",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "REPLACEMENT",
+   "party": "Wipro Lighting",
+   "ref": "RB-0001",
+   "batch": "RB-0001",
+   "note": "Replaced for DEF-0001, DEF-0002"
+  },
+  {
+   "no": "IN-0025",
+   "kind": "IN",
+   "date": "2026-10-02",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Vizag Office",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "REPLACEMENT",
+   "party": "Wipro Lighting",
+   "ref": "RB-0001",
+   "batch": "RB-0001",
+   "note": "Repaired for DEF-0003"
+  },
+  {
+   "no": "IN-0026",
+   "kind": "IN",
+   "date": "2026-10-02",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "15WATT (190MA)",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "DEFECTIVE_RETURNED",
+   "party": "Wipro Lighting",
+   "ref": "RB-0001",
+   "batch": "RB-0001",
+   "note": "Rejected by company, DEF-0004 sent back"
+  },
+  {
+   "no": "OUT-0022",
+   "kind": "OUT",
+   "date": "2026-10-02",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Svkml",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "NACIN, Anantapur",
+   "ref": "Job 663"
+  },
+  {
+   "no": "TRF-0005",
+   "kind": "TRF",
+   "date": "2026-10-03",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG83-072-103-0700",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG83-072-103-0700",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: No output on bench test"
+  },
+  {
+   "no": "OUT-0023",
+   "kind": "OUT",
+   "date": "2026-10-03",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0024",
+   "kind": "OUT",
+   "date": "2026-10-04",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "IIT, Tirupati",
+   "ref": "CMP-0018",
+   "complaint": "CMP-0018"
+  },
+  {
+   "no": "IN-0027",
+   "kind": "IN",
+   "date": "2026-10-04",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "B2545",
+     "pkd": "2025-07"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "IIT, Tirupati",
+   "ref": "CMP-0018",
+   "complaint": "CMP-0018"
+  },
+  {
+   "no": "OUT-0025",
+   "kind": "OUT",
+   "date": "2026-10-05",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "SSE-DRV-24W",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "VN Energies, Vijayawada",
+   "ref": "CMP-0019",
+   "complaint": "CMP-0019"
+  },
+  {
+   "no": "IN-0028",
+   "kind": "IN",
+   "date": "2026-10-05",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "SSE-DRV-24W",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2428",
+     "pkd": "2026-07"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "VN Energies, Vijayawada",
+   "ref": "CMP-0019",
+   "complaint": "CMP-0019"
+  },
+  {
+   "no": "OUT-0026",
+   "kind": "OUT",
+   "date": "2026-10-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO8437",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Master Minds, Guntur",
+   "ref": "CMP-0020",
+   "complaint": "CMP-0020"
+  },
+  {
+   "no": "IN-0029",
+   "kind": "IN",
+   "date": "2026-10-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO8437",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "B2418",
+     "pkd": "2025-01"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Master Minds, Guntur",
+   "ref": "CMP-0020",
+   "complaint": "CMP-0020"
+  },
+  {
+   "no": "OUT-0027",
+   "kind": "OUT",
+   "date": "2026-10-06",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "MCB 16A SP",
+     "loc": "Defective store",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "RETURN_TO_COMPANY",
+   "party": "Havells",
+   "ref": "PC-7781203",
+   "batch": "RB-0002"
+  },
+  {
+   "no": "OUT-0028",
+   "kind": "OUT",
+   "date": "2026-10-06",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "EIO6006",
+     "loc": "TV Shop",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "ADJ-0002",
+   "kind": "ADJ",
+   "date": "2026-10-06",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reason": "Damaged",
+   "note": "2 lenses cracked in storage"
+  },
+  {
+   "no": "OUT-0029",
+   "kind": "OUT",
+   "date": "2026-10-07",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "FX-MODSW-6A",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Laurus Labs Unit-2, Visakhapatnam",
+   "ref": "CMP-0021",
+   "complaint": "CMP-0021"
+  },
+  {
+   "no": "IN-0030",
+   "kind": "IN",
+   "date": "2026-10-07",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "FX-MODSW-6A",
+     "loc": "Defective store",
+     "qty": 3,
+     "batch": "B2455",
+     "pkd": "2025-01"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Laurus Labs Unit-2, Visakhapatnam",
+   "ref": "CMP-0021",
+   "complaint": "CMP-0021"
+  },
+  {
+   "no": "IN-0031",
+   "kind": "IN",
+   "date": "2026-10-07",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "WIRE 1.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 100,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Sri Sai Electricals",
+   "ref": "Bill SS-357"
+  },
+  {
+   "no": "OUT-0030",
+   "kind": "OUT",
+   "date": "2026-10-08",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": -2,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "COMPLAINT",
+   "party": "Vaishaki Bio Marine, Visakhapatnam",
+   "ref": "CMP-0022",
+   "complaint": "CMP-0022"
+  },
+  {
+   "no": "IN-0032",
+   "kind": "IN",
+   "date": "2026-10-08",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LENS",
+     "loc": "Defective store",
+     "qty": 2,
+     "batch": "B2521",
+     "pkd": "2026-07"
+    }
+   ],
+   "subtype": "DEFECTIVE_COLLECTED",
+   "party": "Vaishaki Bio Marine, Visakhapatnam",
+   "ref": "CMP-0022",
+   "complaint": "CMP-0022"
+  },
+  {
+   "no": "OUT-0031",
+   "kind": "OUT",
+   "date": "2026-10-08",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WPWG-5050-15SIP",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LF20-102-060-57-G3",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LENS",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Dr Reddys, Vizag",
+   "ref": "Job 651"
+  },
+  {
+   "no": "ADJ-0003",
+   "kind": "ADJ",
+   "date": "2026-10-08",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "CABLE TIE 200MM",
+     "loc": "Vizag Office",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reason": "Physical count",
+   "note": "Found 1 extra pack during count"
+  },
+  {
+   "no": "TRF-0006",
+   "kind": "TRF",
+   "date": "2026-10-09",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "LG76-200-700F",
+     "loc": "TV Shop",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG76-200-700F",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: Burnt smell"
+  },
+  {
+   "no": "TRF-0007",
+   "kind": "TRF",
+   "date": "2026-10-09",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "HV-BATTEN-20W",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "HV-BATTEN-20W",
+     "loc": "Defective store",
+     "qty": 1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "party": "Defective store",
+   "note": "Marked defective: Cracked diffuser, LEDs off"
+  },
+  {
+   "no": "IN-0033",
+   "kind": "IN",
+   "date": "2026-10-09",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "WIRE 2.5 SQMM",
+     "loc": "Vizag Office",
+     "qty": 100,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "MCB 16A SP",
+     "loc": "Vizag Office",
+     "qty": 10,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SUPPLIER",
+   "party": "Sri Sai Electricals",
+   "ref": "Bill SS-165"
+  },
+  {
+   "no": "OUT-0032",
+   "kind": "OUT",
+   "date": "2026-10-10",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO6006",
+     "loc": "Vizag Office",
+     "qty": -4,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG75-150-215-70E",
+     "loc": "Vizag Office",
+     "qty": -5,
+     "batch": "",
+     "pkd": ""
+    },
+    {
+     "code": "LG26-048-0720",
+     "loc": "Vizag Office",
+     "qty": -1,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "TECH",
+   "party": "Apparao",
+   "ref": ""
+  },
+  {
+   "no": "OUT-0033",
+   "kind": "OUT",
+   "date": "2026-10-10",
+   "by": "Office",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": -3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "subtype": "SITE",
+   "party": "Dr Reddys, Vizag",
+   "ref": "Job 512"
+  },
+  {
+   "no": "REV-0001",
+   "kind": "REV",
+   "date": "2026-10-10",
+   "by": "Admin",
+   "lines": [
+    {
+     "code": "EIO9326",
+     "loc": "Vizag Office",
+     "qty": 3,
+     "batch": "",
+     "pkd": ""
+    }
+   ],
+   "reverses": "OUT-0033",
+   "note": "Entered against the wrong job"
+  }
+ ],
+ "sites": [
+  {
+   "id": 1,
+   "name": "Punjab National Bank",
+   "city": "Gudivada",
+   "contact": "Branch manager",
+   "phone": "9866832284",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 2,
+   "name": "NSL Textiles",
+   "city": "Guntur",
+   "contact": "Jagadeesh",
+   "phone": "9585738843",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 3,
+   "name": "Vaishaki Bio Marine",
+   "city": "Visakhapatnam",
+   "contact": "R. Apparao",
+   "phone": "9701051017",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 4,
+   "name": "Sanvira Industries",
+   "city": "Visakhapatnam",
+   "contact": "Srinuvas",
+   "phone": "8790022266",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 5,
+   "name": "BARC",
+   "city": "Visakhapatnam",
+   "contact": "Chenna Keshavulu",
+   "phone": "9849669594",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 6,
+   "name": "Laurus Labs Unit-2",
+   "city": "Visakhapatnam",
+   "contact": "Murthy",
+   "phone": "9908127999",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 7,
+   "name": "Laurus Labs Unit-4",
+   "city": "Visakhapatnam",
+   "contact": "Bujji Babu",
+   "phone": "8008885869",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 8,
+   "name": "Sri Kathyayani Filling Station",
+   "city": "Nellore",
+   "contact": "Station manager",
+   "phone": "8886737502",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 9,
+   "name": "GMR Airport",
+   "city": "Visakhapatnam",
+   "contact": "Srinuvas",
+   "phone": "7288002455",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 10,
+   "name": "Siri Filling Station",
+   "city": "Nellore",
+   "contact": "Ganesh",
+   "phone": "9490399389",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 11,
+   "name": "Dr Reddys",
+   "city": "Visakhapatnam",
+   "contact": "Chandra Mouli",
+   "phone": "9912190903",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 12,
+   "name": "Anna Olea",
+   "city": "Nellore",
+   "contact": "Vishnu",
+   "phone": "9059599595",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 13,
+   "name": "IISER",
+   "city": "Tirupati",
+   "contact": "Estate office",
+   "phone": "9938826497",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 14,
+   "name": "IIT",
+   "city": "Tirupati",
+   "contact": "Estate office",
+   "phone": "9599987952",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 15,
+   "name": "Master Minds",
+   "city": "Guntur",
+   "contact": "Sindhu",
+   "phone": "9154152894",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 16,
+   "name": "NACIN",
+   "city": "Anantapur",
+   "contact": "Mahesh",
+   "phone": "8885344504",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 17,
+   "name": "IOCL Holiday Home",
+   "city": "Tirupati",
+   "contact": "Naidu",
+   "phone": "7981018599",
+   "address": "",
+   "active": true
+  },
+  {
+   "id": 18,
+   "name": "VN Energies",
+   "city": "Vijayawada",
+   "contact": "Rama Krishna",
+   "phone": "7989445116",
+   "address": "",
+   "active": true
+  }
+ ],
+ "techs": [
+  {
+   "name": "Ramu",
+   "phone": "9585151261",
+   "active": true
+  },
+  {
+   "name": "Apparao",
+   "phone": "9645290415",
+   "active": true
+  },
+  {
+   "name": "Srinuvas",
+   "phone": "9730699660",
+   "active": true
+  },
+  {
+   "name": "Jagadeesh",
+   "phone": "9303905758",
+   "active": true
+  }
+ ],
+ "complaints": [
+  {
+   "no": "CMP-0001",
+   "site": 1,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/24871",
+   "fault": "15W drivers not working in 18 fittings",
+   "qty": 18,
+   "reportedOn": "2026-08-25",
+   "priority": "High",
+   "techs": [
+    "Apparao"
+   ],
+   "status": "CLOSED",
+   "contact": "Branch manager",
+   "phone": "9866832284",
+   "notCoveredReason": "",
+   "closedOn": "2026-09-24"
+  },
+  {
+   "no": "CMP-0002",
+   "site": 17,
+   "company": "Wipro Lighting",
+   "companyRef": "",
+   "fault": "Material at office, downlights to be fitted",
+   "qty": 2,
+   "reportedOn": "2026-09-02",
+   "priority": "Normal",
+   "techs": [
+    "Srinuvas"
+   ],
+   "status": "CLOSED",
+   "contact": "Naidu",
+   "phone": "7981018599",
+   "notCoveredReason": "",
+   "closedOn": "2026-09-18"
+  },
+  {
+   "no": "CMP-0003",
+   "site": 12,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/24935",
+   "fault": "Bulkhead fittings not working in plant",
+   "qty": 4,
+   "reportedOn": "2026-09-04",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "CLOSED",
+   "contact": "Vishnu",
+   "phone": "9059599595",
+   "notCoveredReason": "",
+   "closedOn": "2026-09-12"
+  },
+  {
+   "no": "CMP-0004",
+   "site": 5,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/24990",
+   "fault": "High bay lights failed in shed 3",
+   "qty": 4,
+   "reportedOn": "2026-09-07",
+   "priority": "Urgent",
+   "techs": [
+    "Ramu",
+    "Apparao"
+   ],
+   "status": "RESOLVED",
+   "contact": "Chenna Keshavulu",
+   "phone": "9849669594",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0005",
+   "site": 15,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25012",
+   "fault": "Panel lights not glowing in 2 classrooms",
+   "qty": 2,
+   "reportedOn": "2026-09-09",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "CLOSED",
+   "contact": "Sindhu",
+   "phone": "9154152894",
+   "notCoveredReason": "",
+   "closedOn": "2026-09-15"
+  },
+  {
+   "no": "CMP-0006",
+   "site": 2,
+   "company": "Wipro Lighting",
+   "companyRef": "",
+   "fault": "Material at office, 6 fittings to be replaced",
+   "qty": 6,
+   "reportedOn": "2026-09-12",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "NOT_ATTENDED",
+   "contact": "Jagadeesh",
+   "phone": "9585738843",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0007",
+   "site": 13,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25066",
+   "fault": "iSense DALI controller not responding",
+   "qty": 1,
+   "reportedOn": "2026-09-14",
+   "priority": "High",
+   "techs": [
+    "Srinuvas"
+   ],
+   "status": "MATERIAL_CHECK",
+   "contact": "Estate office",
+   "phone": "9938826497",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0008",
+   "site": 3,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25102",
+   "fault": "Flood lights not glowing in yard",
+   "qty": 3,
+   "reportedOn": "2026-09-16",
+   "priority": "Normal",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "MATERIAL_CHECK",
+   "contact": "R. Apparao",
+   "phone": "9701051017",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0009",
+   "site": 8,
+   "company": "Wipro Lighting",
+   "companyRef": "",
+   "fault": "7 linear fittings not working",
+   "qty": 7,
+   "reportedOn": "2026-09-17",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "NOT_COVERED",
+   "contact": "Station manager",
+   "phone": "8886737502",
+   "notCoveredReason": "Not our product",
+   "closedOn": "2026-09-19"
+  },
+  {
+   "no": "CMP-0010",
+   "site": 4,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25177",
+   "fault": "Linear fittings flickering on 2nd floor",
+   "qty": 5,
+   "reportedOn": "2026-09-20",
+   "priority": "Normal",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "AWAITING_MATERIAL",
+   "contact": "Srinuvas",
+   "phone": "8790022266",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0011",
+   "site": 6,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25230",
+   "fault": "Street lights not working near main gate",
+   "qty": 2,
+   "reportedOn": "2026-09-22",
+   "priority": "High",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "AWAITING_MATERIAL",
+   "contact": "Murthy",
+   "phone": "9908127999",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0012",
+   "site": 16,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25270",
+   "fault": "Street light drivers failed on campus road",
+   "qty": 5,
+   "reportedOn": "2026-09-24",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh",
+    "Apparao"
+   ],
+   "status": "MATERIAL_CHECK",
+   "contact": "Mahesh",
+   "phone": "8885344504",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0013",
+   "site": 13,
+   "company": "Sri Sai Electricals",
+   "companyRef": "SSE-1160",
+   "fault": "Corridor light drivers failing",
+   "qty": 2,
+   "reportedOn": "2026-09-25",
+   "priority": "Normal",
+   "techs": [
+    "Srinuvas"
+   ],
+   "status": "CLOSED",
+   "contact": "Estate office",
+   "phone": "9938826497",
+   "notCoveredReason": "",
+   "closedOn": "2026-09-28"
+  },
+  {
+   "no": "CMP-0014",
+   "site": 9,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25311",
+   "fault": "Flood light drivers failed on apron",
+   "qty": 4,
+   "reportedOn": "2026-09-26",
+   "priority": "Urgent",
+   "techs": [
+    "Srinuvas",
+    "Ramu"
+   ],
+   "status": "ATTENDED",
+   "contact": "Srinuvas",
+   "phone": "7288002455",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0015",
+   "site": 9,
+   "company": "Havells",
+   "companyRef": "HV-C-77812",
+   "fault": "MCBs tripping in terminal DB",
+   "qty": 3,
+   "reportedOn": "2026-09-28",
+   "priority": "High",
+   "techs": [
+    "Srinuvas"
+   ],
+   "status": "RESOLVED",
+   "contact": "Srinuvas",
+   "phone": "7288002455",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0016",
+   "site": 10,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25402",
+   "fault": "18W drivers not working in linear fittings",
+   "qty": 6,
+   "reportedOn": "2026-09-30",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "NOT_ATTENDED",
+   "contact": "Ganesh",
+   "phone": "9490399389",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0017",
+   "site": 11,
+   "company": "Havells",
+   "companyRef": "HV-C-78020",
+   "fault": "LED battens failed in canteen",
+   "qty": 4,
+   "reportedOn": "2026-10-01",
+   "priority": "Normal",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "MATERIAL_CHECK",
+   "contact": "Chandra Mouli",
+   "phone": "9912190903",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0018",
+   "site": 14,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25455",
+   "fault": "Linear fittings LED module burnt",
+   "qty": 8,
+   "reportedOn": "2026-10-02",
+   "priority": "Normal",
+   "techs": [
+    "Srinuvas"
+   ],
+   "status": "ATTENDED",
+   "contact": "Estate office",
+   "phone": "9599987952",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0019",
+   "site": 18,
+   "company": "Sri Sai Electricals",
+   "companyRef": "SSE-1182",
+   "fault": "Petrol pump canopy lights not working",
+   "qty": 4,
+   "reportedOn": "2026-10-03",
+   "priority": "Normal",
+   "techs": [
+    "Apparao"
+   ],
+   "status": "RESOLVED",
+   "contact": "Rama Krishna",
+   "phone": "7989445116",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0020",
+   "site": 15,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25488",
+   "fault": "Downlight LED module failed",
+   "qty": 1,
+   "reportedOn": "2026-10-05",
+   "priority": "Normal",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "status": "RESOLVED",
+   "contact": "Sindhu",
+   "phone": "9154152894",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0021",
+   "site": 6,
+   "company": "Finolex Cables",
+   "companyRef": "",
+   "fault": "Modular switches burnt in admin block",
+   "qty": 3,
+   "reportedOn": "2026-10-06",
+   "priority": "Normal",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "ATTENDED",
+   "contact": "Murthy",
+   "phone": "9908127999",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0022",
+   "site": 3,
+   "company": "Wipro Lighting",
+   "companyRef": "WL/AP/25520",
+   "fault": "Flood light lens cracked",
+   "qty": 2,
+   "reportedOn": "2026-10-07",
+   "priority": "Normal",
+   "techs": [
+    "Ramu"
+   ],
+   "status": "ATTENDED",
+   "contact": "R. Apparao",
+   "phone": "9701051017",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0023",
+   "site": 7,
+   "company": "Wipro Lighting",
+   "companyRef": "",
+   "fault": "Downlights dim in QC lab",
+   "qty": 6,
+   "reportedOn": "2026-10-09",
+   "priority": "Normal",
+   "techs": [],
+   "status": "NOT_ATTENDED",
+   "contact": "Bujji Babu",
+   "phone": "8008885869",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0024",
+   "site": 4,
+   "company": "Finolex Cables",
+   "companyRef": "",
+   "fault": "Wiring heating near main DB",
+   "qty": 1,
+   "reportedOn": "2026-10-10",
+   "priority": "Urgent",
+   "techs": [],
+   "status": "NOT_ATTENDED",
+   "contact": "Srinuvas",
+   "phone": "8790022266",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0025",
+   "site": 11,
+   "company": "Wipro Lighting",
+   "companyRef": "",
+   "fault": "Well glass fittings tripping MCB",
+   "qty": 3,
+   "reportedOn": "2026-10-11",
+   "priority": "High",
+   "techs": [],
+   "status": "NOT_ATTENDED",
+   "contact": "Chandra Mouli",
+   "phone": "9912190903",
+   "notCoveredReason": "",
+   "closedOn": null
+  },
+  {
+   "no": "CMP-0026",
+   "site": 5,
+   "company": "Havells",
+   "companyRef": "",
+   "fault": "MCB not resetting in pump house",
+   "qty": 2,
+   "reportedOn": "2026-10-12",
+   "priority": "Normal",
+   "techs": [],
+   "status": "NOT_ATTENDED",
+   "contact": "Chenna Keshavulu",
+   "phone": "9849669594",
+   "notCoveredReason": "",
+   "closedOn": null
+  }
+ ],
+ "complaintEvents": [
+  {
+   "complaint": "CMP-0001",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-08-25",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0002",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-02",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0001",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Visit VIS-0001"
+  },
+  {
+   "complaint": "CMP-0001",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Visit VIS-0001"
+  },
+  {
+   "complaint": "CMP-0001",
+   "from": "MATERIAL_CHECK",
+   "to": "AWAITING_MATERIAL",
+   "at": "2026-09-04",
+   "by": "Office",
+   "note": "Drivers not in stock, ordered"
+  },
+  {
+   "complaint": "CMP-0003",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-04",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0002",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-05",
+   "by": "Office",
+   "note": "Visit VIS-0002"
+  },
+  {
+   "complaint": "CMP-0003",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-06",
+   "by": "Office",
+   "note": "Visit VIS-0003"
+  },
+  {
+   "complaint": "CMP-0003",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-09-06",
+   "by": "Office",
+   "note": "Visit VIS-0003"
+  },
+  {
+   "complaint": "CMP-0004",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-07",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0004",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Visit VIS-0004"
+  },
+  {
+   "complaint": "CMP-0004",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Visit VIS-0004"
+  },
+  {
+   "complaint": "CMP-0005",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0005",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-11",
+   "by": "Office",
+   "note": "Visit VIS-0005"
+  },
+  {
+   "complaint": "CMP-0005",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-09-11",
+   "by": "Office",
+   "note": "Visit VIS-0005"
+  },
+  {
+   "complaint": "CMP-0003",
+   "from": "RESOLVED",
+   "to": "CLOSED",
+   "at": "2026-09-12",
+   "by": "Office",
+   "note": "Customer signed job card"
+  },
+  {
+   "complaint": "CMP-0004",
+   "from": "MATERIAL_CHECK",
+   "to": "AWAITING_MATERIAL",
+   "at": "2026-09-12",
+   "by": "Office",
+   "note": "Spares requested"
+  },
+  {
+   "complaint": "CMP-0006",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-12",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0007",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-14",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0005",
+   "from": "RESOLVED",
+   "to": "CLOSED",
+   "at": "2026-09-15",
+   "by": "Office",
+   "note": ""
+  },
+  {
+   "complaint": "CMP-0007",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Visit VIS-0006"
+  },
+  {
+   "complaint": "CMP-0007",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Visit VIS-0006"
+  },
+  {
+   "complaint": "CMP-0008",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0002",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-09-17",
+   "by": "Office",
+   "note": "Visit VIS-0007"
+  },
+  {
+   "complaint": "CMP-0009",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-17",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0002",
+   "from": "RESOLVED",
+   "to": "CLOSED",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": ""
+  },
+  {
+   "complaint": "CMP-0008",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Visit VIS-0008"
+  },
+  {
+   "complaint": "CMP-0008",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Visit VIS-0008"
+  },
+  {
+   "complaint": "CMP-0009",
+   "from": "NOT_ATTENDED",
+   "to": "NOT_COVERED",
+   "at": "2026-09-19",
+   "by": "Office",
+   "note": "Fittings are another brand, not supplied by us",
+   "reason": "Not our product"
+  },
+  {
+   "complaint": "CMP-0010",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-20",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0010",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-21",
+   "by": "Office",
+   "note": "Visit VIS-0009"
+  },
+  {
+   "complaint": "CMP-0010",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-21",
+   "by": "Office",
+   "note": "Visit VIS-0009"
+  },
+  {
+   "complaint": "CMP-0001",
+   "from": "AWAITING_MATERIAL",
+   "to": "RESOLVED",
+   "at": "2026-09-22",
+   "by": "Office",
+   "note": "Visit VIS-0010"
+  },
+  {
+   "complaint": "CMP-0011",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-22",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0011",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-23",
+   "by": "Office",
+   "note": "Visit VIS-0011"
+  },
+  {
+   "complaint": "CMP-0011",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-23",
+   "by": "Office",
+   "note": "Visit VIS-0011"
+  },
+  {
+   "complaint": "CMP-0001",
+   "from": "RESOLVED",
+   "to": "CLOSED",
+   "at": "2026-09-24",
+   "by": "Office",
+   "note": "Customer confirmed on phone"
+  },
+  {
+   "complaint": "CMP-0010",
+   "from": "MATERIAL_CHECK",
+   "to": "AWAITING_MATERIAL",
+   "at": "2026-09-24",
+   "by": "Office",
+   "note": "Waiting for 18W drivers from the company"
+  },
+  {
+   "complaint": "CMP-0012",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-24",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0013",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-25",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0011",
+   "from": "MATERIAL_CHECK",
+   "to": "AWAITING_MATERIAL",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "FH drivers on order"
+  },
+  {
+   "complaint": "CMP-0013",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "Visit VIS-0012"
+  },
+  {
+   "complaint": "CMP-0013",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "Visit VIS-0012"
+  },
+  {
+   "complaint": "CMP-0014",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0012",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Visit VIS-0013"
+  },
+  {
+   "complaint": "CMP-0012",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Visit VIS-0013"
+  },
+  {
+   "complaint": "CMP-0014",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Visit VIS-0014"
+  },
+  {
+   "complaint": "CMP-0013",
+   "from": "RESOLVED",
+   "to": "CLOSED",
+   "at": "2026-09-28",
+   "by": "Office",
+   "note": ""
+  },
+  {
+   "complaint": "CMP-0015",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-28",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0015",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-09-29",
+   "by": "Office",
+   "note": "Visit VIS-0015"
+  },
+  {
+   "complaint": "CMP-0015",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-09-29",
+   "by": "Office",
+   "note": "Visit VIS-0015"
+  },
+  {
+   "complaint": "CMP-0004",
+   "from": "AWAITING_MATERIAL",
+   "to": "RESOLVED",
+   "at": "2026-09-30",
+   "by": "Office",
+   "note": "Visit VIS-0016"
+  },
+  {
+   "complaint": "CMP-0016",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-09-30",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0017",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-01",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0017",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "Visit VIS-0017"
+  },
+  {
+   "complaint": "CMP-0017",
+   "from": "ATTENDED",
+   "to": "MATERIAL_CHECK",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "Visit VIS-0017"
+  },
+  {
+   "complaint": "CMP-0018",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0019",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0018",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-04",
+   "by": "Office",
+   "note": "Visit VIS-0018"
+  },
+  {
+   "complaint": "CMP-0019",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-05",
+   "by": "Office",
+   "note": "Visit VIS-0019"
+  },
+  {
+   "complaint": "CMP-0019",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-10-05",
+   "by": "Office",
+   "note": "Visit VIS-0019"
+  },
+  {
+   "complaint": "CMP-0020",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-05",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0020",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Visit VIS-0020"
+  },
+  {
+   "complaint": "CMP-0020",
+   "from": "ATTENDED",
+   "to": "RESOLVED",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Visit VIS-0020"
+  },
+  {
+   "complaint": "CMP-0021",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0021",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-07",
+   "by": "Office",
+   "note": "Visit VIS-0021"
+  },
+  {
+   "complaint": "CMP-0022",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-07",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0022",
+   "from": "NOT_ATTENDED",
+   "to": "ATTENDED",
+   "at": "2026-10-08",
+   "by": "Office",
+   "note": "Visit VIS-0022"
+  },
+  {
+   "complaint": "CMP-0023",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-09",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0024",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-10",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0025",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-11",
+   "by": "Office",
+   "note": "Complaint filed"
+  },
+  {
+   "complaint": "CMP-0026",
+   "from": null,
+   "to": "NOT_ATTENDED",
+   "at": "2026-10-12",
+   "by": "Office",
+   "note": "Complaint filed"
+  }
+ ],
+ "visits": [
+  {
+   "no": "VIS-0001",
+   "complaint": "CMP-0001",
+   "date": "2026-09-03",
+   "techs": [
+    "Apparao"
+   ],
+   "work": "Checked all 18 fittings; 4 drivers dead, taken for testing",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0003",
+   "tags": [
+    "DEF-0001",
+    "DEF-0002",
+    "DEF-0003",
+    "DEF-0004"
+   ]
+  },
+  {
+   "no": "VIS-0002",
+   "complaint": "CMP-0002",
+   "date": "2026-09-05",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Site checked, drivers needed",
+   "nextStatus": "ATTENDED",
+   "outEntry": null,
+   "collectEntry": null,
+   "tags": []
+  },
+  {
+   "no": "VIS-0003",
+   "complaint": "CMP-0003",
+   "date": "2026-09-06",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "work": "Replaced 2 bulkheads from stock",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0002",
+   "collectEntry": "IN-0004",
+   "tags": [
+    "DEF-0005",
+    "DEF-0006"
+   ]
+  },
+  {
+   "no": "VIS-0004",
+   "complaint": "CMP-0004",
+   "date": "2026-09-09",
+   "techs": [
+    "Ramu",
+    "Apparao"
+   ],
+   "work": "Removed 2 drivers and 1 LED module from high bays",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0005",
+   "tags": [
+    "DEF-0010",
+    "DEF-0011",
+    "DEF-0012"
+   ]
+  },
+  {
+   "no": "VIS-0005",
+   "complaint": "CMP-0005",
+   "date": "2026-09-11",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "work": "Changed 2 LED modules",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0006",
+   "collectEntry": "IN-0006",
+   "tags": [
+    "DEF-0018",
+    "DEF-0019"
+   ]
+  },
+  {
+   "no": "VIS-0006",
+   "complaint": "CMP-0007",
+   "date": "2026-09-16",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Controller dead, brought to office",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0010",
+   "tags": [
+    "DEF-0022"
+   ]
+  },
+  {
+   "no": "VIS-0007",
+   "complaint": "CMP-0002",
+   "date": "2026-09-17",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Fitted 2 drivers, old ones collected",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0008",
+   "collectEntry": "IN-0011",
+   "tags": [
+    "DEF-0023",
+    "DEF-0024"
+   ]
+  },
+  {
+   "no": "VIS-0008",
+   "complaint": "CMP-0008",
+   "date": "2026-09-18",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "2 flood light drivers failed, brought to office for checking",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0013",
+   "tags": [
+    "DEF-0025",
+    "DEF-0026"
+   ]
+  },
+  {
+   "no": "VIS-0009",
+   "complaint": "CMP-0010",
+   "date": "2026-09-21",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "3 drivers flickering, removed",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0014",
+   "tags": [
+    "DEF-0027",
+    "DEF-0028",
+    "DEF-0029"
+   ]
+  },
+  {
+   "no": "VIS-0010",
+   "complaint": "CMP-0001",
+   "date": "2026-09-22",
+   "techs": [
+    "Apparao"
+   ],
+   "work": "Fitted 4 new drivers, all fittings working",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0011",
+   "collectEntry": null,
+   "tags": []
+  },
+  {
+   "no": "VIS-0011",
+   "complaint": "CMP-0011",
+   "date": "2026-09-23",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "Both drivers dead, removed for return",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0016",
+   "tags": [
+    "DEF-0033",
+    "DEF-0034"
+   ]
+  },
+  {
+   "no": "VIS-0012",
+   "complaint": "CMP-0013",
+   "date": "2026-09-26",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Changed 2 drivers",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0014",
+   "collectEntry": "IN-0018",
+   "tags": [
+    "DEF-0035",
+    "DEF-0036"
+   ]
+  },
+  {
+   "no": "VIS-0013",
+   "complaint": "CMP-0012",
+   "date": "2026-09-27",
+   "techs": [
+    "Jagadeesh",
+    "Apparao"
+   ],
+   "work": "2 drivers removed for checking",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0019",
+   "tags": [
+    "DEF-0037",
+    "DEF-0038"
+   ]
+  },
+  {
+   "no": "VIS-0014",
+   "complaint": "CMP-0014",
+   "date": "2026-09-27",
+   "techs": [
+    "Srinuvas",
+    "Ramu"
+   ],
+   "work": "Replaced 2 drivers; 2 more fittings to check at night",
+   "nextStatus": "ATTENDED",
+   "outEntry": "OUT-0016",
+   "collectEntry": "IN-0020",
+   "tags": [
+    "DEF-0039",
+    "DEF-0040"
+   ]
+  },
+  {
+   "no": "VIS-0015",
+   "complaint": "CMP-0015",
+   "date": "2026-09-29",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Changed 3 MCBs",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0018",
+   "collectEntry": "IN-0021",
+   "tags": [
+    "DEF-0041",
+    "DEF-0042",
+    "DEF-0043"
+   ]
+  },
+  {
+   "no": "VIS-0016",
+   "complaint": "CMP-0004",
+   "date": "2026-09-30",
+   "techs": [
+    "Ramu",
+    "Apparao"
+   ],
+   "work": "Fitted replacement drivers and module; shed 3 fully lit",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0020",
+   "collectEntry": null,
+   "tags": []
+  },
+  {
+   "no": "VIS-0017",
+   "complaint": "CMP-0017",
+   "date": "2026-10-02",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "2 battens removed for checking",
+   "nextStatus": "MATERIAL_CHECK",
+   "outEntry": null,
+   "collectEntry": "IN-0023",
+   "tags": [
+    "DEF-0044",
+    "DEF-0045"
+   ]
+  },
+  {
+   "no": "VIS-0018",
+   "complaint": "CMP-0018",
+   "date": "2026-10-04",
+   "techs": [
+    "Srinuvas"
+   ],
+   "work": "Changed 3 LED modules, 5 fittings still to check",
+   "nextStatus": "ATTENDED",
+   "outEntry": "OUT-0024",
+   "collectEntry": "IN-0027",
+   "tags": [
+    "DEF-0048",
+    "DEF-0049",
+    "DEF-0050"
+   ]
+  },
+  {
+   "no": "VIS-0019",
+   "complaint": "CMP-0019",
+   "date": "2026-10-05",
+   "techs": [
+    "Apparao"
+   ],
+   "work": "Changed 2 drivers",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0025",
+   "collectEntry": "IN-0028",
+   "tags": [
+    "DEF-0051",
+    "DEF-0052"
+   ]
+  },
+  {
+   "no": "VIS-0020",
+   "complaint": "CMP-0020",
+   "date": "2026-10-06",
+   "techs": [
+    "Jagadeesh"
+   ],
+   "work": "Changed LED module",
+   "nextStatus": "RESOLVED",
+   "outEntry": "OUT-0026",
+   "collectEntry": "IN-0029",
+   "tags": [
+    "DEF-0053"
+   ]
+  },
+  {
+   "no": "VIS-0021",
+   "complaint": "CMP-0021",
+   "date": "2026-10-07",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "Changed 3 switches",
+   "nextStatus": "ATTENDED",
+   "outEntry": "OUT-0029",
+   "collectEntry": "IN-0030",
+   "tags": [
+    "DEF-0054",
+    "DEF-0055",
+    "DEF-0056"
+   ]
+  },
+  {
+   "no": "VIS-0022",
+   "complaint": "CMP-0022",
+   "date": "2026-10-08",
+   "techs": [
+    "Ramu"
+   ],
+   "work": "Changed 2 lenses",
+   "nextStatus": "ATTENDED",
+   "outEntry": "OUT-0030",
+   "collectEntry": "IN-0032",
+   "tags": [
+    "DEF-0057",
+    "DEF-0058"
+   ]
+  }
+ ],
+ "pieces": [
+  {
+   "tag": "DEF-0001",
+   "code": "15WATT (190MA)",
+   "company": "Wipro Lighting",
+   "batch": "B2448",
+   "pkd": "2026-03",
+   "fault": "fault: no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0001",
+   "visit": "VIS-0001",
+   "collectedOn": "2026-09-03",
+   "status": "SETTLED",
+   "batchNo": "RB-0001",
+   "outcome": "REPLACED",
+   "settledOn": "2026-10-02",
+   "entry": "IN-0003"
+  },
+  {
+   "tag": "DEF-0002",
+   "code": "15WATT (190MA)",
+   "company": "Wipro Lighting",
+   "batch": "B2448",
+   "pkd": "2026-03",
+   "fault": "fault: no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0001",
+   "visit": "VIS-0001",
+   "collectedOn": "2026-09-03",
+   "status": "SETTLED",
+   "batchNo": "RB-0001",
+   "outcome": "REPLACED",
+   "settledOn": "2026-10-02",
+   "entry": "IN-0003"
+  },
+  {
+   "tag": "DEF-0003",
+   "code": "15WATT (190MA)",
+   "company": "Wipro Lighting",
+   "batch": "B2448",
+   "pkd": "2026-03",
+   "fault": "fault: no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0001",
+   "visit": "VIS-0001",
+   "collectedOn": "2026-09-03",
+   "status": "SETTLED",
+   "batchNo": "RB-0001",
+   "outcome": "REPAIRED",
+   "settledOn": "2026-10-02",
+   "entry": "IN-0003"
+  },
+  {
+   "tag": "DEF-0004",
+   "code": "15WATT (190MA)",
+   "company": "Wipro Lighting",
+   "batch": "B2448",
+   "pkd": "2026-03",
+   "fault": "fault: no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0001",
+   "visit": "VIS-0001",
+   "collectedOn": "2026-09-03",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": "REJECTED_RETURNED",
+   "settledOn": "2026-10-02",
+   "entry": "IN-0003"
+  },
+  {
+   "tag": "DEF-0005",
+   "code": "BULKHEAD 12W",
+   "company": "Wipro Lighting",
+   "batch": "B2437",
+   "pkd": "2025-09",
+   "fault": "water ingress",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0003",
+   "visit": "VIS-0003",
+   "collectedOn": "2026-09-06",
+   "status": "SENT",
+   "batchNo": "RB-0001",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0004"
+  },
+  {
+   "tag": "DEF-0006",
+   "code": "BULKHEAD 12W",
+   "company": "Wipro Lighting",
+   "batch": "B2437",
+   "pkd": "2025-09",
+   "fault": "water ingress",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0003",
+   "visit": "VIS-0003",
+   "collectedOn": "2026-09-06",
+   "status": "SENT",
+   "batchNo": "RB-0001",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0004"
+  },
+  {
+   "tag": "DEF-0007",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Dead on arrival from last delivery",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-07",
+   "status": "IN_BATCH",
+   "batchNo": "RB-0003",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0001"
+  },
+  {
+   "tag": "DEF-0008",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Dead on arrival from last delivery",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-07",
+   "status": "IN_BATCH",
+   "batchNo": "RB-0003",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0001"
+  },
+  {
+   "tag": "DEF-0009",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Dead on arrival from last delivery",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-07",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0001"
+  },
+  {
+   "tag": "DEF-0010",
+   "code": "LG75-150-215-70E",
+   "company": "Wipro Lighting",
+   "batch": "B2608",
+   "pkd": "2025-07",
+   "fault": "burnt smell",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0004",
+   "visit": "VIS-0004",
+   "collectedOn": "2026-09-09",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0005"
+  },
+  {
+   "tag": "DEF-0011",
+   "code": "LG75-150-215-70E",
+   "company": "Wipro Lighting",
+   "batch": "B2608",
+   "pkd": "2025-07",
+   "fault": "burnt smell",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0004",
+   "visit": "VIS-0004",
+   "collectedOn": "2026-09-09",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0005"
+  },
+  {
+   "tag": "DEF-0012",
+   "code": "LH21-200-180-30S6P",
+   "company": "Wipro Lighting",
+   "batch": "B2516",
+   "pkd": "2025-01",
+   "fault": "LEDs dark",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0004",
+   "visit": "VIS-0004",
+   "collectedOn": "2026-09-09",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0005"
+  },
+  {
+   "tag": "DEF-0013",
+   "code": "FTS-KC-60-57K",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "LEDs dead, found during count",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-10",
+   "status": "SCRAPPED",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": "2026-09-27",
+   "entry": "ADJ-0001"
+  },
+  {
+   "tag": "DEF-0014",
+   "code": "FTS-KC-60-57K",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "LEDs dead, found during count",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-10",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0002"
+  },
+  {
+   "tag": "DEF-0015",
+   "code": "FTS-KC-60-57K",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "LEDs dead, found during count",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-10",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0002"
+  },
+  {
+   "tag": "DEF-0016",
+   "code": "FTS-KC-60-57K",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "LEDs dead, found during count",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-10",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0002"
+  },
+  {
+   "tag": "DEF-0017",
+   "code": "FTS-KC-60-57K",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "LEDs dead, found during count",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-10",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0002"
+  },
+  {
+   "tag": "DEF-0018",
+   "code": "EIO6006",
+   "company": "Wipro Lighting",
+   "batch": "B2536",
+   "pkd": "2025-01",
+   "fault": "no light",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0005",
+   "visit": "VIS-0005",
+   "collectedOn": "2026-09-11",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0006"
+  },
+  {
+   "tag": "DEF-0019",
+   "code": "EIO6006",
+   "company": "Wipro Lighting",
+   "batch": "B2536",
+   "pkd": "2025-01",
+   "fault": "no light",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0005",
+   "visit": "VIS-0005",
+   "collectedOn": "2026-09-11",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0006"
+  },
+  {
+   "tag": "DEF-0020",
+   "code": "MCB 16A SP",
+   "company": "Havells",
+   "batch": "",
+   "pkd": "",
+   "fault": "Does not latch",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-14",
+   "status": "SENT",
+   "batchNo": "RB-0002",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0003"
+  },
+  {
+   "tag": "DEF-0021",
+   "code": "MCB 16A SP",
+   "company": "Havells",
+   "batch": "",
+   "pkd": "",
+   "fault": "Does not latch",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-14",
+   "status": "SENT",
+   "batchNo": "RB-0002",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0003"
+  },
+  {
+   "tag": "DEF-0022",
+   "code": "WCS-IS-DA4",
+   "company": "Wipro Lighting",
+   "batch": "B2410",
+   "pkd": "2025-04",
+   "fault": "no power",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0007",
+   "visit": "VIS-0006",
+   "collectedOn": "2026-09-16",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0010"
+  },
+  {
+   "tag": "DEF-0023",
+   "code": "LG26-048-0720",
+   "company": "Wipro Lighting",
+   "batch": "B2425",
+   "pkd": "2026-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0002",
+   "visit": "VIS-0007",
+   "collectedOn": "2026-09-17",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0011"
+  },
+  {
+   "tag": "DEF-0024",
+   "code": "LG26-048-0720",
+   "company": "Wipro Lighting",
+   "batch": "B2425",
+   "pkd": "2026-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0002",
+   "visit": "VIS-0007",
+   "collectedOn": "2026-09-17",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0011"
+  },
+  {
+   "tag": "DEF-0025",
+   "code": "LG78-150-700",
+   "company": "Wipro Lighting",
+   "batch": "B2554",
+   "pkd": "2025-08",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0008",
+   "visit": "VIS-0008",
+   "collectedOn": "2026-09-18",
+   "status": "IN_BATCH",
+   "batchNo": "RB-0003",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0013"
+  },
+  {
+   "tag": "DEF-0026",
+   "code": "LG78-150-700",
+   "company": "Wipro Lighting",
+   "batch": "B2554",
+   "pkd": "2025-08",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0008",
+   "visit": "VIS-0008",
+   "collectedOn": "2026-09-18",
+   "status": "IN_BATCH",
+   "batchNo": "RB-0003",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0013"
+  },
+  {
+   "tag": "DEF-0027",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "B2484",
+   "pkd": "2026-04",
+   "fault": "flickering",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0010",
+   "visit": "VIS-0009",
+   "collectedOn": "2026-09-21",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0014"
+  },
+  {
+   "tag": "DEF-0028",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "B2484",
+   "pkd": "2026-04",
+   "fault": "flickering",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0010",
+   "visit": "VIS-0009",
+   "collectedOn": "2026-09-21",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0014"
+  },
+  {
+   "tag": "DEF-0029",
+   "code": "LG30-018-054-0300",
+   "company": "Wipro Lighting",
+   "batch": "B2484",
+   "pkd": "2026-04",
+   "fault": "flickering",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0010",
+   "visit": "VIS-0009",
+   "collectedOn": "2026-09-21",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0014"
+  },
+  {
+   "tag": "DEF-0030",
+   "code": "WPWG-5050-15SIP",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Strip cut, half dark",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-22",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0004"
+  },
+  {
+   "tag": "DEF-0031",
+   "code": "WPWG-5050-15SIP",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Strip cut, half dark",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-22",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0004"
+  },
+  {
+   "tag": "DEF-0032",
+   "code": "WPWG-5050-15SIP",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Strip cut, half dark",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-09-22",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0004"
+  },
+  {
+   "tag": "DEF-0033",
+   "code": "LG76-150-700FH",
+   "company": "Wipro Lighting",
+   "batch": "B2533",
+   "pkd": "2025-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0011",
+   "visit": "VIS-0011",
+   "collectedOn": "2026-09-23",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0016"
+  },
+  {
+   "tag": "DEF-0034",
+   "code": "LG76-150-700FH",
+   "company": "Wipro Lighting",
+   "batch": "B2533",
+   "pkd": "2025-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0011",
+   "visit": "VIS-0011",
+   "collectedOn": "2026-09-23",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0016"
+  },
+  {
+   "tag": "DEF-0035",
+   "code": "SSE-DRV-24W",
+   "company": "Sri Sai Electricals",
+   "batch": "B2518",
+   "pkd": "2026-07",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0013",
+   "visit": "VIS-0012",
+   "collectedOn": "2026-09-26",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0018"
+  },
+  {
+   "tag": "DEF-0036",
+   "code": "SSE-DRV-24W",
+   "company": "Sri Sai Electricals",
+   "batch": "B2518",
+   "pkd": "2026-07",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0013",
+   "visit": "VIS-0012",
+   "collectedOn": "2026-09-26",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0018"
+  },
+  {
+   "tag": "DEF-0037",
+   "code": "LG66-036-036-900S",
+   "company": "Wipro Lighting",
+   "batch": "B2528",
+   "pkd": "2025-02",
+   "fault": "intermittent",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0012",
+   "visit": "VIS-0013",
+   "collectedOn": "2026-09-27",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0019"
+  },
+  {
+   "tag": "DEF-0038",
+   "code": "LG66-036-036-900S",
+   "company": "Wipro Lighting",
+   "batch": "B2528",
+   "pkd": "2025-02",
+   "fault": "intermittent",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0012",
+   "visit": "VIS-0013",
+   "collectedOn": "2026-09-27",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0019"
+  },
+  {
+   "tag": "DEF-0039",
+   "code": "LG76-200-700F",
+   "company": "Wipro Lighting",
+   "batch": "B2542",
+   "pkd": "2025-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0014",
+   "visit": "VIS-0014",
+   "collectedOn": "2026-09-27",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0020"
+  },
+  {
+   "tag": "DEF-0040",
+   "code": "LG76-200-700F",
+   "company": "Wipro Lighting",
+   "batch": "B2542",
+   "pkd": "2025-05",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0014",
+   "visit": "VIS-0014",
+   "collectedOn": "2026-09-27",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0020"
+  },
+  {
+   "tag": "DEF-0041",
+   "code": "MCB 16A SP",
+   "company": "Havells",
+   "batch": "B2481",
+   "pkd": "2025-09",
+   "fault": "trips at low load",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0015",
+   "visit": "VIS-0015",
+   "collectedOn": "2026-09-29",
+   "status": "SENT",
+   "batchNo": "RB-0002",
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0021"
+  },
+  {
+   "tag": "DEF-0042",
+   "code": "MCB 16A SP",
+   "company": "Havells",
+   "batch": "B2481",
+   "pkd": "2025-09",
+   "fault": "trips at low load",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0015",
+   "visit": "VIS-0015",
+   "collectedOn": "2026-09-29",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0021"
+  },
+  {
+   "tag": "DEF-0043",
+   "code": "MCB 16A SP",
+   "company": "Havells",
+   "batch": "B2481",
+   "pkd": "2025-09",
+   "fault": "trips at low load",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0015",
+   "visit": "VIS-0015",
+   "collectedOn": "2026-09-29",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0021"
+  },
+  {
+   "tag": "DEF-0044",
+   "code": "HV-BATTEN-20W",
+   "company": "Havells",
+   "batch": "B2474",
+   "pkd": "2025-02",
+   "fault": "no light",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0017",
+   "visit": "VIS-0017",
+   "collectedOn": "2026-10-02",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0023"
+  },
+  {
+   "tag": "DEF-0045",
+   "code": "HV-BATTEN-20W",
+   "company": "Havells",
+   "batch": "B2474",
+   "pkd": "2025-02",
+   "fault": "no light",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0017",
+   "visit": "VIS-0017",
+   "collectedOn": "2026-10-02",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0023"
+  },
+  {
+   "tag": "DEF-0046",
+   "code": "LG83-072-103-0700",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "No output on bench test",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-10-03",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0005"
+  },
+  {
+   "tag": "DEF-0047",
+   "code": "LG83-072-103-0700",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "No output on bench test",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-10-03",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0005"
+  },
+  {
+   "tag": "DEF-0048",
+   "code": "EIO9326",
+   "company": "Wipro Lighting",
+   "batch": "B2545",
+   "pkd": "2025-07",
+   "fault": "LEDs burnt",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0018",
+   "visit": "VIS-0018",
+   "collectedOn": "2026-10-04",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0027"
+  },
+  {
+   "tag": "DEF-0049",
+   "code": "EIO9326",
+   "company": "Wipro Lighting",
+   "batch": "B2545",
+   "pkd": "2025-07",
+   "fault": "LEDs burnt",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0018",
+   "visit": "VIS-0018",
+   "collectedOn": "2026-10-04",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0027"
+  },
+  {
+   "tag": "DEF-0050",
+   "code": "EIO9326",
+   "company": "Wipro Lighting",
+   "batch": "B2545",
+   "pkd": "2025-07",
+   "fault": "LEDs burnt",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0018",
+   "visit": "VIS-0018",
+   "collectedOn": "2026-10-04",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0027"
+  },
+  {
+   "tag": "DEF-0051",
+   "code": "SSE-DRV-24W",
+   "company": "Sri Sai Electricals",
+   "batch": "B2428",
+   "pkd": "2026-07",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0019",
+   "visit": "VIS-0019",
+   "collectedOn": "2026-10-05",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0028"
+  },
+  {
+   "tag": "DEF-0052",
+   "code": "SSE-DRV-24W",
+   "company": "Sri Sai Electricals",
+   "batch": "B2428",
+   "pkd": "2026-07",
+   "fault": "no output",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0019",
+   "visit": "VIS-0019",
+   "collectedOn": "2026-10-05",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0028"
+  },
+  {
+   "tag": "DEF-0053",
+   "code": "EIO8437",
+   "company": "Wipro Lighting",
+   "batch": "B2418",
+   "pkd": "2025-01",
+   "fault": "no light",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0020",
+   "visit": "VIS-0020",
+   "collectedOn": "2026-10-06",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0029"
+  },
+  {
+   "tag": "DEF-0054",
+   "code": "FX-MODSW-6A",
+   "company": "Finolex Cables",
+   "batch": "B2455",
+   "pkd": "2025-01",
+   "fault": "burnt contacts",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0021",
+   "visit": "VIS-0021",
+   "collectedOn": "2026-10-07",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0030"
+  },
+  {
+   "tag": "DEF-0055",
+   "code": "FX-MODSW-6A",
+   "company": "Finolex Cables",
+   "batch": "B2455",
+   "pkd": "2025-01",
+   "fault": "burnt contacts",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0021",
+   "visit": "VIS-0021",
+   "collectedOn": "2026-10-07",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0030"
+  },
+  {
+   "tag": "DEF-0056",
+   "code": "FX-MODSW-6A",
+   "company": "Finolex Cables",
+   "batch": "B2455",
+   "pkd": "2025-01",
+   "fault": "burnt contacts",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0021",
+   "visit": "VIS-0021",
+   "collectedOn": "2026-10-07",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0030"
+  },
+  {
+   "tag": "DEF-0057",
+   "code": "LENS",
+   "company": "Wipro Lighting",
+   "batch": "B2521",
+   "pkd": "2026-07",
+   "fault": "cracked",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0022",
+   "visit": "VIS-0022",
+   "collectedOn": "2026-10-08",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0032"
+  },
+  {
+   "tag": "DEF-0058",
+   "code": "LENS",
+   "company": "Wipro Lighting",
+   "batch": "B2521",
+   "pkd": "2026-07",
+   "fault": "cracked",
+   "source": "SITE_VISIT",
+   "complaint": "CMP-0022",
+   "visit": "VIS-0022",
+   "collectedOn": "2026-10-08",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "IN-0032"
+  },
+  {
+   "tag": "DEF-0059",
+   "code": "LG76-200-700F",
+   "company": "Wipro Lighting",
+   "batch": "",
+   "pkd": "",
+   "fault": "Burnt smell",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-10-09",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0006"
+  },
+  {
+   "tag": "DEF-0060",
+   "code": "HV-BATTEN-20W",
+   "company": "Havells",
+   "batch": "",
+   "pkd": "",
+   "fault": "Cracked diffuser, LEDs off",
+   "source": "FOUND_IN_STOCK",
+   "complaint": null,
+   "visit": null,
+   "collectedOn": "2026-10-09",
+   "status": "IN_STORE",
+   "batchNo": null,
+   "outcome": null,
+   "settledOn": null,
+   "entry": "TRF-0007"
+  }
+ ],
+ "pieceEvents": [
+  {
+   "tag": "DEF-0001",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Collected at site (CMP-0001)"
+  },
+  {
+   "tag": "DEF-0002",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Collected at site (CMP-0001)"
+  },
+  {
+   "tag": "DEF-0003",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Collected at site (CMP-0001)"
+  },
+  {
+   "tag": "DEF-0004",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-03",
+   "by": "Office",
+   "note": "Collected at site (CMP-0001)"
+  },
+  {
+   "tag": "DEF-0005",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-06",
+   "by": "Office",
+   "note": "Collected at site (CMP-0003)"
+  },
+  {
+   "tag": "DEF-0006",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-06",
+   "by": "Office",
+   "note": "Collected at site (CMP-0003)"
+  },
+  {
+   "tag": "DEF-0007",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-07",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0008",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-07",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0009",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-07",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0010",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Collected at site (CMP-0004)"
+  },
+  {
+   "tag": "DEF-0011",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Collected at site (CMP-0004)"
+  },
+  {
+   "tag": "DEF-0012",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-09",
+   "by": "Office",
+   "note": "Collected at site (CMP-0004)"
+  },
+  {
+   "tag": "DEF-0013",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-10",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0014",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-10",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0015",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-10",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0016",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-10",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0017",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-10",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0018",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-11",
+   "by": "Office",
+   "note": "Collected at site (CMP-0005)"
+  },
+  {
+   "tag": "DEF-0019",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-11",
+   "by": "Office",
+   "note": "Collected at site (CMP-0005)"
+  },
+  {
+   "tag": "DEF-0020",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-14",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0021",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-14",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0022",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Collected at site (CMP-0007)"
+  },
+  {
+   "tag": "DEF-0001",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0002",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0003",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0004",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0005",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0006",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-09-16",
+   "by": "Office",
+   "note": "Added to RB-0001"
+  },
+  {
+   "tag": "DEF-0023",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-17",
+   "by": "Office",
+   "note": "Collected at site (CMP-0002)"
+  },
+  {
+   "tag": "DEF-0024",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-17",
+   "by": "Office",
+   "note": "Collected at site (CMP-0002)"
+  },
+  {
+   "tag": "DEF-0025",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Collected at site (CMP-0008)"
+  },
+  {
+   "tag": "DEF-0026",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Collected at site (CMP-0008)"
+  },
+  {
+   "tag": "DEF-0001",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0002",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0003",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0004",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0005",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0006",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-09-18",
+   "by": "Office",
+   "note": "Dispatched with RB-0001 (DTDC D51243817)"
+  },
+  {
+   "tag": "DEF-0027",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-21",
+   "by": "Office",
+   "note": "Collected at site (CMP-0010)"
+  },
+  {
+   "tag": "DEF-0028",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-21",
+   "by": "Office",
+   "note": "Collected at site (CMP-0010)"
+  },
+  {
+   "tag": "DEF-0029",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-21",
+   "by": "Office",
+   "note": "Collected at site (CMP-0010)"
+  },
+  {
+   "tag": "DEF-0030",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-22",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0031",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-22",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0032",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-22",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0033",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-23",
+   "by": "Office",
+   "note": "Collected at site (CMP-0011)"
+  },
+  {
+   "tag": "DEF-0034",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-23",
+   "by": "Office",
+   "note": "Collected at site (CMP-0011)"
+  },
+  {
+   "tag": "DEF-0035",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "Collected at site (CMP-0013)"
+  },
+  {
+   "tag": "DEF-0036",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-26",
+   "by": "Office",
+   "note": "Collected at site (CMP-0013)"
+  },
+  {
+   "tag": "DEF-0037",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Collected at site (CMP-0012)"
+  },
+  {
+   "tag": "DEF-0038",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Collected at site (CMP-0012)"
+  },
+  {
+   "tag": "DEF-0039",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Collected at site (CMP-0014)"
+  },
+  {
+   "tag": "DEF-0040",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Collected at site (CMP-0014)"
+  },
+  {
+   "tag": "DEF-0013",
+   "from": "IN_STORE",
+   "to": "SCRAPPED",
+   "at": "2026-09-27",
+   "by": "Office",
+   "note": "Physically broken, not worth returning"
+  },
+  {
+   "tag": "DEF-0041",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-29",
+   "by": "Office",
+   "note": "Collected at site (CMP-0015)"
+  },
+  {
+   "tag": "DEF-0042",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-29",
+   "by": "Office",
+   "note": "Collected at site (CMP-0015)"
+  },
+  {
+   "tag": "DEF-0043",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-09-29",
+   "by": "Office",
+   "note": "Collected at site (CMP-0015)"
+  },
+  {
+   "tag": "DEF-0044",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "Collected at site (CMP-0017)"
+  },
+  {
+   "tag": "DEF-0045",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "Collected at site (CMP-0017)"
+  },
+  {
+   "tag": "DEF-0001",
+   "from": "SENT",
+   "to": "SETTLED",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "RB-0001: Replaced"
+  },
+  {
+   "tag": "DEF-0002",
+   "from": "SENT",
+   "to": "SETTLED",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "RB-0001: Replaced"
+  },
+  {
+   "tag": "DEF-0003",
+   "from": "SENT",
+   "to": "SETTLED",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "RB-0001: Repaired"
+  },
+  {
+   "tag": "DEF-0004",
+   "from": "SENT",
+   "to": "IN_STORE",
+   "at": "2026-10-02",
+   "by": "Office",
+   "note": "RB-0001: Rejected returned"
+  },
+  {
+   "tag": "DEF-0046",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0047",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0020",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Added to RB-0002"
+  },
+  {
+   "tag": "DEF-0021",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Added to RB-0002"
+  },
+  {
+   "tag": "DEF-0041",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-03",
+   "by": "Office",
+   "note": "Added to RB-0002"
+  },
+  {
+   "tag": "DEF-0048",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-04",
+   "by": "Office",
+   "note": "Collected at site (CMP-0018)"
+  },
+  {
+   "tag": "DEF-0049",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-04",
+   "by": "Office",
+   "note": "Collected at site (CMP-0018)"
+  },
+  {
+   "tag": "DEF-0050",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-04",
+   "by": "Office",
+   "note": "Collected at site (CMP-0018)"
+  },
+  {
+   "tag": "DEF-0051",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-05",
+   "by": "Office",
+   "note": "Collected at site (CMP-0019)"
+  },
+  {
+   "tag": "DEF-0052",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-05",
+   "by": "Office",
+   "note": "Collected at site (CMP-0019)"
+  },
+  {
+   "tag": "DEF-0053",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Collected at site (CMP-0020)"
+  },
+  {
+   "tag": "DEF-0020",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Dispatched with RB-0002 (Professional Couriers PC-7781203)"
+  },
+  {
+   "tag": "DEF-0021",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Dispatched with RB-0002 (Professional Couriers PC-7781203)"
+  },
+  {
+   "tag": "DEF-0041",
+   "from": "IN_BATCH",
+   "to": "SENT",
+   "at": "2026-10-06",
+   "by": "Office",
+   "note": "Dispatched with RB-0002 (Professional Couriers PC-7781203)"
+  },
+  {
+   "tag": "DEF-0054",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-07",
+   "by": "Office",
+   "note": "Collected at site (CMP-0021)"
+  },
+  {
+   "tag": "DEF-0055",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-07",
+   "by": "Office",
+   "note": "Collected at site (CMP-0021)"
+  },
+  {
+   "tag": "DEF-0056",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-07",
+   "by": "Office",
+   "note": "Collected at site (CMP-0021)"
+  },
+  {
+   "tag": "DEF-0057",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-08",
+   "by": "Office",
+   "note": "Collected at site (CMP-0022)"
+  },
+  {
+   "tag": "DEF-0058",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-08",
+   "by": "Office",
+   "note": "Collected at site (CMP-0022)"
+  },
+  {
+   "tag": "DEF-0059",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-09",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0060",
+   "from": null,
+   "to": "IN_STORE",
+   "at": "2026-10-09",
+   "by": "Office",
+   "note": "Marked defective from stock"
+  },
+  {
+   "tag": "DEF-0025",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-10",
+   "by": "Office",
+   "note": "Added to RB-0003"
+  },
+  {
+   "tag": "DEF-0026",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-10",
+   "by": "Office",
+   "note": "Added to RB-0003"
+  },
+  {
+   "tag": "DEF-0007",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-10",
+   "by": "Office",
+   "note": "Added to RB-0003"
+  },
+  {
+   "tag": "DEF-0008",
+   "from": "IN_STORE",
+   "to": "IN_BATCH",
+   "at": "2026-10-10",
+   "by": "Office",
+   "note": "Added to RB-0003"
+  }
+ ],
+ "batches": [
+  {
+   "no": "RB-0001",
+   "company": "Wipro Lighting",
+   "createdOn": "2026-09-16",
+   "status": "DISPATCHED",
+   "dispatchedOn": "2026-09-18",
+   "docket": "D51243817",
+   "courier": "DTDC",
+   "note": "Drivers from PNB and bulkheads from Anna Olea",
+   "dispatchEntry": "OUT-0009",
+   "lines": [
+    {
+     "tag": "DEF-0001",
+     "outcome": "REPLACED",
+     "settledOn": "2026-10-02",
+     "toLoc": "Vizag Office",
+     "entry": "IN-0024"
+    },
+    {
+     "tag": "DEF-0002",
+     "outcome": "REPLACED",
+     "settledOn": "2026-10-02",
+     "toLoc": "Vizag Office",
+     "entry": "IN-0024"
+    },
+    {
+     "tag": "DEF-0003",
+     "outcome": "REPAIRED",
+     "settledOn": "2026-10-02",
+     "toLoc": "Vizag Office",
+     "entry": "IN-0025"
+    },
+    {
+     "tag": "DEF-0004",
+     "outcome": "REJECTED_RETURNED",
+     "settledOn": "2026-10-02",
+     "toLoc": null,
+     "entry": "IN-0026"
+    },
+    {
+     "tag": "DEF-0005",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0006",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    }
+   ]
+  },
+  {
+   "no": "RB-0002",
+   "company": "Havells",
+   "createdOn": "2026-10-03",
+   "status": "DISPATCHED",
+   "dispatchedOn": "2026-10-06",
+   "docket": "PC-7781203",
+   "courier": "Professional Couriers",
+   "note": "MCBs for warranty claim",
+   "dispatchEntry": "OUT-0027",
+   "lines": [
+    {
+     "tag": "DEF-0020",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0021",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0041",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    }
+   ]
+  },
+  {
+   "no": "RB-0003",
+   "company": "Wipro Lighting",
+   "createdOn": "2026-10-10",
+   "status": "DRAFT",
+   "dispatchedOn": null,
+   "docket": "",
+   "courier": "",
+   "note": "Next Wipro return",
+   "dispatchEntry": null,
+   "lines": [
+    {
+     "tag": "DEF-0025",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0026",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0007",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    },
+    {
+     "tag": "DEF-0008",
+     "outcome": null,
+     "settledOn": null,
+     "toLoc": null,
+     "entry": null
+    }
+   ]
+  }
+ ]
+}
