@@ -13,12 +13,15 @@ TAB_LABELS = {"open": "Open", **{s: Status(s).label for s in Status.values}, "al
 # Link target for the dashboard's "Closed / not covered" tile: Closed and Not covered together. It is not a
 # tab of its own (the tab row is TABS), so nothing is highlighted while it is on.
 FINISHED = "finished"
+# closed_since only narrows these tabs; on the open tabs it would hide everything.
+CLOSED_SINCE_TABS = (FINISHED, Status.CLOSED, Status.NOT_COVERED, "all")
+LATE_DAYS = 15  # an open complaint older than this many days is red (list badge, age bar, pending export)
 # (key, label, from days, to days or None)
 AGE_BUCKETS = [
     ("0-2", "0–2 days", 0, 2),
     ("3-7", "3–7 days", 3, 7),
-    ("8-15", "8–15 days", 8, 15),
-    ("15+", "Over 15 days", 16, None),
+    ("8-15", "8–15 days", 8, LATE_DAYS),
+    ("15+", f"Over {LATE_DAYS} days", LATE_DAYS + 1, None),
 ]
 
 

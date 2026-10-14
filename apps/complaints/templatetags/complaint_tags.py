@@ -3,6 +3,7 @@ from django.utils.html import format_html
 
 from apps.core.templatetags.core_tags import st_badge
 
+from ..filters import LATE_DAYS
 from ..models import Priority, Status
 from ..phones import format_phone
 
@@ -47,8 +48,8 @@ def priority_badge(priority):
 
 @register.simple_tag
 def age_badge(days, is_open):
-    """'12 d', or a red badge when an open complaint is older than 15 days."""
-    if is_open and days > 15:
+    """'12 d', or a red badge when an open complaint is older than LATE_DAYS days."""
+    if is_open and days > LATE_DAYS:
         return format_html('<span class="badge st st-alert">{} d</span>', days)
     return f"{days} d"
 

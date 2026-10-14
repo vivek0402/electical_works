@@ -1,5 +1,5 @@
 {# Bar list: one hue, value labels, red only when the row needs attention. Needs `rows` [{label, n, href, alert}] and `top`. #}
 <div class="list-group list-group-flush">{% for r in rows %}<a class="list-group-item list-group-item-action py-2" href="{{ r.href }}">
-  <div class="d-flex align-items-center gap-2 mb-1"><span class="{% if r.alert %}text-danger fw-medium{% endif %}">{% if r.alert %}<i class="ti ti-alert-triangle me-1"></i>{% endif %}{{ r.label }}</span><span class="ms-auto fw-bold num">{{ r.n }}</span></div>
+  <div class="d-flex align-items-center gap-2 mb-1"><span class="{% if r.alert %}text-danger fw-medium{% endif %}">{% if r.alert %}<i class="ti ti-alert-triangle me-1" aria-hidden="true"></i>{% endif %}{{ r.label }}</span><span class="ms-auto fw-bold num">{{ r.n }}</span></div>
   <div class="progress progress-sm" aria-hidden="true"><div class="progress-bar {% if r.alert %}bg-red{% else %}bar-brand{% endif %}" style="width:{% widthratio r.n top 100 %}%"></div></div></a>
 {% empty %}<div class="list-group-item text-secondary">Nothing open.</div>{% endfor %}</div>

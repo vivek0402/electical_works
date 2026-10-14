@@ -20,7 +20,7 @@ from apps.inventory.models import Company, StockEntry
 from apps.inventory.services import StockError
 
 from . import selectors, services
-from .filters import AGE_BUCKETS, FINISHED, complaint_filters
+from .filters import AGE_BUCKETS, CLOSED_SINCE_TABS, FINISHED, complaint_filters
 from .forms import ComplaintForm, SiteForm, VisitForm
 from .models import TRANSITIONS, Complaint, NotCoveredReason, Priority, Status, Technician, Visit
 from .services import ComplaintError
@@ -393,6 +393,7 @@ def complaint_list(request):
         {
             "f": f,
             "finished": f.tab == FINISHED,
+            "since_active": bool(f.closed_since and f.tab in CLOSED_SINCE_TABS),
             "table": table,
             "tabs": tabs,
             "companies": Company.objects.filter(Q(is_active=True) | Q(complaints__isnull=False)).distinct(),

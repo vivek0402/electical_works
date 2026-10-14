@@ -7,7 +7,7 @@ from apps.accounts.roles import OFFICE
 from apps.core.excel import Column, workbook_response
 
 from . import selectors
-from .filters import AGE_BUCKETS, FINISHED, TAB_LABELS, complaint_filters
+from .filters import AGE_BUCKETS, FINISHED, LATE_DAYS, TAB_LABELS, complaint_filters
 from .phones import format_phone
 
 COLUMNS = [
@@ -29,7 +29,6 @@ COLUMNS = [
     Column("Last visit", "date"),
 ]
 AGE_COLUMN = 13  # highlighted red when an open complaint is older than 15 days
-LATE_DAYS = 15  # the same limit as the red age badge on the list
 
 
 def _who(request):

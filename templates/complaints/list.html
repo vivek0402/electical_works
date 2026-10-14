@@ -7,9 +7,9 @@
 {% block content %}
 <div class="card">
   <div class="card-header pb-0 border-0"><ul class="nav nav-tabs card-header-tabs status-tabs mb-0">{% for key, label, n in tabs %}
-    <li class="nav-item"><a href="{% url_with tab=key page=None %}" class="nav-link{% if f.tab == key %} active{% endif %}">{{ label }} <span class="badge {% if f.tab == key %}bg-primary text-white{% else %}bg-secondary-lt{% endif %} ms-1">{{ n }}</span></a></li>{% endfor %}</ul></div>
+    <li class="nav-item"><a href="{% url_with tab=key page=None closed_since=None %}" class="nav-link{% if f.tab == key %} active{% endif %}"{% if f.tab == key %} aria-current="page"{% endif %}>{{ label }} <span class="badge {% if f.tab == key %}bg-primary text-white{% else %}bg-secondary-lt{% endif %} ms-1">{{ n }}</span></a></li>{% endfor %}</ul></div>
   <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end"><input type="hidden" name="tab" value="{{ f.tab }}">
-    {% if f.closed_since %}<input type="hidden" name="closed_since" value="{{ f.closed_since|date:'Y-m-d' }}">{% endif %}
+    {% if since_active %}<input type="hidden" name="closed_since" value="{{ f.closed_since|date:'Y-m-d' }}">{% endif %}
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-co">Company</label><select id="cf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
       {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
     <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-city">City</label><select id="cf-city" name="city" class="form-select" onchange="this.form.submit()"><option value="">All cities</option>
@@ -20,8 +20,8 @@
       {% for key, label, low, high in ages %}<option value="{{ key }}" {% if f.age == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
     <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="cf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
       <input id="cf-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Complaint no., company ref, site, fault"></div></div>
-    {% if finished or f.closed_since %}<div class="col-12 pb-1"><span class="badge st st-done"><i class="ti ti-lock"></i>{% if finished %}Closed or not covered{% else %}Closed or not covered since{% endif %}{% if f.closed_since %} after {{ f.closed_since|date }}{% endif %}</span>
-      <a href="{% url 'complaints' %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off"></i> Clear filters</a></div>{% endif %}
+    {% if finished or since_active %}<div class="col-12 pb-1"><span class="badge st st-done"><i class="ti ti-lock" aria-hidden="true"></i>Closed or not covered{% if since_active %} after {{ f.closed_since|date }}{% endif %}</span>
+      <a href="{% url 'complaints' %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off" aria-hidden="true"></i> Clear filters</a></div>{% endif %}
   </form></div>
   <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
     <thead><tr>{% sort_th "no" "Complaint" %}{% sort_th "reported" "Reported" %}{% sort_th "site" "Site" %}{% sort_th "company" "Company" %}<th>Fault</th>{% sort_th "techs" "Technicians" %}{% sort_th "priority" "Priority" %}{% sort_th "status" "Status" %}{% sort_th "age" "Age" True %}</tr></thead>

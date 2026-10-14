@@ -16,6 +16,7 @@ from tests.factories import make_complaint, make_site, make_tech
 
 pytestmark = pytest.mark.django_db
 LIST = "/complaints/list/"
+MAX_DASHBOARD, MAX_LIST, MAX_EXPORT = 10, 11, 7  # measured + 1
 LINK = r'href="/complaints/(CMP-\d{4})/"'
 
 
@@ -156,6 +157,83 @@ def test_dashboard_cities_group_ignoring_case(office_client, office_user):
     assert len(re.findall(LINK, office_client.get(cities[0]["href"]).content.decode())) == 2
 
 
+def test_open_tab_link_from_the_finished_view_lists_open_complaints(office_client, several):
+    since = (today() - timedelta(days=30)).isoformat()
+    html = office_client.get(f"{LIST}?tab=finished&closed_since={since}").content.decode()
+    assert re.findall(LINK, html) == ["CMP-0003"]
+    assert "Closed or not covered after" in html
+    open_href = re.search(r'href="([^"]+)" class="nav-link"[^>]*>Open ', html).group(1).replace("&amp;", "&")
+    assert "closed_since" not in open_href
+    assert numbers(office_client, open_href.removeprefix(LIST)) == ["CMP-0002", "CMP-0001"]
+    # even a hand-made URL: closed_since never hides open complaints
+    assert numbers(office_client, f"?tab=open&closed_since={since}") == ["CMP-0002", "CMP-0001"]
+
+
+def test_closed_since_with_the_closed_and_all_tabs(office_client, office_user, several):
+    old = make_complaint(office_user, reported_on=ago(60))
+    finish(old, office_user, Status.CLOSED, 59, 58, 40)
+    new = make_complaint(office_user, reported_on=ago(10))
+    finish(new, office_user, Status.CLOSED, 9, 8, 7)
+    since = (today() - timedelta(days=30)).isoformat()
+    assert numbers(office_client, f"?tab=CLOSED&closed_since={since}") == ["CMP-0005"]
+    assert numbers(office_client, "?tab=CLOSED") == ["CMP-0005", "CMP-0004"]
+    assert sorted(numbers(office_client, f"?tab=finished&closed_since={since}")) == ["CMP-0003", "CMP-0005"]
+    # "all" keeps open complaints out of the way only by the date: the open ones have no closed date
+    assert numbers(office_client, f"?tab=all&closed_since={since}") == ["CMP-0003", "CMP-0005"]
+
+
+def test_city_dropdown_and_dashboard_share_one_grouping(office_client, office_user):
+    make_complaint(office_user, site=make_site("A", "Vizag"))
+    make_complaint(office_user, site=make_site("B", "vizag"))
+    assert selectors.cities() == ["Vizag"]
+    html = office_client.get(LIST).content.decode()
+    assert len(re.findall(r'<option value="[Vv]izag"', html)) == 1
+    assert selectors.group_cities(["Vizag", "vizag", "Guntur"]) == [
+        {"label": "Vizag", "n": 2},
+        {"label": "Guntur", "n": 1},
+    ]
+
+
+def test_reopened_complaint_age_runs_to_today_and_awaiting_days_stay(office_client, office_user, admin_user):
+    from apps.complaints.services import reopen
+
+    c = make_complaint(office_user, reported_on=ago(20))
+    change_status(complaint=c, to=Status.ATTENDED, user=office_user, at=ago(19))
+    change_status(complaint=c, to=Status.AWAITING_MATERIAL, user=office_user, at=ago(18))
+    change_status(complaint=c, to=Status.RESOLVED, user=office_user, at=ago(12))  # 6 days waiting
+    change_status(complaint=c, to=Status.CLOSED, user=office_user, at=ago(10))
+    found = selectors.complaint_qs().get(pk=c.pk)
+    assert (selectors.age_days(found, today()), selectors.awaiting_days(found, today())) == (10, 6)
+    reopen(complaint=c, user=admin_user, note="Customer called again", at=ago(1))
+    found = selectors.complaint_qs().get(pk=c.pk)
+    assert (selectors.age_days(found, today()), selectors.awaiting_days(found, today())) == (20, 6)
+
+
+def test_search_matches_contact_name_and_phone_digits(office_client, office_user):
+    make_complaint(office_user, contact_name="Mr Subba Rao", phone="9848012345")
+    make_complaint(office_user, contact_name="Other", phone="9000011111")
+    assert numbers(office_client, "?q=subba") == ["CMP-0001"]
+    assert numbers(office_client, "?q=98480") == ["CMP-0001"]
+    assert numbers(office_client, "?q=98480%2012345") == ["CMP-0001"]
+    assert numbers(office_client, "?q=0891") == []  # looks like a phone, matches none
+
+
+def test_late_days_is_one_constant():
+    from apps.complaints.filters import AGE_BUCKETS, LATE_DAYS
+
+    assert LATE_DAYS == 15 and AGE_BUCKETS[-2][3] == LATE_DAYS and AGE_BUCKETS[-1][2] == LATE_DAYS + 1
+
+
+def test_dashboard_open_rows_skip_the_events_query(office_user, several, django_assert_num_queries):
+    # open complaints: one query for them, one for technicians; no events query
+    with django_assert_num_queries(2):
+        rows = selectors.open_rows(today())
+    assert len(rows) == 2 and rows[0]["awaiting"] is None
+    assert selectors.status_counts()["NOT_ATTENDED"] == 2
+    assert [a["n"] for a in selectors.age_counts(rows)] == [1, 0, 0, 1]
+    assert selectors.closed_since_count(today() - timedelta(days=30)) == 1
+
+
 def test_dashboard_empty_state(office_client):
     html = office_client.get("/complaints/").content.decode()
     assert html.count("Nothing open.") == 3 and "0 open" in html
@@ -220,13 +298,13 @@ def test_nav_links_complaints(office_client):
 def test_query_counts_are_bounded(office_client, office_user, several, django_assert_max_num_queries):
     for n in range(12):  # more rows must not mean more queries
         make_complaint(office_user, reported_on=ago(n), technicians=[make_tech(f"Tech {n}")])
-    with django_assert_max_num_queries(14):
+    with django_assert_max_num_queries(MAX_DASHBOARD):
         assert office_client.get("/complaints/").status_code == 200
-    with django_assert_max_num_queries(14):
+    with django_assert_max_num_queries(MAX_LIST):
         assert office_client.get(LIST + "?tab=all&sort=age").status_code == 200
-    with django_assert_max_num_queries(10):
+    with django_assert_max_num_queries(MAX_EXPORT):
         assert office_client.get("/complaints/export/?tab=all").status_code == 200
-    with django_assert_max_num_queries(10):
+    with django_assert_max_num_queries(MAX_EXPORT):
         assert office_client.get("/complaints/pending/export/").status_code == 200
 
 
