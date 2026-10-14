@@ -56,6 +56,9 @@ ACTIVE_ALIASES = {
     "piece_detail": "defective_pieces",
     "complaint_detail": "complaints",
     "visit_new": "complaints",
+    "site_detail": "sites",
+    "site_edit": "sites",
+    "technician_edit": "technicians",
 }
 
 

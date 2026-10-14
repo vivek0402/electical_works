@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load static core_tags complaint_tags %}
+{% block title %}Sites{% endblock %}
+{% block pretitle %}Complaints{% endblock %}
+{% block page_title %}Sites{% endblock %}
+{% block actions %}<button type="button" class="btn btn-primary" id="new-site-btn"><i class="ti ti-plus"></i> Add site</button>{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">
+    <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="sf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+      <input id="sf-q" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Site, city, contact, phone"></div></div>
+    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="sf-city">City</label><select id="sf-city" name="city" class="form-select" onchange="this.form.submit()"><option value="">All cities</option>
+      {% for c in cities %}<option value="{{ c }}" {% if city|lower == c|lower %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  </form></div>
+  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+    <thead><tr>{% sort_th "name" "Site" %}{% sort_th "city" "City" %}{% sort_th "contact" "Contact" %}<th>Phone</th>{% sort_th "open" "Open complaints" True %}{% sort_th "total" "All complaints" True %}{% sort_th "last" "Last complaint" %}</tr></thead>
+    <tbody>{% for s in table.page %}<tr class="{% if not s.is_active %}text-secondary{% endif %}">
+      <td><a href="{% url 'site_detail' s.pk %}" class="fw-medium">{{ s.name }}</a>{% if not s.is_active %} <span class="badge st st-done"><i class="ti ti-eye-off" aria-hidden="true"></i>Hidden</span>{% endif %}</td><td>{{ s.city }}</td><td>{{ s.contact_name }}</td>
+      <td class="nowrap">{% if s.phone %}<a href="tel:{{ s.phone }}">{{ s.phone|phone_display }}</a>{% endif %}</td><td class="num">{% if s.n_open %}<b>{{ s.n_open }}</b>{% else %}{{ s.n_open|qty }}{% endif %}</td><td class="num">{{ s.n_all }}</td><td class="nowrap">{{ s.last|date }}</td></tr>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No sites match.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "core/_pagination.html" %}
+</div>
+{% include "complaints/_site_modal.html" %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/site-picker.js' %}"></script>{% endblock %}

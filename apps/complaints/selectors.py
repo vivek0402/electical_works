@@ -9,7 +9,7 @@ from django.db.models import Count, Max, Prefetch, Q
 from apps.defectives.models import DefectivePiece
 
 from .filters import AGE_BUCKETS, CLOSED_SINCE_TABS, FINISHED, TAB_LABELS, TABS
-from .models import FINISHED_STATUSES, OPEN_STATUSES, Complaint, ComplaintEvent, Site, Status
+from .models import FINISHED_STATUSES, OPEN_STATUSES, Complaint, ComplaintEvent, Site, Status, Technician
 from .phones import format_phone
 
 
@@ -206,3 +206,37 @@ def dashboard(today):
         "cities": cities,
         "cities_top": max([c["n"] for c in cities] + [1]),
     }
+
+
+def site_rows(q="", city=""):
+    """Sites (hidden ones too) with their open and total complaint counts and the last reported date.
+    q matches name, city, contact and phone (typed digits too: "98496 69594" finds 9849669594)."""
+    sites = Site.objects.annotate(
+        n_open=Count("complaints", filter=Q(complaints__status__in=OPEN_STATUSES)),
+        n_all=Count("complaints"),
+        last=Max("complaints__reported_on"),
+    )
+    if city:
+        sites = sites.filter(city__iexact=city)
+    if q:
+        cond = (
+            Q(name__icontains=q) | Q(city__icontains=q) | Q(contact_name__icontains=q) | Q(phone__icontains=q)
+        )
+        digits = re.sub(r"\D", "", q)
+        if len(digits) >= 4 and re.fullmatch(r"[\d\s+\-]+", q):
+            cond |= Q(phone__contains=digits)
+        sites = sites.filter(cond)
+    return list(sites)
+
+
+def technician_rows(today):
+    """Technicians with open complaints assigned, visits in the last 30 days, and the last visit date."""
+    return list(
+        Technician.objects.annotate(
+            n_open=Count("complaints", filter=Q(complaints__status__in=OPEN_STATUSES), distinct=True),
+            n_visits=Count(
+                "visits", filter=Q(visits__visit_date__gt=today - timedelta(days=30)), distinct=True
+            ),
+            last=Max("visits__visit_date"),
+        )
+    )

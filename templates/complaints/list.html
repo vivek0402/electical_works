@@ -27,7 +27,7 @@
     <thead><tr>{% sort_th "no" "Complaint" %}{% sort_th "reported" "Reported" %}{% sort_th "site" "Site" %}{% sort_th "company" "Company" %}<th>Fault</th>{% sort_th "techs" "Technicians" %}{% sort_th "priority" "Priority" %}{% sort_th "status" "Status" %}{% sort_th "age" "Age" True %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
       <td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td class="nowrap">{{ r.c.reported_on|date }}</td>
-      <td>{{ r.c.site.name }}<div class="small text-secondary">{{ r.c.site.city }}</div></td>
+      <td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><div class="small text-secondary">{{ r.c.site.city }}</div></td>
       <td>{{ r.c.company.name }}{% if r.c.company_ref %}<div class="small text-secondary code">{{ r.c.company_ref }}</div>{% endif %}</td>
       <td class="cell-wrap">{{ r.c.fault }}{% if r.c.qty_affected %} <span class="text-secondary">({{ r.c.qty_affected }})</span>{% endif %}</td>
       <td>{{ r.techs|default:"Not assigned" }}</td><td>{{ r.c.priority|priority_badge }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open %}</td></tr>

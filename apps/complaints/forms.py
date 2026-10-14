@@ -184,3 +184,26 @@ class VisitForm(TablerFormMixin, forms.Form):
         self.fields["technicians"].widget.choices = [
             (t.pk, t.name) for t in Technician.objects.filter(is_active=True)
         ]
+
+
+class TechnicianForm(TablerFormMixin, forms.Form):
+    """Add or edit a technician. The phone is a mobile only (the service checks it)."""
+
+    name = forms.CharField(
+        max_length=60,
+        error_messages={"required": "Enter the name of the technician."},
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Suresh", "autocomplete": "off"}),
+    )
+    phone = forms.CharField(
+        max_length=PHONE_TYPED_MAX,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "type": "tel",
+                "inputmode": "tel",
+                "maxlength": PHONE_TYPED_MAX,
+                "autocomplete": "off",
+                "placeholder": "10-digit mobile",
+            }
+        ),
+    )

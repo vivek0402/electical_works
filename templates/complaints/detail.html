@@ -18,8 +18,7 @@
     {% if c.not_covered_reason %}<span class="chip"><i class="ti ti-ban"></i> Not covered: <b>{{ c.get_not_covered_reason_display }}</b></span>{% endif %}
   </div></div>
   <div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3></div><div class="card-body"><div class="datagrid">
-    {% url 'site_detail' c.site.pk as site_url %}
-    <div class="datagrid-item"><div class="datagrid-title">Site</div><div class="datagrid-content">{% if site_url %}<a href="{{ site_url }}">{{ c.site.name }}</a>{% else %}{{ c.site.name }}{% endif %}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Site</div><div class="datagrid-content"><a href="{% url 'site_detail' c.site.pk %}">{{ c.site.name }}</a></div></div>
     <div class="datagrid-item"><div class="datagrid-title">City</div><div class="datagrid-content">{{ c.site.city }}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Contact</div><div class="datagrid-content">{{ c.contact_name|default:"—" }}</div></div>
     <div class="datagrid-item"><div class="datagrid-title">Phone</div><div class="datagrid-content">{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone_display }}</a>{% else %}—{% endif %}</div></div>

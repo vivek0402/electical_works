@@ -16,13 +16,14 @@ from apps.core.tokens import guarded_post, page_token
 from apps.defectives.services import MAX_PIECES_PER_LINE, DefectiveError
 from apps.inventory import selectors as stock
 from apps.inventory.entry_lines import parse_lines, raw_lines
+from apps.inventory.filters import _text
 from apps.inventory.models import Company, StockEntry
 from apps.inventory.services import StockError
 
 from . import selectors, services
 from .filters import AGE_BUCKETS, CLOSED_SINCE_TABS, FINISHED, complaint_filters
-from .forms import ComplaintForm, SiteForm, VisitForm
-from .models import TRANSITIONS, Complaint, NotCoveredReason, Priority, Status, Technician, Visit
+from .forms import ComplaintForm, SiteForm, TechnicianForm, VisitForm
+from .models import TRANSITIONS, Complaint, NotCoveredReason, Priority, Site, Status, Technician, Visit
 from .services import ComplaintError
 
 SAVED_ALREADY = "This was already saved."
@@ -402,3 +403,202 @@ def complaint_list(request):
             "ages": AGE_BUCKETS,
         },
     )
+
+
+# ---------------------------------------------------------------- sites and technicians
+# Office adds and edits both; only Admin hides or shows them (role_required on the toggle views, not just
+# the template). Every write goes through guarded_post, like the rest of the module.
+
+SITE_FIELDS = ("name", "city", "contact_name", "phone", "address")
+
+
+@never_cache
+@role_required(OFFICE)
+def sites(request):
+    q, city = _text(request.GET.get("q")), _text(request.GET.get("city"))
+    rows = selectors.site_rows(q, city)
+    sorters = {
+        "name": lambda s: s.name.lower(),
+        "city": lambda s: s.city.lower(),
+        "contact": lambda s: s.contact_name.lower(),
+        "open": lambda s: s.n_open,
+        "total": lambda s: s.n_all,
+        "last": lambda s: s.last,
+    }
+    table = sort_and_page(request, rows, sorters, "name")
+    return render(
+        request,
+        "complaints/sites.html",
+        {
+            "table": table,
+            "q": q,
+            "city": city,
+            "cities": selectors.cities(),
+            "site_form": SiteForm(prefix="ns"),
+        },
+    )
+
+
+def _site_page(request, site):
+    """The site card: its details and every complaint filed for it (newest first)."""
+    today = timezone.localdate()
+    rows = [
+        selectors.complaint_row(c, today, events=False)
+        for c in selectors.complaint_qs(events=False).filter(site=site)
+    ]
+    rows.sort(key=lambda r: (r["c"].reported_on, r["c"].number), reverse=True)
+    return render(
+        request,
+        "complaints/site_detail.html",
+        {
+            "site": site,
+            "rows": rows,
+            "n_open": sum(1 for r in rows if r["c"].is_open),
+            "token": page_token(request.session, request.path),
+        },
+    )
+
+
+@never_cache
+@role_required(OFFICE)
+def site_detail(request, pk):
+    return _site_page(request, get_object_or_404(Site, pk=pk))
+
+
+@never_cache
+@role_required(OFFICE)
+def site_edit(request, pk):
+    site = get_object_or_404(Site, pk=pk)
+    initial = {f: getattr(site, f) for f in SITE_FIELDS}
+    form = SiteForm(request.POST or None, initial=initial)
+    error, token = None, ""
+    if request.method == "POST":
+
+        def run():
+            if not form.is_valid():
+                raise ComplaintError(form.first_error())
+            services.save_site(site=site, data=form.cleaned_data)
+            messages.success(request, f"Site {site.name} saved.")
+            return reverse("site_detail", args=[site.pk])
+
+        result = guarded_post(request, run)
+        if result.replayed:
+            messages.warning(request, SAVED_ALREADY)
+        if result.saved:
+            return redirect(result.saved)
+        error, token = result.error, result.token
+    return render(
+        request,
+        "complaints/site_form.html",
+        {
+            "site": Site.objects.get(pk=pk),  # the saved name, not a half-edited one, in the title
+            "form": form,
+            "error": error,
+            "token": token or page_token(request.session, request.path),
+            "cities": selectors.cities(),
+        },
+    )
+
+
+def _toggle(request, obj, page, noun):
+    """Hide or show a site or technician (Admin only; the decorators check it). Back to `page`."""
+
+    def run():
+        services.set_active(obj, active=not obj.is_active)
+        if obj.is_active:
+            messages.success(request, f"{obj.name} is shown again.")
+        else:
+            messages.success(request, f"{obj.name} is hidden from the {noun} lists.")
+        return page
+
+    result = guarded_post(request, run)
+    if result.replayed:
+        messages.warning(request, SAVED_ALREADY)
+    elif result.error:
+        messages.error(request, result.error)
+    return redirect(page)
+
+
+@role_required(ADMIN)
+@require_POST
+def site_toggle(request, pk):
+    site = get_object_or_404(Site, pk=pk)
+    return _toggle(request, site, reverse("site_detail", args=[pk]), "site")
+
+
+def _technicians_page(request, form, error=None, token=""):
+    rows = sorted(
+        selectors.technician_rows(timezone.localdate()), key=lambda t: (not t.is_active, t.name.lower())
+    )
+    return render(
+        request,
+        "complaints/technicians.html",
+        {
+            "rows": rows,
+            "form": form,
+            "error": error,
+            "token": token or page_token(request.session, request.path),
+        },
+    )
+
+
+@never_cache
+@role_required(OFFICE)
+def technicians(request):
+    form = TechnicianForm(request.POST or None)
+    if request.method != "POST":
+        return _technicians_page(request, form)
+
+    def run():
+        if not form.is_valid():
+            raise ComplaintError(form.first_error())
+        tech = services.save_technician(**form.cleaned_data)
+        messages.success(request, f"Technician {tech.name} added.")
+        return reverse("technicians")
+
+    result = guarded_post(request, run)
+    if result.replayed:
+        messages.warning(request, SAVED_ALREADY)
+    if result.saved:
+        return redirect(result.saved)
+    return _technicians_page(request, form, result.error, result.token)
+
+
+@never_cache
+@role_required(OFFICE)
+def technician_edit(request, pk):
+    tech = get_object_or_404(Technician, pk=pk)
+    form = TechnicianForm(request.POST or None, initial={"name": tech.name, "phone": tech.phone})
+    error, token = None, ""
+    if request.method == "POST":
+
+        def run():
+            if not form.is_valid():
+                raise ComplaintError(form.first_error())
+            saved = services.save_technician(technician=tech, **form.cleaned_data)
+            messages.success(request, f"Technician {saved.name} saved.")
+            return reverse("technicians")
+
+        result = guarded_post(request, run)
+        if result.replayed:
+            messages.warning(request, SAVED_ALREADY)
+        if result.saved:
+            return redirect(result.saved)
+        error, token = result.error, result.token
+    return render(
+        request,
+        "complaints/technician_form.html",
+        {
+            "tech": Technician.objects.get(pk=pk),
+            "form": form,
+            "error": error,
+            "token": token or page_token(request.session, request.path),
+        },
+    )
+
+
+@role_required(ADMIN)
+@require_POST
+def technician_toggle(request, pk):
+    tech = get_object_or_404(Technician, pk=pk)
+    return _toggle(request, tech, reverse("technicians"), "technician")

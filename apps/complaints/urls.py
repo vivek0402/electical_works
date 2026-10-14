@@ -17,5 +17,12 @@ urlpatterns = [
         views.visit_undo_parts,
         name="visit_undo_parts",
     ),
+    path("sites/", views.sites, name="sites"),
     path("sites/quick-create/", views.site_quick_create, name="site_quick_create"),
+    path("sites/<int:pk>/", views.site_detail, name="site_detail"),
+    path("sites/<int:pk>/edit/", views.site_edit, name="site_edit"),
+    path("sites/<int:pk>/toggle/", views.site_toggle, name="site_toggle"),
+    path("technicians/", views.technicians, name="technicians"),
+    path("technicians/<int:pk>/edit/", views.technician_edit, name="technician_edit"),
+    path("technicians/<int:pk>/toggle/", views.technician_toggle, name="technician_toggle"),
 ]

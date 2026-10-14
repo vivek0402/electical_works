@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Edit {{ site.name }}{% endblock %}
+{% block pretitle %}Sites{% endblock %}
+{% block page_title %}<i class="ti ti-edit"></i> Edit site{% endblock %}
+{% block content %}
+<form method="post" novalidate data-once class="card">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><div class="card-body"><div class="row g-3">
+  <div class="col-12 col-md-8"><label class="form-label required" for="id_name">Site name</label>{{ form.name }}</div>
+  <div class="col-12 col-md-4"><label class="form-label required" for="id_city">City</label>{{ form.city }}<datalist id="site-cities">{% for c in cities %}<option value="{{ c }}">{% endfor %}</datalist></div>
+  <div class="col-12 col-md-6"><label class="form-label" for="id_contact_name">Contact person</label>{{ form.contact_name }}</div>
+  <div class="col-12 col-md-6"><label class="form-label" for="id_phone">Phone</label>{{ form.phone }}<small class="form-hint">A 10-digit mobile or an STD landline like 0891-2345678.</small></div>
+  <div class="col-12"><label class="form-label" for="id_address">Address</label>{{ form.address }}</div>
+  {% if error %}<div class="col-12"><div class="alert alert-danger mb-0" role="alert" tabindex="-1" id="form-error"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div></div>{% endif %}
+</div></div>
+<div class="card-footer d-flex"><div class="ms-auto btn-list"><a href="{% url 'site_detail' site.pk %}" class="btn btn-link link-secondary">Cancel</a><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Save site</button></div></div></form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/site-picker.js' %}"></script>{% endblock %}

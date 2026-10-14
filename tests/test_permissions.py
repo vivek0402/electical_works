@@ -3,7 +3,7 @@ from django.urls import get_resolver
 
 pytestmark = pytest.mark.django_db
 PUBLIC = {"login", "logout", "healthz"}
-ADMIN_ONLY = {"masters", "masters_toggle"}
+ADMIN_ONLY = {"masters", "masters_toggle", "site_toggle", "technician_toggle"}
 EXPECTED_STOCK_ROUTES = {
     "dashboard", "current_stock", "low_stock", "movements", "items", "item_new", "item_detail", "item_edit",
     "stock_in", "stock_out", "transfer", "adjust", "entry_detail", "entry_undo", "item_quick_create",

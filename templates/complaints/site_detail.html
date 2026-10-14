@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load complaint_tags %}
+{% block title %}{{ site.name }}{% endblock %}
+{% block pretitle %}Site · {{ site.city }}{% endblock %}
+{% block page_title %}{{ site.name }}{% if not site.is_active %} <span class="badge st st-done"><i class="ti ti-eye-off" aria-hidden="true"></i>Hidden</span>{% endif %}{% endblock %}
+{% block actions %}
+  <a href="{% url 'complaint_new' %}?site={{ site.pk }}" class="btn btn-primary"><i class="ti ti-plus"></i> New complaint for this site</a>
+  <a href="{% url 'site_edit' site.pk %}" class="btn btn-quiet"><i class="ti ti-edit"></i> Edit</a>
+  {% if is_admin %}<form method="post" action="{% url 'site_toggle' site.pk %}" data-once class="d-inline">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><button type="submit" class="btn btn-outline-secondary">{% if site.is_active %}<i class="ti ti-eye-off"></i> Hide{% else %}<i class="ti ti-eye"></i> Show{% endif %}</button></form>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row row-cards">
+  <div class="col-12"><div class="card"><div class="card-body"><div class="datagrid">
+    <div class="datagrid-item"><div class="datagrid-title">City</div><div class="datagrid-content">{{ site.city }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Contact</div><div class="datagrid-content">{{ site.contact_name|default:"—" }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Phone</div><div class="datagrid-content">{% if site.phone %}<a href="tel:{{ site.phone }}">{{ site.phone|phone_display }}</a>{% else %}—{% endif %}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Address</div><div class="datagrid-content">{{ site.address|default:"—"|linebreaksbr }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Open complaints</div><div class="datagrid-content">{{ n_open }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">All complaints</div><div class="datagrid-content">{{ rows|length }}</div></div>
+    <div class="datagrid-item"><div class="datagrid-title">Status</div><div class="datagrid-content">{% if site.is_active %}<span class="badge st st-ok"><i class="ti ti-check" aria-hidden="true"></i>Active</span>{% else %}<span class="badge st st-done"><i class="ti ti-eye-off" aria-hidden="true"></i>Hidden</span>{% endif %}</div></div>
+  </div></div></div></div>
+  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-history"></i> Complaint history</h3></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+      <thead><tr><th>Complaint</th><th>Reported</th><th>Company</th><th>Fault</th><th class="num">Visits</th><th>Status</th><th class="num">Age</th></tr></thead>
+      <tbody>{% for r in rows %}<tr><td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td class="nowrap">{{ r.c.reported_on|date }}</td><td>{{ r.c.company.name }}</td>
+        <td class="cell-wrap">{{ r.c.fault }}</td><td class="num">{{ r.c.n_visits }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open %}</td></tr>
+      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No complaints for this site yet.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</div>
+{% endblock %}

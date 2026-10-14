@@ -13,7 +13,7 @@
   <div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title">Oldest open complaints</h3>
     <div class="card-actions"><a href="{% url 'complaints' %}" class="btn btn-sm btn-outline-primary">All open <i class="ti ti-arrow-right"></i></a></div></div>
     <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Complaint</th><th>Site</th><th>Company</th><th>Status</th><th class="num">Age</th></tr></thead>
-      <tbody>{% for r in d.oldest %}<tr><td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td>{{ r.c.site.name }}<div class="small text-secondary">{{ r.c.site.city }}</div></td>
+      <tbody>{% for r in d.oldest %}<tr><td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><div class="small text-secondary">{{ r.c.site.city }}</div></td>
         <td>{{ r.c.company.name }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open %}</td></tr>
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing open.</td></tr>{% endfor %}</tbody></table></div></div></div>
   <div class="col-md-6"><div class="card"><div class="card-header"><h3 class="card-title">Open by company</h3></div>{% include "complaints/_bars.html" with rows=d.companies top=d.companies_top %}</div></div>

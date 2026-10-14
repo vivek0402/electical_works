@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ tech.name }}{% endblock %}
+{% block pretitle %}Technicians{% endblock %}
+{% block page_title %}<i class="ti ti-edit"></i> Edit technician{% endblock %}
+{% block content %}
+<form method="post" novalidate data-once class="card" style="max-width:32rem">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><div class="card-body">
+  <label class="form-label required" for="id_name">Name</label>{{ form.name }}
+  <label class="form-label mt-3" for="id_phone">Phone</label>{{ form.phone }}
+  {% if error %}<div class="alert alert-danger mt-3 mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+  <div class="card-footer d-flex"><div class="ms-auto btn-list"><a href="{% url 'technicians' %}" class="btn btn-link link-secondary">Cancel</a><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Save</button></div></div></form>
+{% endblock %}
