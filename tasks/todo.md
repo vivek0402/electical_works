@@ -174,3 +174,4 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - in `apps/complaints/selectors.py`: `status_counts()`, `open_rows(today, events=False)`, `age_counts(rows)`, `closed_since_count(since)` and `complaint_search_q(q)`;
   - in `filters.py`: `LATE_DAYS` (the "over 15 days" limit);
   - for defectives: `piece_counts()`.
+- **For Task 18 (from Task 16):** the main dashboard's "Entries, last 7 days" tile links to `/movements/`, which uses its own default range and counts lines, so the numbers don't match. Fix the link to add `date_from` = today-6, and either count entries or relabel the tile. Same rule as every other tile: the count must match the list.
