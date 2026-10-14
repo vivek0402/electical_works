@@ -167,3 +167,6 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - After saving, redirect to `complaint_detail`.
   - Show refused saves on the visit page itself.
   - Use `phone_display` for any phone shown.
+- **For Task 18:**
+  - The latest Playwright (1.64) needs a browser build that isn't installed here. Run the walkthrough with `uv run --with playwright==1.63.0 …` (or run `playwright install`), and fix the command in CLAUDE.md and the README.
+  - Set `PYTHONIOENCODING=utf-8` when printing → on the Windows console.
