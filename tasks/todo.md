@@ -78,7 +78,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S12 New complaint + complaint page: f1f5b95 + fixes 3592178 (724 tests; phone cards at 390px; spec ✅ quality ✅)
   - [x] S13 Record visit page: 09b82d0 + follow-ups e6bd279 (750 tests; full walkthrough exit 0; spec ✅ quality ✅)
   - [x] S14 Complaints list, dashboard + 2 exports: 0d1adde + fixes b026daf (791 tests; spec ✅ quality ✅)
-  - [ ] S15 Sites & technicians screens
+  - [x] S15 Sites & technicians screens: 4af578e + fixes 8e2e9a7 (826 tests; spec ✅ quality ✅)
   - [ ] S16 Integration (nav, search, dashboard, links, sweep)
   - [ ] S17 Service demo data
   - [ ] S18 Walkthrough, docs, todo
