@@ -29,8 +29,10 @@ In QA mode, flag any code that doesn't match DESIGN.md.
 ## Build
 Django 5.2 + PostgreSQL 16. Windows dev machine has no Docker, so use `uv` with a `DATABASE_URL`:
 - Tests: `DATABASE_URL=<postgres url> uv run pytest -q`, then `uv run ruff format --check . && uv run ruff check .`
-- Dev server: `uv run python manage.py migrate`, `SEED_PASSWORD=<strong> uv run python manage.py seed_users`, `uv run python manage.py seed_stock_demo` (empty ledger only), `uv run python manage.py runserver 8000`
-- Browser walkthrough (on demo data): `uv run --with playwright python e2e/walkthrough.py http://127.0.0.1:8000 office <password>` must exit 0 with no JS errors.
+- Dev server: `uv run python manage.py migrate`, `SEED_PASSWORD=<strong> uv run python manage.py seed_users`, `uv run python manage.py seed_service_demo` (empty database only), `uv run python manage.py runserver 8000`
+- Demo data: `make demo`, or `seed_users` then `seed_service_demo` on an empty database. `seed_service_demo` brings its own stock history plus complaints, visits, defective pieces and return batches, so it **replaces** `seed_stock_demo` (which loads stock only; never run both).
+- Reseed `svkml_demo` (the review database) after any walkthrough run, since the walkthrough leaves data behind: `DROP DATABASE IF EXISTS svkml_demo WITH (FORCE)` + `CREATE DATABASE svkml_demo` (psycopg autocommit on the `postgres` database), then `migrate`, `seed_users`, `seed_service_demo`, and `rebuild_stock_balances`, which must print "Cache matches ledger."
+- Browser walkthrough (on demo data): `PYTHONIOENCODING=utf-8 uv run --with playwright==1.63.0 python e2e/walkthrough.py http://127.0.0.1:8000 office <password>` must exit 0 with no JS errors. Pin Playwright 1.63.0: newer versions need a browser build that isn't installed here. It is re-runnable; its docstring lists what each run leaves behind.
 - Prod check: `DJANGO_SETTINGS_MODULE=config.settings.prod uv run python manage.py check --deploy` (needs SECRET_KEY, DATABASE_URL, ALLOWED_HOSTS).
 - Docker: `docker compose up -d --build`, `make migrate`, `make demo`, `make test`, `make lint`.
 
@@ -38,7 +40,15 @@ Where the logic lives:
 - `apps/inventory/services.py`: every write (items, post/adjust/undo entries, balance rebuild).
 - `apps/inventory/selectors.py`: every read (stock matrix, lists, item history, dashboard).
 - `apps/inventory/entry_lines.py`: parsing the item lines posted by the entry forms.
-- `apps/core/excel.py`: the shared XlsxWriter report writer (`apps/inventory/exports.py` builds the five exports on it).
-- Demo data: `apps/inventory/demo/demo-data.json`, loaded by `seed_stock_demo`.
+- `apps/complaints/` and `apps/defectives/`: the same split. `services.py` holds every write (complaints, visits, status moves, sites, technicians; pieces, marking, return batches, dispatch, settle), `selectors.py` every read (lists, dashboards, counts the menu badges and main dashboard reuse), `filters.py` the list filters, `exports.py` the four service exports (pending complaints, complaint list, defective list, a batch's dispatch list).
+- `apps/core/excel.py`: the shared XlsxWriter report writer (`apps/inventory/exports.py` builds the five stock exports on it; the service exports use it too).
+- `apps/core/tokens.py`: one-time form tokens. Every write view uses `guarded_post(request, run)`, and form pages get their token with `page_token(session, path)` (add `@never_cache`).
+- `apps/core/numbers.py`: gap-free document numbers (DEF, RB, CMP, VIS) via `next_number` / `next_numbers`.
+- **Lock order** is documented at the top of `apps/defectives/services.py` (Complaint row → VIS number → ReturnBatch row → pieces in tag order → `post_entry` → `next_number(s)`). Any new service that combines these must follow it.
+- Demo data: `apps/complaints/demo/service-demo.json`, replayed through the services by `seed_service_demo`. (`apps/inventory/demo/demo-data.json` is the older stock-only set for `seed_stock_demo`.)
 
-**Never write to StockEntry, StockLine or StockBalance outside `services.py`.** The ledger is append-only (database triggers block updates and deletes); mistakes are cancelled with `undo_entry`.
+**Every write goes through a `services.py`.** Never write to StockEntry, StockLine or StockBalance outside `apps/inventory/services.py`, and never change a complaint, visit, piece or return batch outside its app's `services.py`; every stock effect of the service modules goes through `inventory.services.post_entry`. The ledger is append-only (database triggers block updates and deletes); mistakes are cancelled with `undo_entry` (or `undo_visit_parts` for a visit's parts given).
+
+## Service modules (built 2026-10-12 to 10-15, plan `docs/superpowers/plans/2026-10-12-defectives-complaints.md`)
+- The **Defective store** is the one `Location` with `is_defective_store=True`. Use `Location.objects.good()` for anything that means good stock (totals, low stock, pickers). Only the defectives services post to it, and their entries refuse Undo.
+- No company is special: Wipro is one company among several (see `tasks/lessons.md`).

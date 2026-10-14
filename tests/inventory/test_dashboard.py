@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.utils import timezone
 
@@ -36,7 +38,7 @@ def test_dashboard_stats(stocked):
     assert stats["active_items"] == 2
     assert stats["nos_in_stock"] == 6  # MTR items are not added to NOS
     assert stats["low_count"] == 1  # 6 <= reorder 10
-    assert stats["entries_week"] == 2 and stats["entries_today"] == 2
+    assert stats["movements_week"] == 3 and stats["movements_today"] == 3  # ledger lines, not entries
 
 
 def test_weekly_in_out_counts_nos_only(stocked):
@@ -66,7 +68,6 @@ def test_dashboard_requires_login(client):
 
 
 # --- low-stock count, weekly boundaries, undone label ---------------------------------------------
-from datetime import timedelta  # noqa: E402
 
 from apps.inventory.selectors import low_stock_count, low_stock_rows  # noqa: E402
 from apps.inventory.services import undo_entry  # noqa: E402
@@ -129,6 +130,7 @@ def test_dashboard_query_count(office_client, office_user, django_assert_max_num
 
 def test_dashboard_tiles_and_locations_are_links(office_client, stocked):
     html = office_client.get("/").content.decode()
-    for url in ["/items/", "/stock/", "/low-stock/", "/movements/"]:
+    week = f"date_from={TODAY - timedelta(days=6):%Y-%m-%d}&amp;date_to={TODAY:%Y-%m-%d}"
+    for url in ["/items/", "/stock/", "/low-stock/", f"/movements/?{week}"]:
         assert f'href="{url}" class="card card-sm card-link' in html
     assert f'href="/stock/?location={loc().pk}"' in html

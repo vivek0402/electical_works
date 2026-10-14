@@ -1,7 +1,7 @@
 # Design System: SVKML Stock
 
 ## Product Context
-- **What this is:** Stock management for SVKML Electrical Works (a Wipro Lighting service partner, Visakhapatnam): stock IN/OUT, transfers, count corrections, stock by location, Excel exports. Defective-pieces and complaints modules come later in the same app.
+- **What this is:** Stock management for SVKML Electrical Works (a Wipro Lighting service partner, Visakhapatnam): stock IN/OUT, transfers, count corrections, stock by location, Excel exports, plus the Complaints and Defective pieces modules in the same app (since 2026-10-12; the app is branded "SVKML Service").
 - **Who it's for:** Admin and office staff with low tech comfort, mostly on desktop, sometimes on phones.
 - **Project type:** Internal web app with an admin-dashboard layout.
 - **Memorable thing:** "Calm, serious business software where colour always means something."
@@ -40,6 +40,8 @@
   - Never use purple or other decorative colours for actions.
   - Secondary actions (Transfer, Adjust, Cancel) are white "quiet" buttons.
   - Status always pairs colour with an icon or word, never colour alone.
+- **Status pills** (complaints, pieces, batches, outcomes) are tinted badges with an icon and a word, never colour alone. Five tints (`.st-*` in `static/css/app.css`): `st-alert` red `#fde8e8`/`#b42318` (Not attended, Urgent, rejected outcomes); `st-wait` amber `#fef3c7`/`#854d0e` (Awaiting material, High, Sent/Dispatched, Partly settled); `st-ok` green `#e7f6ec`/`#1e7e34` (Resolved, Settled, Replaced, Repaired); `st-neutral` slate (Attended, Material need to check, In store, Draft); `st-done` grey `#eef0f3`/`#475569` (Closed, Not covered, Scrapped).
+- **Defective store:** shown next to stock as its own shaded column (dashed left border, "not counted" under the heading; a recycle icon marks it in Movements), never part of a total or low-stock check.
 - **Excel exports:** company title in navy `#0F2744`, header in Excel's "Table Style Medium 2" (blue).
 - **Dark mode:** not in v1.
 
@@ -59,3 +61,7 @@
 | 2026-10-11 | Deeper IN/OUT button shades | White text on `#eb6834` was 3.2:1 (fails AA); `#c2410c` is 5.2:1 |
 | 2026-10-11 | Palette **A · Navy & Amber** | User picked it from 3 live options (A Navy & Amber, B Slate & Teal, C Clean light). The brand blue matches IN, navy reads as trustworthy, amber nods to lighting |
 | 2026-10-11 | Restraint: colour only for meaning | The first version used 6+ loud colours (purple Adjust, rainbow KPI icons) and looked like a template |
+| 2026-10-12 | Defective store column is shown but never counted | Failed pieces must stay visible next to stock (so nothing is lost) but must never inflate good stock, totals or low-stock checks. Pickers and totals use `Location.objects.good()` |
+| 2026-10-12 | Status pills: five tints, always icon + word | Seven complaint statuses plus piece, batch and outcome states needed colour without a rainbow. Tints reuse the meaning colours (red attention, amber waiting, green done well, slate in progress, grey finished) |
+| 2026-10-13 | Site and complaint phones accept mobile or STD landline | The user chose it: many sites (banks, offices) only have a landline. Technicians stay mobile-only. Shown formatted (e.g. 0891-2345678) |
+| 2026-10-14 | Brand subtitle "Service" instead of "Stock" | The app now covers stock, complaints and defectives, as in the approved service mockup. Logo mark and colours unchanged |

@@ -62,6 +62,7 @@ def dashboard(request):
                 for status in ("IN_STORE", "SENT")
             },
             "today": today,
+            "movements_from": selectors.movements_week_from(today),
         },
     )
 

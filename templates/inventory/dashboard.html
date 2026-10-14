@@ -14,9 +14,9 @@
   <div class="col-sm-6 col-lg-3"><a href="{% url 'low_stock' %}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar {% if stats.low_count %}kpi-alert{% else %}kpi-ok{% endif %}"><i class="ti ti-alert-triangle"></i></span></div>
     <div class="col"><div class="fw-medium fs-3">{{ stats.low_count }}</div><div class="text-secondary">Low stock items</div><div class="small text-secondary">at or below reorder level</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{% url 'movements' %}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
+  <div class="col-sm-6 col-lg-3"><a href="{% url 'movements' %}?date_from={{ movements_from|date:'Y-m-d' }}&amp;date_to={{ today|date:'Y-m-d' }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-arrows-exchange"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.entries_week }}</div><div class="text-secondary">Entries, last 7 days</div><div class="small text-secondary">{{ stats.entries_today }} today</div></div></div></div></a></div>
+    <div class="col"><div class="fw-medium fs-3">{{ stats.movements_week }}</div><div class="text-secondary">Movements, last 7 days</div><div class="small text-secondary">{{ stats.movements_today }} today</div></div></div></div></a></div>
   {% if nav_urls.complaints %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.complaints }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
     <div class="col-auto"><span class="avatar {% if service.not_attended %}kpi-alert{% else %}kpi-brand{% endif %}"><i class="ti ti-message-report"></i></span></div>
     <div class="col"><div class="fw-medium fs-3">{{ service.open }}</div><div class="text-secondary">Open complaints</div><div class="small text-secondary">{% if service.not_attended %}{{ service.not_attended }} not attended yet{% else %}all attended{% endif %}</div></div></div></div></a></div>{% endif %}

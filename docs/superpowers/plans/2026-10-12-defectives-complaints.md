@@ -57,17 +57,17 @@ Taken from the spec and the approved mockup. Where this plan adds or changes som
 
 ## Local test environment (this Windows machine has no Docker)
 
-PostgreSQL 16 runs locally; pytest creates its own test database on it:
+PostgreSQL 16 runs locally; pytest creates its own test database on it. **The port changes after a reboot:** check line 4 of `scratchpad/pgdata2/postmaster.pid` and use that port in place of `<port>` below (it was 65030 when this plan was written, later 61579 and 52207).
 
 ```bash
-DATABASE_URL="postgresql://postgres:@127.0.0.1:65030/postgres" uv run pytest -q
+DATABASE_URL="postgresql://postgres:@127.0.0.1:<port>/postgres" uv run pytest -q
 uv run ruff format --check . && uv run ruff check .
 ```
 
 The dev database for browser checks is `svkml_demo`:
 
 ```bash
-export DATABASE_URL="postgresql://postgres:@127.0.0.1:65030/svkml_demo"
+export DATABASE_URL="postgresql://postgres:@127.0.0.1:<port>/svkml_demo"
 uv run python manage.py migrate
 SEED_PASSWORD="<strong password>" uv run python manage.py seed_users
 uv run python manage.py seed_service_demo      # after Task 17; empty ledger only
@@ -8378,7 +8378,7 @@ In the main loop, the two branches become:
 - [ ] **Step 2: Run the walkthrough against the demo database**
 
 ```bash
-export DATABASE_URL="postgresql://postgres:@127.0.0.1:65030/svkml_demo"
+export DATABASE_URL="postgresql://postgres:@127.0.0.1:<port>/svkml_demo"
 uv run python manage.py migrate
 SEED_PASSWORD="<strong password>" uv run python manage.py seed_users
 uv run python manage.py seed_service_demo        # only on an empty svkml_demo; drop and recreate the database first if it has data

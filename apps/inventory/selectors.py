@@ -83,9 +83,17 @@ def dashboard_stats(today):
         "active_items": Item.objects.filter(is_active=True).count(),
         "nos_in_stock": nos,
         "low_count": low_stock_count(),
-        "entries_week": StockEntry.objects.filter(entry_date__gt=today - timedelta(days=7)).count(),
-        "entries_today": StockEntry.objects.filter(entry_date=today).count(),
+        # one per ledger line, as the Movements list counts its rows; the tile links to the same 7 days
+        "movements_week": StockLine.objects.filter(
+            entry__entry_date__gte=movements_week_from(today), entry__entry_date__lte=today
+        ).count(),
+        "movements_today": StockLine.objects.filter(entry__entry_date=today).count(),
     }
+
+
+def movements_week_from(today):
+    """First day of the dashboard's "Movements, last 7 days" tile (today and the 6 days before)."""
+    return today - timedelta(days=6)
 
 
 SERVICE_WINDOW_DAYS = 7  # "Complaints visited" tile: visits dated after today - 7 days

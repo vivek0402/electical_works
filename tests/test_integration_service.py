@@ -16,7 +16,10 @@ from apps.complaints.services import record_visit
 from apps.defectives.filters import piece_filters
 from apps.defectives.selectors import piece_rows
 from apps.defectives.services import create_batch, dispatch
-from apps.inventory.models import Company
+from apps.inventory.filters import movement_filters
+from apps.inventory.models import Company, EntryKind
+from apps.inventory.selectors import movement_rows
+from apps.inventory.services import Line, post_entry
 from tests.factories import give_stock, loc, make_complaint, make_item, make_pieces, make_site, make_tech
 
 pytestmark = pytest.mark.django_db
@@ -164,6 +167,27 @@ def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_cl
     assert [r["c"].number for r in rows] == ["CMP-0001"]
     listed = office_client.get(href).content.decode()
     assert listed.count('<a class="code" href="/complaints/CMP-') == 1
+
+
+def test_movements_tile_counts_the_lines_its_list_shows(office_client, office_user, visited):
+    # visited: IN-0001 (1 line), OUT-0001 (1 line), IN-0002 (1 line), all today; plus a 2-line IN 6 days ago
+    # (inside the window) and one 7 days ago (outside it, though the Movements default range would list it)
+    a, b = make_item("W1"), make_item("W2")
+    for days in (6, 7):
+        post_entry(
+            kind=EntryKind.IN,
+            entry_date=TODAY - timedelta(days=days),
+            lines=[Line(a, loc(), 1), Line(b, loc(), 1)],
+            user=office_user,
+        )
+    html = office_client.get("/").content.decode()
+    n, href = _tile(html, "Movements, last 7 days")
+    assert n == 5 and "3 today" in html
+    path, _, query = href.partition("?")
+    assert path == "/movements/"
+    assert len(movement_rows(movement_filters(QueryDict(query), TODAY))) == n
+    listed = office_client.get(href).content.decode()
+    assert listed.count('<a class="code" href="/entries/') == n
 
 
 def test_global_search_lists_active_sites_first_and_marks_hidden_ones(office_client):
