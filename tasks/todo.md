@@ -75,7 +75,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S9 Defectives dashboard + 2 exports: 55d37be + fixes 8ea4969 (581 tests; spec ✅ quality ✅)
   - [x] S10 Complaints models + links: 851d64c + integrity fixes 56d38f8 + landline phones 56f3a92 (624 tests; spec ✅ quality ✅)
   - [x] S11 Complaints services: acc1821 + fixes 785f6ba + post_entry hardening 5e7692b (685 tests; deadlock-free lock order verified; spec ✅ quality ✅)
-  - [ ] S12 New complaint + complaint page
+  - [x] S12 New complaint + complaint page: f1f5b95 + fixes 3592178 (724 tests; phone cards at 390px; spec ✅ quality ✅)
   - [ ] S13 Record visit page
   - [ ] S14 Complaints list, dashboard + 2 exports
   - [ ] S15 Sites & technicians screens
