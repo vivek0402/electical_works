@@ -74,7 +74,7 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - [x] S8 Pieces list + bulk actions: 94c9a46 + fixes 98705c5 (557 tests; spec ✅ quality ✅). Final review: tighten the 30-piece bulk-add query guard (80 is loose)
   - [x] S9 Defectives dashboard + 2 exports: 55d37be + fixes 8ea4969 (581 tests; spec ✅ quality ✅)
   - [x] S10 Complaints models + links: 851d64c + integrity fixes 56d38f8 + landline phones 56f3a92 (624 tests; spec ✅ quality ✅)
-  - [ ] S11 Complaints services (acc1821, 673 tests; review in progress)
+  - [x] S11 Complaints services: acc1821 + fixes 785f6ba + post_entry hardening 5e7692b (685 tests; deadlock-free lock order verified; spec ✅ quality ✅)
   - [ ] S12 New complaint + complaint page
   - [ ] S13 Record visit page
   - [ ] S14 Complaints list, dashboard + 2 exports
