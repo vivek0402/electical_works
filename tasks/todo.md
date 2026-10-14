@@ -175,3 +175,8 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - in `filters.py`: `LATE_DAYS` (the "over 15 days" limit);
   - for defectives: `piece_counts()`.
 - **For Task 18 (from Task 16):** the main dashboard's "Entries, last 7 days" tile links to `/movements/`, which uses its own default range and counts lines, so the numbers don't match. Fix the link to add `date_from` = today-6, and either count entries or relabel the tile. Same rule as every other tile: the count must match the list.
+- **For Task 18 (from Task 17):**
+  - `seed_service_demo` is the full demo loader. It brings its own stock history, so on an empty ledger it *replaces* `seed_stock_demo` (`make demo` already runs `seed_users` then `seed_service_demo`).
+  - Fix CLAUDE.md (the Build section and its "Demo data" line) and README.md (around lines 18 and 29).
+  - The plan header still says port 65030.
+  - The walkthrough leaves data behind, so re-seed `svkml_demo` afterwards.
