@@ -88,6 +88,32 @@ def dashboard_stats(today):
     }
 
 
+SERVICE_WINDOW_DAYS = 7  # "Complaints visited" tile: visits dated after today - 7 days
+
+
+def service_stats(today):
+    """The service tiles on the main dashboard, from the complaints and defectives selectors (never recounted
+    here), so both module dashboards and the menu badges always agree. Three queries. Each figure is the row
+    count of the list its tile links to."""
+    from apps.complaints.models import OPEN_STATUSES, Status  # imported here: complaints depends on inventory
+    from apps.complaints.selectors import status_counts, visits_since
+    from apps.defectives.selectors import piece_counts
+
+    counts = status_counts()
+    since = today - timedelta(days=SERVICE_WINDOW_DAYS)
+    visits = visits_since(since)
+    pieces = piece_counts()
+    return {
+        "open": sum(counts[s] for s in OPEN_STATUSES),
+        "not_attended": counts[Status.NOT_ATTENDED],
+        "in_store": pieces["in_store"],
+        "sent": pieces["sent"],
+        "visited": visits["complaints"],
+        "visits": visits["visits"],
+        "since": since,
+    }
+
+
 def weekly_in_out(today, weeks=5):
     """NOS quantity received and issued per 7-day window, oldest first; undone entries excluded."""
     windows = [
@@ -118,7 +144,7 @@ def entries_with_lines(queryset):
     undone = StockEntry.objects.filter(reverses=OuterRef("pk"))
     return (
         queryset.annotate(undone_flag=Exists(undone))
-        .select_related("reverses", "created_by")
+        .select_related("reverses", "created_by", "complaint", "return_batch")
         .prefetch_related("lines__item", "lines__location")
     )
 
@@ -183,7 +209,14 @@ def movement_rows(f):
     lines = (
         StockLine.objects.filter(entry__entry_date__gte=f.date_from, entry__entry_date__lte=f.date_to)
         .select_related(
-            "entry", "entry__created_by", "entry__reverses", "entry__reversed_by", "item", "location"
+            "entry",
+            "entry__created_by",
+            "entry__reverses",
+            "entry__reversed_by",
+            "entry__complaint",
+            "entry__return_batch",
+            "item",
+            "location",
         )
         .annotate(undone=Exists(undone))
         .order_by("-entry__entry_date", "-entry_id", "id")
@@ -200,6 +233,9 @@ def movement_rows(f):
             | Q(entry__party__icontains=f.q)
             | Q(entry__ref__icontains=f.q)
             | Q(entry__number__icontains=f.q)
+            | Q(entry__complaint__number__icontains=f.q)
+            | Q(entry__complaint__company_ref__icontains=f.q)
+            | Q(entry__return_batch__number__icontains=f.q)
         )
         item_match = item_search_q(f.q)  # other spellings, descriptions, look-alike codes
         if item_match is not None:

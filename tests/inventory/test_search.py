@@ -19,10 +19,13 @@ def test_global_search_items_and_entries(office_client, office_user):
     assert data["entries"][0] == {"number": "IN-0001", "url": "/entries/IN-0001/", "label": "Stock IN"}
 
 
+EMPTY = {"items": [], "entries": [], "complaints": [], "sites": [], "pieces": []}
+
+
 def test_short_query_returns_nothing(office_client):
-    assert office_client.get("/search/?q=e").json() == {"items": [], "entries": []}
-    assert office_client.get("/search/?q=ab").json() == {"items": [], "entries": []}
-    assert office_client.get("/search/?q=a%00b").json() == {"items": [], "entries": []}
+    assert office_client.get("/search/?q=e").json() == EMPTY
+    assert office_client.get("/search/?q=ab").json() == EMPTY
+    assert office_client.get("/search/?q=a%00b").json() == EMPTY
 
 
 def test_nul_bytes_do_not_crash(office_client):
@@ -39,8 +42,8 @@ def test_exact_match_first_and_aliases_included(office_client):
 def test_search_query_budget(office_client, django_assert_max_num_queries):
     for n in range(5):
         make_item(f"ZZ10{n}")
-    # session, user, role groups, items, aliases prefetch, entries
-    with django_assert_max_num_queries(6):
+    # session, user, role groups, items, aliases prefetch, entries, complaints, sites, pieces (one each)
+    with django_assert_max_num_queries(9):
         assert len(office_client.get("/search/?q=ZZ10").json()["items"]) == 5
 
 

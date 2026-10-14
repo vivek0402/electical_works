@@ -93,6 +93,9 @@ def movements_xlsx(request):
         Column("PKD"),
         Column("Entered by"),
         Column("Note", width=28),
+        # at the end, so the columns above keep their positions
+        Column("Complaint", "code"),
+        Column("Return batch", "code"),
     ]
     data = []
     for r in rows:
@@ -116,6 +119,8 @@ def movements_xlsx(request):
                 _pkd(line),
                 e.created_by.first_name or e.created_by.username,
                 note,
+                e.complaint.number if e.complaint_id else "",
+                e.return_batch.number if e.return_batch_id else "",
             ]
         )
     filters = _describe(

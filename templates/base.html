@@ -2,7 +2,7 @@
 <html lang="en-IN" data-bs-navbar-position="vertical">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}SVKML Stock{% endblock %} · SVKML</title>
+  <title>{% block title %}SVKML Service{% endblock %} · SVKML</title>
   <link rel="stylesheet" href="{% static 'vendor/tabler.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/tom-select.bootstrap5.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/tabler-vendors.min.css' %}">
@@ -14,7 +14,7 @@
   <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
     <div class="container-fluid">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button>
-      <a href="{% url 'dashboard' %}" class="navbar-brand navbar-brand-autodark brand"><span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Stock</span></a>
+      <a href="{% url 'dashboard' %}" class="navbar-brand navbar-brand-autodark brand"><span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Service</span></a>
       <div class="collapse navbar-collapse" id="sidebar-menu">
         <ul class="navbar-nav pt-lg-3" id="nav">
           {% for title, entries in nav_sections %}
@@ -23,7 +23,9 @@
               <li class="nav-item"><a class="nav-link{% if e.active %} active{% endif %}{% if not e.url %} disabled{% endif %}"
                 href="{{ e.url|default:'#' }}"{% if not e.url %} aria-disabled="true"{% endif %}>
                 <span class="nav-link-icon {{ e.cls }}"><i class="ti ti-{{ e.icon }}"></i></span><span class="nav-link-title">{{ e.label }}</span>
-                {% if e.name == 'low_stock' and nav_low_count %}<span class="badge bg-red-lt ms-auto">{{ nav_low_count }}</span>{% endif %}</a></li>
+                {% if e.name == 'low_stock' and nav_low_count %}<span class="badge bg-red-lt ms-auto">{{ nav_low_count }}</span>{% endif %}
+                {% if e.name == 'complaints' and nav_open_complaints %}<span class="badge nav-badge ms-auto" title="Open complaints">{{ nav_open_complaints }}</span>{% endif %}
+                {% if e.name == 'defective_pieces' and nav_pieces_in_store %}<span class="badge nav-badge ms-auto" title="Pieces in the Defective store">{{ nav_pieces_in_store }}</span>{% endif %}</a></li>
             {% endif %}{% endfor %}
           {% endfor %}
         </ul>
@@ -35,7 +37,7 @@
       <div class="container-xl">
         <div class="global-search">
           <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
-            <input id="gsearch" type="search" class="form-control" placeholder="Search items, old spellings, entry no…" autocomplete="off" aria-label="Search" role="combobox" aria-controls="gresults" aria-autocomplete="list" aria-expanded="false" data-url="{{ nav_urls.global_search|default:'' }}"></div>
+            <input id="gsearch" type="search" class="form-control" placeholder="Search items, entries, complaints, sites, tags…" autocomplete="off" aria-label="Search" role="combobox" aria-controls="gresults" aria-autocomplete="list" aria-expanded="false" data-url="{{ nav_urls.global_search|default:'' }}"></div>
           <div id="gresults" class="dropdown-menu gresults" role="listbox" aria-label="Search results"></div>
           <div id="gstatus" class="visually-hidden" aria-live="polite"></div>
         </div>

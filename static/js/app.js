@@ -1,4 +1,4 @@
-/* Top-bar search: shows matching items and entries in the #gresults dropdown under the box. */
+/* Top-bar search: shows matching items, entries, complaints, sites and defective pieces in the #gresults dropdown. */
 (function () {
   const box = document.getElementById("gsearch");
   const menu = document.getElementById("gresults");
@@ -31,12 +31,18 @@
       const items = d.items.map((i, n) => `<a class="dropdown-item" role="option" id="gs-i${n}" href="${esc(i.url)}"><span><span class="code">${esc(i.code)}</span><br>
         <small class="text-secondary">${esc(i.type)} · ${esc(i.desc)}${i.aliases.length ? " · also " + esc(i.aliases.join(", ")) : ""}</small></span></a>`);
       const entries = d.entries.map((e, n) => `<a class="dropdown-item" role="option" id="gs-e${n}" href="${esc(e.url)}"><span class="code">${esc(e.number)}</span><span class="ms-2 text-secondary">${esc(e.label)}</span></a>`);
-      menu.innerHTML = (items.length ? `<span class="dropdown-header" role="presentation">Items</span>${items.join("")}` : "")
-        + (entries.length ? `<span class="dropdown-header" role="presentation">Entries</span>${entries.join("")}` : "")
+      const complaints = (d.complaints || []).map((c, n) => `<a class="dropdown-item" role="option" id="gs-c${n}" href="${esc(c.url)}"><span><span class="code">${esc(c.number)}</span> <span class="text-secondary">${esc(c.status)}</span><br>
+        <small class="text-secondary">${esc(c.label)}${c.ref ? ` · <span class="code">${esc(c.ref)}</span>` : ""}</small></span></a>`);
+      const sites = (d.sites || []).map((s, n) => `<a class="dropdown-item" role="option" id="gs-s${n}" href="${esc(s.url)}"><span><i class="ti ti-building" aria-hidden="true"></i> ${esc(s.name)}<br><small class="text-secondary">${esc(s.label)}</small></span></a>`);
+      const pieces = (d.pieces || []).map((p, n) => `<a class="dropdown-item" role="option" id="gs-p${n}" href="${esc(p.url)}"><span><span class="code">${esc(p.tag)}</span> <span class="text-secondary">${esc(p.status)}</span><br><small class="text-secondary">${esc(p.label)}</small></span></a>`);
+      // [heading, rows, one, many] for the dropdown and the screen-reader count
+      const groups = [["Items", items, "item", "items"], ["Entries", entries, "entry", "entries"], ["Complaints", complaints, "complaint", "complaints"],
+        ["Sites", sites, "site", "sites"], ["Defective pieces", pieces, "piece", "pieces"]].filter(([, list]) => list.length);
+      menu.innerHTML = groups.map(([title, list]) => `<span class="dropdown-header" role="presentation">${title}</span>${list.join("")}`).join("")
         || `<span class="dropdown-item-text text-secondary" role="presentation">Nothing found for “${esc(q)}”.</span>`;
       menu.classList.add("show"); active = -1; box.setAttribute("aria-expanded", "true");
-      announce(items.length || entries.length
-        ? [items.length ? `${items.length} item${items.length > 1 ? "s" : ""}` : "", entries.length ? `${entries.length} entr${entries.length > 1 ? "ies" : "y"}` : ""].filter(Boolean).join(", ")
+      announce(groups.length
+        ? groups.map(([, list, one, many]) => `${list.length} ${list.length > 1 ? many : one}`).join(", ")
         : "Nothing found");
     }, 200);
   });

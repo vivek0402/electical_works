@@ -44,6 +44,7 @@ def _describe(f, first, technicians="all technicians"):
         f.technician.name if f.technician else technicians,
         f"age {ages[f.age]}" if f.age else "",
         f"closed or not covered since {f.closed_since:%d-%m-%Y}" if f.closed_since else "",
+        f"visited after {f.visited_since:%d-%m-%Y}" if f.visited_since else "",
         f'search "{f.q}"' if f.q else "",
     ]
     return " · ".join(p for p in parts if p)

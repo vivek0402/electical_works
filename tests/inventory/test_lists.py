@@ -65,7 +65,8 @@ def test_movements_default_last_30_days_and_undone(office_client, stock):
 
 def test_movements_filter_kind(office_client, stock):
     html = office_client.get("/movements/?kind=REV").content.decode()
-    assert "REV-0001" in html and "OUT-0001" not in html
+    # OUT-0001 is named only in the REV's Details ("Undo of OUT-0001"), never as a row of its own
+    assert "REV-0001" in html and 'href="/entries/OUT-0001/"' not in html and "Undo of OUT-0001" in html
 
 
 def test_low_stock(office_client, stock):

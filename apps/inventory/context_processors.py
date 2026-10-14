@@ -45,6 +45,8 @@ NAV = [
     ("Setup", [("items", "Items", "box", "", False), ("masters", "Masters", "settings", "", True)]),
 ]
 EXTRA_URLS = ["global_search"]
+# Menu entries that open on a filtered list, so the badge beside them counts exactly the rows shown.
+NAV_QUERY = {"defective_pieces": "?status=IN_STORE"}
 # URL names that should highlight a menu entry other than their own.
 ACTIVE_ALIASES = {
     "item_new": "items",
@@ -69,8 +71,26 @@ def _url(name):
         return None
 
 
+def _open_complaints():
+    """Open complaints (the "All complaints" list opens on the Open tab), from the shared status counts."""
+    from apps.complaints.models import OPEN_STATUSES  # imported here: complaints depends on inventory
+    from apps.complaints.selectors import status_counts
+
+    counts = status_counts()
+    return sum(counts[s] for s in OPEN_STATUSES)
+
+
+def _pieces_in_store():
+    """Pieces In store (the "Pieces" menu entry opens on that filter), from the shared piece counts."""
+    from apps.defectives.selectors import piece_counts
+
+    return piece_counts()["in_store"]
+
+
 def nav(request):
-    """Sidebar sections, URLs by name (None until built), active entry, and the low-stock count."""
+    """Sidebar sections, URLs by name (None until built), active entry, and the menu badges' counts.
+
+    Each badge is lazy: its one counting query runs only if the template shows it."""
     if not request.user.is_authenticated:
         return {}
     urls = {name: _url(name) for _, entries in NAV for name, *_ in entries}
@@ -87,7 +107,7 @@ def nav(request):
                     "icon": ic,
                     "cls": cls,
                     "admin_only": admin,
-                    "url": urls[n],
+                    "url": urls[n] and urls[n] + NAV_QUERY.get(n, ""),
                     "active": n == active,
                 }
                 for n, label, ic, cls, admin in entries
@@ -95,4 +115,10 @@ def nav(request):
         )
         for title, entries in NAV
     ]
-    return {"nav_sections": sections, "nav_urls": urls, "nav_low_count": SimpleLazyObject(low_stock_count)}
+    return {
+        "nav_sections": sections,
+        "nav_urls": urls,
+        "nav_low_count": SimpleLazyObject(low_stock_count),
+        "nav_open_complaints": SimpleLazyObject(_open_complaints),
+        "nav_pieces_in_store": SimpleLazyObject(_pieces_in_store),
+    }

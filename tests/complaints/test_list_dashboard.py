@@ -16,7 +16,7 @@ from tests.factories import make_complaint, make_site, make_tech
 
 pytestmark = pytest.mark.django_db
 LIST = "/complaints/list/"
-MAX_DASHBOARD, MAX_LIST, MAX_EXPORT = 10, 11, 7  # measured + 1
+MAX_DASHBOARD, MAX_LIST, MAX_EXPORT = 12, 13, 7  # measured + 1; pages +2 for the two menu badges
 LINK = r'href="/complaints/(CMP-\d{4})/"'
 
 

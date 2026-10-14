@@ -9,7 +9,16 @@ from django.db.models import Count, Max, Prefetch, Q
 from apps.defectives.models import DefectivePiece
 
 from .filters import AGE_BUCKETS, CLOSED_SINCE_TABS, FINISHED, TAB_LABELS, TABS
-from .models import FINISHED_STATUSES, OPEN_STATUSES, Complaint, ComplaintEvent, Site, Status, Technician
+from .models import (
+    FINISHED_STATUSES,
+    OPEN_STATUSES,
+    Complaint,
+    ComplaintEvent,
+    Site,
+    Status,
+    Technician,
+    Visit,
+)
 from .phones import format_phone
 
 
@@ -143,6 +152,9 @@ def complaint_rows(f, today):
         complaints = complaints.filter(technicians=f.technician)
     if f.closed_since and f.tab in CLOSED_SINCE_TABS:  # the open tabs ignore it
         complaints = complaints.filter(closed_on__gt=f.closed_since)
+    if f.visited_since:
+        visited = Visit.objects.filter(visit_date__gt=f.visited_since).values("complaint_id")
+        complaints = complaints.filter(pk__in=visited)
     if f.q:
         complaints = complaints.filter(complaint_search_q(f.q))
     rows = [complaint_row(c, today) for c in complaints]
@@ -180,6 +192,14 @@ def age_counts(rows):
 def closed_since_count(since):
     """Complaints Closed or Not covered after `since` (what the dashboard's tile and its link list)."""
     return Complaint.objects.filter(status__in=FINISHED_STATUSES, closed_on__gt=since).count()
+
+
+def visits_since(since):
+    """{"visits", "complaints"}: visits dated after `since` and the complaints they were on, in one query.
+    "complaints" is what the list shows with visited_since=since (tab All)."""
+    return Visit.objects.filter(visit_date__gt=since).aggregate(
+        visits=Count("id"), complaints=Count("complaint", distinct=True)
+    )
 
 
 def dashboard(today):

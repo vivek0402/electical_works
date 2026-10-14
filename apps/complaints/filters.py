@@ -34,6 +34,7 @@ class ComplaintFilters:
     age: str  # an AGE_BUCKETS key, or ""
     q: str
     closed_since: date | None = None  # closed or not covered after this day (the dashboard's 30-day tile)
+    visited_since: date | None = None  # with a visit after this day (main dashboard tile); any tab
 
 
 def complaint_filters(params):
@@ -46,4 +47,5 @@ def complaint_filters(params):
         age if age in {key for key, *_ in AGE_BUCKETS} else "",
         _text(params.get("q")),
         _date(params.get("closed_since"), None),
+        _date(params.get("visited_since"), None),
     )

@@ -55,6 +55,7 @@ def dashboard(request):
             "weeks_chart": [{"label": w["label"], "in": w["qty_in"], "out": w["qty_out"]} for w in weeks],
             "locations": selectors.location_unit_totals(),
             "recent": selectors.recent_entries(),
+            "service": selectors.service_stats(today),
             "today": today,
         },
     )
@@ -436,10 +437,14 @@ def adjust(request):
 
 @role_required(OFFICE)
 def entry_detail(request, number):
-    entry = get_object_or_404(
-        selectors.entries_with_lines(StockEntry.objects.select_related("complaint")), number=number
-    )
+    from apps.defectives.models import DefectivePiece  # imported here: defectives depends on inventory
+
+    entry = get_object_or_404(selectors.entries_with_lines(StockEntry.objects.all()), number=number)
     undone_by = StockEntry.objects.filter(reverses=entry).first()
+    # the pieces this entry moved (collected, marked, dispatched, settled or scrapped)
+    pieces = (
+        DefectivePiece.objects.filter(events__entry=entry).distinct().select_related("item").order_by("id")
+    )
     return render(
         request,
         "inventory/entry_detail.html",
@@ -450,6 +455,7 @@ def entry_detail(request, number):
             and undone_by is None
             and not entry.is_defective
             and not entry.is_complaint_visit,
+            "pieces": pieces,
         },
     )
 
@@ -471,17 +477,34 @@ def entry_undo(request, number):
     return redirect("entry_detail", number=rev.number)
 
 
+SEARCH_EMPTY = {"items": [], "entries": [], "complaints": [], "sites": [], "pieces": []}
+
+
 @role_required(OFFICE)
 def global_search(request):
-    """Top-bar search: items (code, other spelling, description, fitting) and entry numbers."""
+    """Top-bar search: items (code, other spelling, description, fitting), entry numbers, complaints (the
+    complaints list's search: no., company's complaint no., site, fault, contact, phone), sites and
+    defective pieces (the pieces list's search: tag typed loosely, batch code, RB no., ...).
+    Each group is kept small."""
+    from apps.complaints.models import Complaint, Site  # imported here: both apps depend on inventory
+    from apps.complaints.selectors import complaint_search_q
+    from apps.defectives.selectors import piece_search_q, pieces_qs
+
     q = _text(request.GET.get("q"))
     if len(q) <= 2:
-        return JsonResponse({"items": [], "entries": []})
+        return JsonResponse(SEARCH_EMPTY)
     found = [
         {**selectors.picker_option(i), "url": reverse("item_detail", args=[i.pk])}
         for i in search_items(q, limit=8)
     ]
     entries = StockEntry.objects.filter(number__icontains=q).order_by("-id")[:5]
+    complaints = (
+        Complaint.objects.filter(complaint_search_q(q)).select_related("site", "company").order_by("-id")[:5]
+    )
+    sites = Site.objects.filter(
+        Q(name__icontains=q) | Q(city__icontains=q) | Q(contact_name__icontains=q)
+    ).order_by("name", "city")[:4]
+    pieces = pieces_qs().filter(piece_search_q(q)).order_by("-id")[:5]
     return JsonResponse(
         {
             "items": found,
@@ -492,6 +515,33 @@ def global_search(request):
                     "label": e.get_kind_display(),
                 }
                 for e in entries
+            ],
+            "complaints": [
+                {
+                    "number": c.number,
+                    "url": reverse("complaint_detail", args=[c.number]),
+                    "label": f"{c.site.name}, {c.site.city} · {c.company.name}",
+                    "ref": c.company_ref,
+                    "status": c.get_status_display(),
+                }
+                for c in complaints
+            ],
+            "sites": [
+                {
+                    "name": s.name,
+                    "url": reverse("site_detail", args=[s.pk]),
+                    "label": s.city + (f" · {s.contact_name}" if s.contact_name else ""),
+                }
+                for s in sites
+            ],
+            "pieces": [
+                {
+                    "tag": p.tag,
+                    "url": reverse("piece_detail", args=[p.tag]),
+                    "label": f"{p.item.code} · {p.company.name}",
+                    "status": p.get_status_display(),
+                }
+                for p in pieces
             ],
         }
     )

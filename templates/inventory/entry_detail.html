@@ -4,6 +4,8 @@
 {% block page_title %}<span class="code">{{ entry.number }}</span> <span class="badge badge-k k-{{ entry.kind }} ms-2">{{ entry.get_kind_display }}</span>{% if undone_by %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}{% endblock %}
 {% block actions %}
   {% if can_undo %}<button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#undo-modal"><i class="ti ti-arrow-back-up"></i> Undo this entry</button>{% endif %}
+  {% if entry.complaint %}<a href="{% url 'complaint_detail' entry.complaint.number %}" class="btn btn-quiet"><i class="ti ti-message-report"></i> Complaint {{ entry.complaint.number }}</a>{% endif %}
+  {% if entry.return_batch %}<a href="{% url 'batch_detail' entry.return_batch.number %}" class="btn btn-quiet"><i class="ti ti-truck-return"></i> Batch {{ entry.return_batch.number }}</a>{% endif %}
   <a href="{% url 'movements' %}" class="btn btn-quiet"><i class="ti ti-list"></i> All movements</a>
 {% endblock %}
 {% block content %}
@@ -11,14 +13,15 @@
 {% if entry.is_complaint_visit and entry.reverses %}<div class="alert alert-info"><div class="d-flex gap-2"><i class="ti ti-info-circle"></i><div>Undo of the parts given on <span class="code">{{ entry.reverses.visit_given.number }}</span> (<a class="code" href="{% url 'complaint_detail' entry.complaint.number %}">{{ entry.complaint.number }}</a>). It cancels <a class="code" href="{% url 'entry_detail' entry.reverses.number %}">{{ entry.reverses.number }}</a> and stays on the complaint's record.</div></div></div>
 {% elif entry.reverses %}<div class="alert alert-info"><div class="d-flex gap-2"><i class="ti ti-info-circle"></i><div>This entry cancels <a class="code" href="{% url 'entry_detail' entry.reverses.number %}">{{ entry.reverses.number }}</a>.</div></div></div>{% endif %}
 {% if entry.is_complaint_visit and not entry.reverses %}<div class="alert alert-info"><div class="d-flex gap-2"><i class="ti ti-info-circle"></i><div>This entry belongs to a visit on complaint <a class="code" href="{% url 'complaint_detail' entry.complaint.number %}">{{ entry.complaint.number }}</a>, so it can't be undone here. Correct it from the complaint.</div></div></div>
-{% elif entry.is_defective %}<div class="alert alert-info"><div class="d-flex gap-2"><i class="ti ti-info-circle"></i><div>This entry belongs to the defective pieces, so it can't be undone here. Use the Defectives screens instead.</div></div></div>{% endif %}
+{% elif entry.is_defective %}<div class="alert alert-info"><div class="d-flex gap-2"><i class="ti ti-info-circle"></i><div>This entry belongs to the defective pieces, so it can't be undone here. Use {% if entry.return_batch %}return batch <a class="code" href="{% url 'batch_detail' entry.return_batch.number %}">{{ entry.return_batch.number }}</a>{% else %}the <a href="{% url 'defective_pieces' %}">Defectives screens</a>{% endif %} instead.</div></div></div>{% endif %}
 <div class="row row-cards">
   <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3></div><div class="card-body"><div class="datagrid">
     <div class="datagrid-item"><div class="datagrid-title">Date</div><div class="datagrid-content">{{ entry.entry_date|date }}</div></div>
     {% if entry.details %}<div class="datagrid-item"><div class="datagrid-title">Type</div><div class="datagrid-content">{{ entry.details }}</div></div>{% endif %}
     {% if entry.party %}<div class="datagrid-item"><div class="datagrid-title">{% if entry.kind == "IN" %}Received from{% elif entry.kind == "TRF" %}To location{% elif entry.kind == "REV" %}Party{% else %}Issued to{% endif %}</div><div class="datagrid-content">{{ entry.party }}</div></div>{% endif %}
+    {% if entry.complaint %}<div class="datagrid-item"><div class="datagrid-title">Complaint</div><div class="datagrid-content"><a class="code" href="{% url 'complaint_detail' entry.complaint.number %}">{{ entry.complaint.number }}</a></div></div>{% endif %}
     {% if entry.return_batch_id %}<div class="datagrid-item"><div class="datagrid-title">Return batch</div><div class="datagrid-content"><a class="code" href="{% url 'batch_detail' entry.return_batch.number %}">{{ entry.return_batch.number }}</a></div></div>{% endif %}
-    {% if entry.ref %}<div class="datagrid-item"><div class="datagrid-title">DC / ref no.</div><div class="datagrid-content">{{ entry.ref }}</div></div>{% endif %}
+    {% if entry.ref and entry.ref != entry.complaint.number %}<div class="datagrid-item"><div class="datagrid-title">{% if entry.return_batch_id %}Docket / ref no.{% else %}DC / ref no.{% endif %}</div><div class="datagrid-content">{{ entry.ref }}</div></div>{% endif %}
     {% if entry.note %}<div class="datagrid-item"><div class="datagrid-title">{% if entry.kind == "REV" %}Reason{% else %}Note{% endif %}</div><div class="datagrid-content">{{ entry.note|linebreaksbr }}</div></div>{% endif %}
     <div class="datagrid-item"><div class="datagrid-title">Entered by</div><div class="datagrid-content">{{ entry.created_by.first_name|default:entry.created_by.username }} · {{ entry.created_at|date:"d-m-Y H:i" }}</div></div>
   </div></div></div></div>
@@ -30,6 +33,8 @@
         <td class="num">{% if line.qty < 0 %}<span class="qty-out">−{{ line.qty|stringformat:"d"|slice:"1:" }}</span>{% endif %}</td><td>{{ line.item.unit }}</td>
         {% if entry.kind == "IN" %}<td>{{ line.batch_code }}</td><td>{{ line.pkd|date:"m-Y" }}</td>{% endif %}</tr>{% endfor %}</tbody>
     </table></div></div></div>
+  {% if pieces %}<div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-tags"></i> Defective pieces</h3><span class="badge bg-secondary-lt ms-2">{{ pieces|length }}</span></div>
+    <div class="card-body"><div class="d-flex flex-wrap gap-2">{% for p in pieces %}<a class="chip chip-link" href="{% url 'piece_detail' p.tag %}"><span class="code">{{ p.tag }}</span> <span class="text-secondary">{{ p.item.code }}</span></a>{% endfor %}</div></div></div></div>{% endif %}
 </div>
 {% if can_undo %}
 <div class="modal modal-blur fade" id="undo-modal" tabindex="-1" aria-labelledby="undo-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">

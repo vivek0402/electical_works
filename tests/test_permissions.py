@@ -10,6 +10,14 @@ EXPECTED_STOCK_ROUTES = {
     "item_check_code", "global_search", "masters", "masters_toggle", "items_xlsx", "current_stock_xlsx",
     "movements_xlsx", "low_stock_xlsx", "item_history_xlsx",
 }  # fmt: skip
+EXPECTED_SERVICE_ROUTES = {
+    "defectives_dashboard", "defective_pieces", "pieces_bulk", "piece_detail", "mark_defective",
+    "return_batches", "batch_new", "batch_detail", "batch_add", "batch_remove", "batch_dispatch",
+    "batch_settle", "defective_list_xlsx", "batch_xlsx", "complaints_dashboard", "complaints",
+    "complaint_new", "complaint_detail", "complaint_status", "complaint_not_covered", "visit_new",
+    "visit_undo_parts", "complaints_xlsx", "pending_complaints_xlsx", "site_quick_create", "sites",
+    "site_detail", "site_edit", "site_toggle", "technicians", "technician_edit", "technician_toggle",
+}  # fmt: skip
 
 
 def named_routes():
@@ -23,7 +31,9 @@ def named_routes():
 
 def test_sweep_finds_the_routes():
     names = {n for n, _ in named_routes()}
-    assert names >= EXPECTED_STOCK_ROUTES
+    # exact: a new route must be added here (and to ADMIN_ONLY if only Admin may open it)
+    assert names == EXPECTED_STOCK_ROUTES | EXPECTED_SERVICE_ROUTES
+    assert names >= ADMIN_ONLY
 
 
 @pytest.mark.parametrize("name,path", sorted(named_routes()))

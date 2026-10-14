@@ -471,7 +471,7 @@ def thirty(office_user):
 def test_batch_detail_query_count(office_client, thirty, django_assert_max_num_queries):
     url = f"/defectives/batches/{thirty.number}/"
     office_client.get(url)  # warm the session
-    with django_assert_max_num_queries(12):
+    with django_assert_max_num_queries(14):  # 12 + the two menu badges
         assert office_client.get(url).status_code == 200
 
 
@@ -486,5 +486,5 @@ def test_draft_batch_query_count(office_client, office_user, django_assert_max_n
     b = create_batch(company=wipro(), user=office_user, pieces=many[:15])
     url = f"/defectives/batches/{b.number}/"
     office_client.get(url)
-    with django_assert_max_num_queries(12):
+    with django_assert_max_num_queries(14):  # 12 + the two menu badges
         assert office_client.get(url).status_code == 200
