@@ -3,10 +3,11 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.inventory.forms import TablerFormMixin
-from apps.inventory.models import Company
+from apps.inventory.models import Company, Location
 
-from .models import Priority, Site, Technician
+from .models import Priority, Site, Status, Technician
 from .phones import normalise_phone
+from .services import visit_next_options
 
 DATE = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
 PHONE_TYPED_MAX = (
@@ -133,3 +134,53 @@ class SiteForm(PhoneMixin, TablerFormMixin, forms.Form):
     address = forms.CharField(
         required=False, widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"})
     )
+
+
+class VisitForm(TablerFormMixin, forms.Form):
+    """The visit header. The two item tables (parts given, failed parts collected) are parsed separately
+    (entry_lines). Technicians accept hidden ones too, so a page opened before one was hidden gets the
+    service's message ("… is hidden"), while the list only offers active ones."""
+
+    visit_date = forms.DateField(
+        label="Visit date", widget=DATE, error_messages={"required": "Choose the visit date."}
+    )
+    technicians = forms.ModelMultipleChoiceField(
+        Technician.objects.all(),
+        label="Technicians who attended",
+        widget=forms.SelectMultiple(attrs={"data-ts": "", "placeholder": "Choose who attended"}),
+        error_messages={
+            "required": "Choose who attended.",
+            "invalid_choice": "Choose technicians from the list.",
+        },
+    )
+    work_done = forms.CharField(
+        label="Work done",
+        widget=forms.Textarea(
+            attrs={"rows": 2, "placeholder": "e.g. Changed 2 drivers, 4 fittings still to check"}
+        ),
+        error_messages={"required": "Write what work was done."},
+    )
+    location = forms.ModelChoiceField(
+        Location.objects.good().filter(is_active=True),
+        empty_label=None,
+        label="From location",
+        error_messages={"invalid_choice": "Choose a good-stock location for the parts given."},
+    )
+    next_status = forms.ChoiceField(
+        label="Status after this visit",
+        widget=forms.RadioSelect,
+        error_messages={
+            "required": "Choose the status after the visit.",
+            "invalid_choice": "Choose one of the statuses offered.",
+        },
+    )
+
+    def __init__(self, *args, complaint, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["next_status"].choices = [(s, Status(s).label) for s in visit_next_options(complaint)]
+        self.fields["visit_date"].widget.attrs.update(
+            min=complaint.reported_on.isoformat(), max=timezone.localdate().isoformat()
+        )
+        self.fields["technicians"].widget.choices = [
+            (t.pk, t.name) for t in Technician.objects.filter(is_active=True)
+        ]

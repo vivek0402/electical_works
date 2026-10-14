@@ -55,6 +55,7 @@ ACTIVE_ALIASES = {
     "batch_detail": "return_batches",
     "piece_detail": "defective_pieces",
     "complaint_detail": "complaints",
+    "visit_new": "complaints",
 }
 
 

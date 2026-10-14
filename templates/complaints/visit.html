@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load static complaint_tags %}
+{% block title %}Record visit · {{ c.number }}{% endblock %}
+{% block pretitle %}Complaint {{ c.number }} · {{ c.site.name }}, {{ c.site.city }}{% endblock %}
+{% block page_title %}<i class="ti ti-clipboard-plus"></i> Record visit{% endblock %}
+{% block content %}
+<form method="post" novalidate data-lines-form>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <div class="card mb-3"><div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">{{ c.status|status_badge }}<span class="fw-medium">{{ c.fault }}</span><span class="text-secondary">· {{ c.company.name }} · reported {{ c.reported_on|date }}</span>
+    {% if c.contact_name or c.phone %}<span class="text-secondary ms-md-auto"><i class="ti ti-user"></i> {{ c.contact_name|default:"Contact" }}{% if c.phone %} · <a href="tel:{{ c.phone }}">{{ c.phone|phone_display }}</a>{% endif %}</span>{% endif %}</div></div>
+  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-calendar-event"></i> Visit</h3></div><div class="card-body"><div class="row g-3">
+    <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.visit_date.id_for_label }}">Visit date</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-calendar"></i></span>{{ form.visit_date }}</div></div>
+    <div class="col-12 col-md-9"><label class="form-label required" for="{{ form.technicians.id_for_label }}">Technicians who attended</label>{{ form.technicians }}</div>
+    <div class="col-12"><label class="form-label required" for="{{ form.work_done.id_for_label }}">Work done</label>{{ form.work_done }}</div>
+  </div></div></div>
+  <div class="card mb-3"><div class="card-header flex-wrap gap-2"><h3 class="card-title"><i class="ti ti-package-export text-out"></i> Parts given</h3><div class="card-subtitle ms-2 text-secondary">Posts a Stock OUT from the location. Leave empty if no parts were given.</div></div>
+    <div class="card-body"><div class="row g-3 mb-3"><div class="col-12 col-md-3"><label class="form-label" for="{{ form.location.id_for_label }}">From location</label>{{ form.location }}</div></div>
+      <div data-lines="part" data-mode="out" data-loc="{{ form.location.id_for_label }}" data-initial="initial-parts" data-summary="parts-summary" data-add-label="Add another part"></div></div>
+    <div class="card-footer text-secondary" id="parts-summary"></div></div>
+  <div class="card mb-3"><div class="card-header flex-wrap gap-2"><h3 class="card-title"><i class="ti ti-recycle"></i> Failed parts collected</h3><div class="card-subtitle ms-2 text-secondary">Each piece gets its own tag (quantity 3 = 3 tags) and goes to the Defective store, not good stock.</div></div>
+    <div class="card-body"><div data-lines="col" data-mode="collect" data-initial="initial-collected" data-summary="collect-summary" data-add-label="Add another failed part" data-max="{{ max_pieces }}"></div></div>
+    <div class="card-footer text-secondary" id="collect-summary"></div></div>
+  <div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-flag"></i> Status after this visit</h3></div>
+    <div class="card-body"><div class="form-selectgroup" role="radiogroup" aria-label="Status after this visit">{% for value, label in form.next_status.field.choices %}<label class="form-selectgroup-item"><input type="radio" name="next_status" value="{{ value }}" class="form-selectgroup-input"{% if form.next_status.value == value %} checked{% endif %}><span class="form-selectgroup-label"><i class="ti ti-{{ value|status_icon }}"></i> {{ label }}</span></label>{% endfor %}</div>
+      {% if first %}<div class="form-hint mt-2">The first visit also logs Not attended → Attended.</div>{% endif %}</div>
+    <div class="card-footer d-flex"><div class="ms-auto btn-list"><a href="{% url 'complaint_detail' c.number %}" class="btn btn-link link-secondary">Cancel</a><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Save visit</button></div></div></div>
+  <div id="form-error" data-form-error class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+</form>
+{{ items_data|json_script:"items-data" }}{{ balances_data|json_script:"balances-data" }}{{ initial_parts|json_script:"initial-parts" }}{{ initial_collected|json_script:"initial-collected" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/service.js' %}"></script><script src="{% static 'js/line-editor.js' %}"></script>{% endblock %}

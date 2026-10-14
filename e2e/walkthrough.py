@@ -7,7 +7,9 @@ The password comes from argv, or from the E2E_PASSWORD environment variable.
 Re-runnable: each run creates a new item TEST-<timestamp>, then undoes everything it posted (the Stock IN,
 the transfer and the adjustment), so stock levels end where they started. Only the new item and the
 entry/undo pairs stay on record, plus one piece of the new item marked defective (a Stock IN of 1 and the
-mark-defective transfer, which can't be undone; they touch only the throwaway item).
+mark-defective transfer, which can't be undone; they touch only the throwaway item), and one complaint
+closed as Not covered with a visit whose part given is undone and whose collected piece of the new item
+stays in the Defective store.
 
 Screenshots go to e2e/screen-<width>.png. If a step fails, e2e/screen-<width>-FAIL.png is saved, and the
 failing step and any JS errors are printed.
@@ -154,6 +156,60 @@ def run(page):
     expect(page.locator(".alert-success").first).to_contain_text(
         re.compile(r"New defective tag: DEF-\d{4}\.")
     )
+
+    step("file a complaint, then Record visit: 1 part given, 1 failed part collected")
+    page.goto(f"{BASE}/complaints/new/")
+    page.locator("#id_site-ts-control").click()
+    site = page.locator("#id_site-ts-dropdown .option").first
+    expect(site).to_be_visible()
+    site.click()
+    page.fill("#id_fault", "Walkthrough: 1 driver dead")
+    page.click("#complaint-form button[type=submit]")
+    expect(page).to_have_url(re.compile(r"/complaints/CMP-\d{4}/$"))
+    cmp_no = page.locator(".page-title .code").inner_text().strip()
+    page.locator(".page-header").get_by_role("link", name="Record visit").click()
+    expect(page).to_have_url(re.compile(rf"/complaints/{cmp_no}/visit/$"))
+    expect(page.locator("#id_location option", has_text="Defective store")).to_have_count(0)
+    page.locator("#id_technicians-ts-control").click()
+    tech = page.locator("#id_technicians-ts-dropdown .option").first
+    expect(tech).to_be_visible()
+    tech.click()
+    page.keyboard.press("Escape")
+    page.fill("#id_work_done", "Changed 1 driver (walkthrough)")
+    pick_item(page, NEW, row=0)  # Parts given
+    have = int(page.locator(".lines-table .avail b").first.inner_text())
+    page.locator("input[name=part_qty]").fill(str(have + 1))
+    expect(page.locator(".err").first).to_contain_text(f"Only {have} NOS available")
+    page.click("form[data-lines-form] button[type=submit]")
+    expect(page.locator("#form-error")).to_contain_text("Fix the highlighted lines")
+    page.locator("input[name=part_qty]").fill("1")
+    pick_item(page, NEW, row=1)  # Failed parts collected
+    page.locator("input[name=col_qty]").fill("1")
+    page.locator("input[name=col_batch]").fill("B2405")
+    page.locator("input[name=col_pkd]").fill("2026-03")
+    page.locator("input[name=col_fault]").fill("No output (walkthrough)")
+    page.locator(".form-selectgroup-label", has_text="Material need to check").click()
+    page.click("form[data-lines-form] button[type=submit]")
+    expect(page).to_have_url(re.compile(rf"/complaints/{cmp_no}/$"))
+    expect(page.locator(".alert-success").first).to_contain_text(
+        re.compile(r"Visit VIS-\d{4} saved\. Parts given: OUT-\d{4}\. New defective tags: DEF-\d{4}\.")
+    )
+    row = page.locator("table.card-table tbody tr").first
+    expect(row.locator("a.code", has_text=re.compile(r"^OUT-\d{4}$"))).to_be_visible()
+    expect(row.locator("a.code", has_text=re.compile(r"^DEF-\d{4}$"))).to_be_visible()
+
+    step(f"clean-up: undo the parts given on {cmp_no}, then close it as Not covered")
+    row.get_by_role("button", name="Undo parts given").click()
+    undo_modal = page.locator(".modal.show")
+    expect(undo_modal).to_be_visible()
+    undo_modal.locator("input[name=reason]").fill("walkthrough cleanup")
+    undo_modal.locator("button[type=submit]").click()
+    expect(page.locator(".alert-success").first).to_contain_text("The parts are back in stock.")
+    page.click("text=Close as Not covered")
+    expect(page.locator("#nc-modal")).to_be_visible()
+    page.select_option("#nc-reason", label="Customer cancelled")
+    page.click("#nc-modal button[type=submit]")
+    expect(page.locator(".alert-success").first).to_contain_text("closed as Not covered")
 
     step("transfer to the same location is refused; a real transfer saves")
     page.goto(f"{BASE}/stock/transfer/")

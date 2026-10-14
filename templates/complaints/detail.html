@@ -3,7 +3,7 @@
 {% block pretitle %}Complaint · {{ c.company.name }}{% endblock %}
 {% block page_title %}<span class="code">{{ c.number }}</span> {{ c.status|status_badge }}{% endblock %}
 {% block actions %}
-  {% if c.is_open %}{% url 'visit_new' c.number as visit_url %}{% if visit_url %}<a href="{{ visit_url }}" class="btn btn-primary"><i class="ti ti-clipboard-plus"></i> Record visit</a>{% else %}<span class="btn btn-primary disabled" aria-disabled="true" title="Coming soon"><i class="ti ti-clipboard-plus"></i> Record visit</span>{% endif %}{% endif %}
+  {% if c.is_open %}<a href="{% url 'visit_new' c.number %}" class="btn btn-primary"><i class="ti ti-clipboard-plus"></i> Record visit</a>{% endif %}
   {% if c.status != "NOT_COVERED" %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#status-modal"><i class="ti ti-arrows-right-left"></i> Change status</button>{% endif %}
   {% if c.is_open %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#nc-modal"><i class="ti ti-ban"></i> Close as Not covered</button>{% endif %}
 {% endblock %}
@@ -34,7 +34,8 @@
       <div class="tl-body"><div class="fw-medium">{% if ev.from_status %}{{ ev.get_from_status_display }} → {% endif %}{{ ev.get_to_status_display }}</div>
         <div class="small text-secondary">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}</div>
         {% if ev.reason %}<div class="small">Reason: <b>{{ ev.get_reason_display }}</b></div>{% endif %}{% if ev.note %}<div class="small">{{ ev.note }}</div>{% endif %}</div></li>{% endfor %}</ul></div></div></div>
-  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clipboard-list"></i> Visits</h3><span class="badge bg-secondary-lt ms-2">{{ visits|length }}</span></div>
+  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clipboard-list"></i> Visits</h3><span class="badge bg-secondary-lt ms-2">{{ visits|length }}</span>
+    {% if c.is_open %}<div class="card-actions"><a href="{% url 'visit_new' c.number %}" class="btn btn-sm btn-outline-primary"><i class="ti ti-plus"></i> Record visit</a></div>{% endif %}</div>
     <div class="table-responsive d-none d-md-block"><table class="table table-vcenter card-table">
       <thead><tr><th>Visit</th><th>Technicians</th><th>Work done</th><th>Parts given</th><th>Failed parts collected</th><th>Status after</th></tr></thead>
       <tbody>{% for v in visits %}<tr>

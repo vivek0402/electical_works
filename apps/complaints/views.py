@@ -9,11 +9,15 @@ from django.views.decorators.http import require_POST
 from apps.accounts.decorators import role_required
 from apps.accounts.roles import ADMIN, OFFICE, has_role
 from apps.core.tokens import guarded_post, page_token
+from apps.defectives.services import MAX_PIECES_PER_LINE, DefectiveError
+from apps.inventory import selectors as stock
+from apps.inventory.entry_lines import parse_lines, raw_lines
 from apps.inventory.models import StockEntry
+from apps.inventory.services import StockError
 
 from . import selectors, services
-from .forms import ComplaintForm, SiteForm
-from .models import TRANSITIONS, NotCoveredReason, Status, Visit
+from .forms import ComplaintForm, SiteForm, VisitForm
+from .models import TRANSITIONS, Complaint, NotCoveredReason, Status, Visit
 from .services import ComplaintError
 
 SAVED_ALREADY = "This was already saved."
@@ -210,3 +214,102 @@ def visit_undo_parts(request, number, visit):
         return f"Parts given on {v.number} undone. {rev.number} posted. The parts are back in stock."
 
     return _complaint_post(request, number, f"undo-{v.number}", run)
+
+
+def _visit_lines(raw_parts, raw_collected):
+    """(parts, collected) in the shapes record_visit takes. A problem names its table and the line number the
+    user sees ("Failed parts collected: Line 2: …"); the piece limit is checked here for that reason too (the
+    service counts only the non-blank lines)."""
+    try:
+        parts = parse_lines(raw_parts, "out", allow_empty=True)
+    except StockError as exc:
+        raise ComplaintError(f"Parts given: {exc.message}") from exc
+    try:
+        collected = parse_lines(raw_collected, "collect", allow_empty=True)
+        for p in collected:
+            if p.qty > MAX_PIECES_PER_LINE:
+                raise StockError(f"Line {p.n}: quantity must be between 1 and {MAX_PIECES_PER_LINE}.")
+    except StockError as exc:
+        raise ComplaintError(f"Failed parts collected: {exc.message}") from exc
+    return [(p.item, p.qty) for p in parts], [(p.item, p.qty, p.batch, p.pkd, p.fault) for p in collected]
+
+
+def _visit_saved_message(visit):
+    text = f"Visit {visit.number} saved."
+    if visit.out_entry:
+        text += f" Parts given: {visit.out_entry.number}."
+    tags = list(visit.pieces.order_by("tag").values_list("tag", flat=True))
+    if tags:
+        text += f" New defective tags: {', '.join(tags)}."
+    return text
+
+
+@never_cache
+@role_required(OFFICE)
+def visit_new(request, number):
+    """Record a visit: work done, parts given (one Stock OUT), failed parts collected (tagged pieces in the
+    Defective store) and the status after it, in one save. A refused save comes back here with what was typed
+    (both line tables included) and the message; nothing was saved."""
+    complaint = get_object_or_404(Complaint.objects.select_related("site", "company"), number=number)
+    if not complaint.is_open:
+        messages.warning(
+            request, f"{complaint.number} is {complaint.get_status_display()}, so visits can't be added."
+        )
+        return redirect("complaint_detail", number=number)
+    first = complaint.status == Status.NOT_ATTENDED
+    initial = {
+        "visit_date": timezone.localdate(),
+        "location": stock.default_location(),
+        "technicians": [t.pk for t in complaint.technicians.filter(is_active=True)],
+        "next_status": Status.ATTENDED if first else complaint.status,
+    }
+    form = VisitForm(request.POST or None, initial=initial, complaint=complaint)
+    error, token, raw_parts, raw_collected = None, "", [], []
+    if request.method == "POST":
+        raw_parts, raw_collected = raw_lines(request.POST, "part"), raw_lines(request.POST, "col")
+
+        def run():
+            if not form.is_valid():
+                raise ComplaintError(form.first_error())
+            data = form.cleaned_data
+            try:
+                parts, collected = _visit_lines(raw_parts, raw_collected)
+                visit = services.record_visit(
+                    complaint=complaint,
+                    visit_date=data["visit_date"],
+                    technicians=list(data["technicians"]),
+                    work_done=data["work_done"],
+                    next_status=data["next_status"],
+                    user=request.user,
+                    location=data["location"],
+                    parts=parts,
+                    collected=collected,
+                )
+            except (ComplaintError, StockError, DefectiveError) as exc:
+                raise ComplaintError(f"{exc.message} Nothing was saved.") from exc
+            messages.success(request, _visit_saved_message(visit))
+            return reverse("complaint_detail", args=[number])
+
+        result = guarded_post(request, run)
+        if result.replayed:
+            messages.warning(request, "This visit was already saved.")
+        if result.saved:
+            return redirect(result.saved)
+        error, token = result.error, result.token
+    items, balances = stock.picker_data()
+    return render(
+        request,
+        "complaints/visit.html",
+        {
+            "c": complaint,
+            "form": form,
+            "first": first,
+            "error": error,
+            "token": token or page_token(request.session, request.path),
+            "items_data": items,
+            "balances_data": balances,
+            "initial_parts": raw_parts,
+            "initial_collected": raw_collected,
+            "max_pieces": MAX_PIECES_PER_LINE,
+        },
+    )

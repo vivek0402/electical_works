@@ -118,10 +118,12 @@ td.c-check, th.c-check { width: 1%; }
 .lines-table td.c-fault { min-width: 12rem; }
 .lines-table td[data-label="Batch code"] { min-width: 8rem; }
 .lines-table td[data-label="PKD (packed)"] { min-width: 10rem; }
+[data-mode="collect"] .lines-table .ts-wrapper { min-width: 13rem; } /* 3 more columns: fits a 1366px screen */
 .settle-panel { background: #f8fafc; }
 .page-title .badge.st { font-size: .8rem; vertical-align: middle; margin-left: .35rem; }
 @media (max-width: 767.98px) {
   .lines-table td.c-fault { grid-column: 1 / -1; }
+  [data-mode="collect"] .lines-table .ts-wrapper { min-width: 0; }
   .page-header .btn-list { flex-wrap: wrap; }
 }
 /* Six sidebar sections: keep the menu compact on desktop (it still scrolls on short screens). */
