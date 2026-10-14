@@ -67,7 +67,7 @@ def test_nav_anonymous_empty():
 
 # Menu entries whose screens later tasks build; they render disabled until their URL name resolves.
 # Remove a name here when its screen is built.
-UNBUILT: set[str] = {"complaints_dashboard", "complaints", "sites", "technicians"}
+UNBUILT: set[str] = {"sites", "technicians"}
 
 
 def test_only_unbuilt_screens_are_disabled_in_the_menu(office_user):

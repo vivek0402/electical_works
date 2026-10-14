@@ -1,4 +1,7 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -8,16 +11,18 @@ from django.views.decorators.http import require_POST
 
 from apps.accounts.decorators import role_required
 from apps.accounts.roles import ADMIN, OFFICE, has_role
+from apps.core.tables import sort_and_page
 from apps.core.tokens import guarded_post, page_token
 from apps.defectives.services import MAX_PIECES_PER_LINE, DefectiveError
 from apps.inventory import selectors as stock
 from apps.inventory.entry_lines import parse_lines, raw_lines
-from apps.inventory.models import StockEntry
+from apps.inventory.models import Company, StockEntry
 from apps.inventory.services import StockError
 
 from . import selectors, services
+from .filters import AGE_BUCKETS, FINISHED, complaint_filters
 from .forms import ComplaintForm, SiteForm, VisitForm
-from .models import TRANSITIONS, Complaint, NotCoveredReason, Status, Visit
+from .models import TRANSITIONS, Complaint, NotCoveredReason, Priority, Status, Technician, Visit
 from .services import ComplaintError
 
 SAVED_ALREADY = "This was already saved."
@@ -311,5 +316,88 @@ def visit_new(request, number):
             "initial_parts": raw_parts,
             "initial_collected": raw_collected,
             "max_pieces": MAX_PIECES_PER_LINE,
+        },
+    )
+
+
+@role_required(OFFICE)
+def complaints_dashboard(request):
+    today = timezone.localdate()
+    d = selectors.dashboard(today)
+    base = reverse("complaints")
+    for row in d["ages"]:
+        row["href"] = f"{base}?{urlencode({'age': row['key']})}"
+    for row in d["companies"]:
+        row["href"] = f"{base}?{urlencode({'company': row['id']})}"
+    for row in d["cities"]:
+        row["href"] = f"{base}?{urlencode({'city': row['label']})}"
+    n = d["counts"]
+
+    def tile(status, label, icon, css, sub=""):
+        return {
+            "n": n[status],
+            "label": label,
+            "icon": icon,
+            "sub": sub,
+            "css": css,
+            "href": f"{base}?{urlencode({'tab': status})}",
+        }
+
+    tiles = [
+        tile(
+            Status.NOT_ATTENDED,
+            "Not attended",
+            "alert-circle",
+            "kpi-alert" if n[Status.NOT_ATTENDED] else "kpi-brand",
+        ),
+        tile(Status.ATTENDED, "Attended", "tool", "kpi-brand"),
+        tile(Status.MATERIAL_CHECK, "Material need to check", "zoom-question", "kpi-brand"),
+        tile(
+            Status.AWAITING_MATERIAL,
+            "Awaiting material",
+            "hourglass",
+            "kpi-wait" if n[Status.AWAITING_MATERIAL] else "kpi-brand",
+        ),
+        tile(Status.RESOLVED, "Resolved", "circle-check", "kpi-brand", "to be closed"),
+        {
+            "n": d["closed_30"],
+            "label": "Closed / not covered",
+            "icon": "lock",
+            "sub": "last 30 days",
+            "css": "kpi-brand",
+            "href": f"{base}?{urlencode({'tab': FINISHED, 'closed_since': d['since'].isoformat()})}",
+        },
+    ]
+    return render(request, "complaints/dashboard.html", {"d": d, "tiles": tiles})
+
+
+@role_required(OFFICE)
+def complaint_list(request):
+    f = complaint_filters(request.GET)
+    rows, tabs = selectors.complaint_rows(f, timezone.localdate())
+    statuses, priorities = list(Status.values), list(Priority.values)
+    sorters = {
+        "no": lambda r: r["c"].number,
+        "reported": lambda r: (r["c"].reported_on, r["c"].number),
+        "site": lambda r: r["c"].site.name,
+        "company": lambda r: r["c"].company.name,
+        "techs": lambda r: r["techs"],
+        "priority": lambda r: priorities.index(r["c"].priority),
+        "status": lambda r: statuses.index(r["c"].status),
+        "age": lambda r: r["age"],
+    }
+    table = sort_and_page(request, rows, sorters, "reported", "desc")
+    return render(
+        request,
+        "complaints/list.html",
+        {
+            "f": f,
+            "finished": f.tab == FINISHED,
+            "table": table,
+            "tabs": tabs,
+            "companies": Company.objects.filter(Q(is_active=True) | Q(complaints__isnull=False)).distinct(),
+            "cities": selectors.cities(),
+            "technicians": Technician.objects.all(),
+            "ages": AGE_BUCKETS,
         },
     )
