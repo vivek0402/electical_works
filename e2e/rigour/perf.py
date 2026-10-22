@@ -39,7 +39,7 @@ item = q(
 )
 entry = q("select number from inventory_stockentry where kind='IN' order by id limit 1")
 cmp_ = q(
-    "select c.number from complaints_complaint c join complaints_visit v on v.complaint_id=c.id group by c.number order by count(*) desc limit 1"
+    "select c.number from complaints_complaint c join complaints_visit v on v.complaint_id=c.id where c.status in ('ATTENDED','MATERIAL_CHECK','AWAITING_MATERIAL','RESOLVED') group by c.number order by count(*) desc limit 1"
 )
 piece = q("select tag from defectives_defectivepiece order by id desc limit 1")
 batch = q("select number from defectives_returnbatch order by id limit 1")

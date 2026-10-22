@@ -133,7 +133,7 @@ def follow(client, result):
         page = client.get(
             result.location if result.location.startswith("/") else result.location.replace(BASE, "")
         ).text
-        bad = re.findall(r'<div class="alert alert-danger[^"]*"[^>]*>(.*?)</div>', page, re.S)
+        bad = re.findall(r'<div class="alert alert-(?:danger|warning)[^"]*"[^>]*>(.*?)</div>', page, re.S)
         return " | ".join(text_of(b) for b in bad)
     return result.message()
 
@@ -1001,6 +1001,14 @@ case(
     ),
 )
 
+
+def _anon_post():
+    """An anonymous POST must be sent to the login page and must save nothing."""
+    before = state()
+    r = anon.s.post(BASE + "/stock/in/", data={"entry_date": TODAY}, allow_redirects=False)
+    return (r.status_code if state() == before else 999, "", None)
+
+
 # =========================== PERMISSIONS / SECURITY ================================================================
 P = "Permissions & security"
 case(
@@ -1011,11 +1019,9 @@ case(
 )
 case(
     P,
-    "anonymous visitor posts a Stock IN",
-    "refused",
-    lambda: (lambda r: (r.status_code, "", r))(
-        anon.s.post(BASE + "/stock/in/", data={"entry_date": TODAY}, allow_redirects=False)
-    ),
+    "anonymous visitor posts a Stock IN: sent to login, nothing saved",
+    "status:302",
+    lambda: _anon_post(),
 )
 for url in ("/masters/", "/admin/"):
     code = office.get(url, allow_redirects=False).status_code
@@ -1173,6 +1179,32 @@ for path in (
         }
     )
     print(f"{'PASS' if s == 404 else 'FAIL'}  [{Q}] unknown address {path} -> {s}")
+
+# =========================== TEXT TYPED LIKE A FORMULA STAYS TEXT IN EXCEL ==========================================
+import io  # noqa: E402
+
+import openpyxl  # noqa: E402
+
+X = "Excel export"
+xl = admin.s.get(BASE + "/movements/export/?date_from=2026-01-01&date_to=2026-10-22", timeout=120)
+sheet = openpyxl.load_workbook(io.BytesIO(xl.content)).active
+found = [
+    c for row in sheet.iter_rows() for c in row if isinstance(c.value, str) and "HYPERLINK" in c.value.upper()
+]
+ok = bool(found) and all(c.data_type != "f" for c in found)
+results.append(
+    {
+        "area": X,
+        "name": "'=HYPERLINK(...)' typed as a DC number is in the movements export as text, not a formula",
+        "expect": "text",
+        "verdict": "text"
+        if ok
+        else f"not found or a formula: {[(c.coordinate, c.data_type) for c in found][:3]}",
+        "pass": ok,
+        "detail": "",
+    }
+)
+print(f"{'PASS' if ok else 'FAIL'}  [{X}] a typed formula is stored as text ({len(found)} cell(s) found)")
 
 failed = [r for r in results if not r["pass"]]
 (HERE / "matrix-results.json").write_text(json.dumps(results, indent=1), encoding="utf-8")

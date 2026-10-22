@@ -32,7 +32,7 @@ step 02-load        uv run --with requests python e2e/rigour/load_entries.py "$B
 step 03-audit       uv run --with "psycopg[binary]" python e2e/rigour/audit.py
 step 04-consistency uv run --with requests --with openpyxl python e2e/rigour/consistency.py "$BASE" admin "$PW"
 step 05-performance uv run python e2e/rigour/perf.py
-step 06-matrix      uv run --with requests --with "psycopg[binary]" python e2e/rigour/scenario_matrix.py "$BASE" admin office "$PW"
+step 06-matrix      uv run --with requests --with openpyxl --with "psycopg[binary]" python e2e/rigour/scenario_matrix.py "$BASE" admin office "$PW"
 step 07-concurrency uv run --with requests --with "psycopg[binary]" python e2e/rigour/concurrency.py "$BASE" admin "$PW"
 step 08-browser     uv run --with playwright==1.63.0 python e2e/rigour/ui_checks.py "$BASE" admin "$PW"
 step 09-final-audit uv run --with "psycopg[binary]" python e2e/rigour/audit.py --no-model
