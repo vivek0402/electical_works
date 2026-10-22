@@ -17,7 +17,9 @@ from pathlib import Path
 import psycopg
 
 HERE = Path(__file__).resolve().parent
-URL = sys.argv[1] if len(sys.argv) > 1 else "postgresql://postgres:@127.0.0.1:52207/svkml_rigour"
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+MODEL = "--no-model" not in sys.argv  # after the scenario tests there is extra data the model does not know
+URL = ARGS[0] if ARGS else "postgresql://postgres:@127.0.0.1:52207/svkml_rigour"
 scen = json.loads((HERE / "scenarios.json").read_text(encoding="utf-8"))
 res = json.loads((HERE / "results.json").read_text(encoding="utf-8"))
 db = psycopg.connect(URL)
@@ -32,6 +34,12 @@ def check(name, ok, evidence=""):
     print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"\n        {evidence}" if evidence and not ok else ""))
     if not ok:
         failures.append(name)
+
+
+def model_check(*args, **kwargs):
+    """A check against the independent model; skipped with --no-model (extra data from later tests)."""
+    if MODEL:
+        check(*args, **kwargs)
 
 
 # ---- 1. the app's own cache check ------------------------------------------------------------------------
@@ -83,7 +91,7 @@ diffs = [
     for k in sorted(set(expected) | set(actual))
     if expected.get(k, 0) != actual.get(k, 0)
 ]
-check(
+model_check(
     f"good stock matches the independent model for all {len(set(expected) | set(actual))} item/location cells",
     not diffs,
     "(item, location), model, app: " + str(diffs[:8]),
@@ -113,7 +121,7 @@ expect_pieces = sum(q_ for op in scen["timeline"] if op["op"] == "mark" for _, q
     c[1] for op in scen["timeline"] if op["op"] == "visit" for c in op["collected"]
 )
 (n_pieces,) = q("select count(*) from defectives_defectivepiece")[0]
-check(
+model_check(
     f"{expect_pieces} pieces were created (marked + collected)",
     n_pieces == expect_pieces,
     f"app has {n_pieces}",
@@ -149,7 +157,7 @@ check("a piece is in a batch exactly when its status says so", not bad, str(bad[
 (replaced_or_repaired,) = q(
     "select count(*) from defectives_batchline where outcome in ('REPLACED','REPAIRED')"
 )[0]
-check(
+model_check(
     f"stock added by settles ({len(res['settle_effects'])}) equals pieces answered Replaced/Repaired",
     replaced_or_repaired == len(res["settle_effects"]),
     f"batchlines {replaced_or_repaired}",
