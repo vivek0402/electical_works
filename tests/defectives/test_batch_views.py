@@ -252,6 +252,46 @@ def test_dispatch_errors_are_shown(office_client, office_user):
     assert "An empty batch" in html and "data-show-on-load" in html
 
 
+def _dispatched_batch(office_user, pieces, n=1):
+    b = create_batch(company=wipro(), user=office_user, pieces=pieces[:n])
+    dispatch(batch=b, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    return b
+
+
+def test_a_refused_dispatch_of_an_already_dispatched_batch_is_not_silent(office_client, office_user, pieces):
+    """Found in rigour testing: the dispatch dialog isn't drawn once the batch is dispatched (another tab
+    did it), so the refusal had nowhere to show and the page reloaded without a word."""
+    b = _dispatched_batch(office_user, pieces)
+    url = f"/defectives/batches/{b.number}/"
+    data = {"dispatched_on": TODAY.isoformat(), "courier": "Blue Dart", "docket_no": "X9"}
+    html = post(office_client, url, url + "dispatch/", data).content.decode()
+    assert "RB-0001 was already dispatched." in html and "alert-danger" in html
+    assert ReturnBatch.objects.get().courier == "DTDC"  # the first dispatch stands
+
+
+def test_a_refused_remove_from_a_dispatched_batch_is_not_silent(office_client, office_user, pieces):
+    b = _dispatched_batch(office_user, pieces)
+    url = f"/defectives/batches/{b.number}/"
+    html = post(office_client, url, url + "remove/", {"tag": "DEF-0001"}).content.decode()
+    assert "RB-0001 is dispatched and locked." in html and "alert-danger" in html
+
+
+def test_a_refused_settle_when_every_piece_is_already_settled_is_not_silent(
+    office_client, office_user, pieces
+):
+    b = _dispatched_batch(office_user, pieces)
+    settle(batch=b, pieces=pieces[:1], outcome=Outcome.REJECTED_RETURNED, settled_on=TODAY, user=office_user)
+    url = f"/defectives/batches/{b.number}/"
+    data = {
+        "tag": ["DEF-0001"],
+        "outcome": "REPLACED",
+        "settled_on": TODAY.isoformat(),
+        "to_location": loc().pk,
+    }
+    html = post(office_client, url, url + "settle/", data).content.decode()
+    assert "alert-danger" in html and "DEF-0001" in html.split("alert-danger", 1)[1][:400]
+
+
 def test_dispatch_courier_over_60_characters_is_refused(office_client, office_user, pieces):
     b = create_batch(company=wipro(), user=office_user, pieces=pieces[:1])
     url = f"/defectives/batches/{b.number}/"

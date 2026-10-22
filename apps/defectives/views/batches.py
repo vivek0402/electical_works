@@ -109,10 +109,16 @@ def _batch(number):
 def _detail(request, batch, token="", errors=None):
     """Render the batch page. After a refused POST, `errors` holds the message under the form's key
     (add / remove / dispatch / settle) and that form shows what was posted, so nothing is typed twice."""
-    errors = errors or {}
+    errors = dict(errors or {})
     posted = request.POST if errors else {}
     lines = selectors.batch_lines(batch)
     settled = sum(1 for line in lines if line.outcome)
+    sent = [ln for ln in lines if not ln.outcome and ln.piece.status == PieceStatus.SENT]
+    # A refusal is never silent: when the form that was posted isn't drawn any more (another tab dispatched
+    # or settled the batch), its message shows at the top of the page, like the complaint page does.
+    drawn = {"add", "remove", "dispatch"} if batch.is_draft else ({"settle"} if sent else set())
+    for key in [k for k in errors if k not in drawn]:
+        messages.error(request, errors.pop(key))
     today = timezone.localdate()
     available = []
     if batch.is_draft:
@@ -129,7 +135,7 @@ def _detail(request, batch, token="", errors=None):
             "settled": settled,
             "groups": selectors.answer_groups(lines),
             "label": selectors.batch_label(batch, len(lines), settled),
-            "sent": [ln for ln in lines if not ln.outcome and ln.piece.status == PieceStatus.SENT],
+            "sent": sent,
             "waiting": (today - batch.dispatched_on).days if batch.dispatched_on else 0,
             "today": today,
             "available": available,
