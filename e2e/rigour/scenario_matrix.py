@@ -1003,10 +1003,10 @@ case(
 
 
 def _anon_post():
-    """An anonymous POST must be sent to the login page and must save nothing."""
+    """An anonymous POST must be turned away (to login, or 403 when it has no CSRF token) and save nothing."""
     before = state()
     r = anon.s.post(BASE + "/stock/in/", data={"entry_date": TODAY}, allow_redirects=False)
-    return (r.status_code if state() == before else 999, "", None)
+    return (302 if r.status_code in (302, 403) and state() == before else 999, f"HTTP {r.status_code}", None)
 
 
 # =========================== PERMISSIONS / SECURITY ================================================================
@@ -1095,7 +1095,9 @@ case(
     "observe",
     lambda: (200, "login ok" if Client(BASE).login(ADMIN, "wrong-password") else "login refused", None),
 )
-XSS_NO = one("select number from inventory_stockentry where note like '%<script>%' order by id desc limit 1")
+XSS_NO = one(
+    "select number from inventory_stockentry where note like '%%<script>%%' order by id desc limit 1"
+)
 page = admin.get(f"/entries/{XSS_NO}/").text
 ok = "<script>alert(1)</script>" not in page and "&lt;script&gt;alert(1)&lt;/script&gt;" in page
 results.append(
