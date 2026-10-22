@@ -18,7 +18,7 @@ Run on 2026-10-22 against a fresh database, from commit `9ed006d` plus the harne
 | Audit against an independent stock model: 19 checks | all pass: 412 item/location cells agree, no negative stock, numbers gap-free, Defective store = pieces |
 | Consistency: 36 checks (tiles, menu badge, 9 Excel exports, 10 dispatch lists) | all pass except one tile, listed as F3 |
 | Performance: 37 pages | slowest page 97 ms; no query count grows between 10 and 50 rows |
-| Scenario matrix: 155 cases | 155 behave as predicted |
+| Scenario matrix: 159 cases | 159 behave as predicted |
 | Concurrency: 8 users at once | last units, document numbers and scarce parts hold; the double submit failed before F2 and passes now |
 | Browser: 39 pages at 1366 px and 390 px, picker, live warning, 25-line entry, search | all pass, no JS errors |
 | Final ledger audit after all the abuse | passes |
