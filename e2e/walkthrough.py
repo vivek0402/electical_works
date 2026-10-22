@@ -15,6 +15,7 @@ the visit's parts given), so the demo items' stock ends where it started. Left b
     marked piece and the first collected one go in a new return batch for Wipro Lighting that is dispatched
     and settled: the first Replaced, the second Rejected (returned), so it is back in the Defective store.
     The second collected piece stays in the Defective store, so the item ends with 2 pieces there;
+  - supplier "WT Supplier TEST-<timestamp>", created from the Stock IN supplier picker (type-to-add);
   - site "Walkthrough Site <timestamp>" (Visakhapatnam), created from the New complaint site picker;
   - two complaints: one at the new site, moved Awaiting material, Resolved, Closed; one at the first demo
     site, closed as Not covered. Closed complaints don't count as open anywhere;
@@ -185,7 +186,13 @@ def run(page):
 
     step(f"Stock IN with new item {NEW} created from the picker")
     page.goto(f"{BASE}/stock/in/")
-    expect(page.locator("#id_company option:checked")).to_have_text("Wipro Lighting")
+    expect(page.locator("#id_company option:checked")).to_have_text("Choose…")  # nothing is preselected
+    expect(page.locator("#id_location option:checked")).to_have_text("Choose…")
+    ts_pick(page, "id_company", f"WT Supplier {NEW}", create=True)  # type-to-add: saved as a new company
+    expect(page.locator("#id_company option:checked")).to_have_text(f"WT Supplier {NEW}")
+    expect(page.locator("body")).to_contain_text("Saved as a new supplier")
+    ts_pick(page, "id_location", "Vizag Office")
+    page.wait_for_timeout(300)  # Tom Select hands focus back to the closed picker a moment after a pick
     page.fill("#id_ref", "DC 5012")
     pick_item(page, NEW, create=True)
     modal = page.locator("#new-item-modal")
@@ -217,6 +224,8 @@ def run(page):
     page.goto(
         f"{BASE}/stock/in/"
     )  # one extra piece to mark, so the clean-up undo of the IN above still balances
+    page.select_option("#id_company", label="Wipro Lighting")
+    page.select_option("#id_location", label="Vizag Office")
     pick_item(page, NEW)
     page.locator("input[name=line_qty]").first.fill("1")
     page.click("button.btn-in[type=submit]")
@@ -255,6 +264,7 @@ def run(page):
     expect(page.locator("#id_contact_name")).to_have_value("Walkthrough contact")
     expect(page.locator("#id_phone")).to_have_value(re.compile(r"98765\s?43210"))
     page.fill("#id_fault", "Walkthrough: 1 driver dead")
+    ts_pick(page, "id_company", COMPANY)  # no company is preselected
     page.click("#complaint-form button[type=submit]")
     expect(page).to_have_url(re.compile(r"/complaints/CMP-\d{4}/$"))
     cmp_no = page.locator(".page-title .code").inner_text().strip()
@@ -392,6 +402,7 @@ def not_covered(page):
     expect(site).to_be_visible()
     site.click()
     page.fill("#id_fault", "Walkthrough: customer will call back")
+    ts_pick(page, "id_company", COMPANY)
     page.click("#complaint-form button[type=submit]")
     expect(page).to_have_url(re.compile(r"/complaints/CMP-\d{4}/$"))
     page.click("text=Close as Not covered")

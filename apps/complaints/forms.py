@@ -1,5 +1,4 @@
 from django import forms
-from django.conf import settings
 from django.utils import timezone
 
 from apps.inventory.forms import TablerFormMixin
@@ -55,9 +54,12 @@ class ComplaintForm(PhoneMixin, TablerFormMixin, forms.Form):
     company = forms.ModelChoiceField(
         Company.objects.filter(is_active=True),
         label="Company (whose product failed)",
-        empty_label=None,
+        empty_label="Choose…",
         widget=forms.Select(attrs={"data-ts": ""}),
-        error_messages={"invalid_choice": "Choose the company whose product failed."},
+        error_messages={
+            "required": "Choose the company whose product failed.",
+            "invalid_choice": "Choose the company whose product failed.",
+        },
     )
     company_ref = forms.CharField(
         max_length=60,
@@ -104,10 +106,6 @@ class ComplaintForm(PhoneMixin, TablerFormMixin, forms.Form):
         self.fields["technicians"].widget.choices = [
             (t.pk, t.name) for t in Technician.objects.filter(is_active=True)
         ]
-        if not self.is_bound and not self.initial.get("company"):
-            default = Company.objects.filter(name=settings.DEFAULT_COMPANY, is_active=True).first()
-            if default:
-                self.fields["company"].initial = default.pk
 
 
 class SiteForm(PhoneMixin, TablerFormMixin, forms.Form):

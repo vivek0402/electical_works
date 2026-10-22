@@ -47,7 +47,8 @@ def test_new_complaint_page(office_client):
     make_tech("Hidden tech", is_active=False)
     html = office_client.get(NEW).content.decode()
     assert 'id="sites-data"' in html and "Murthy" in html and 'id="new-site-btn"' in html
-    assert "selected>Wipro Lighting</option>" in html  # the configured default company, changeable
+    assert "selected>Wipro Lighting</option>" not in html  # no preselected company
+    assert "Choose…" in html
     assert 'id="id_ns-phone"' in html and 'id="id_phone"' in html  # modal fields don't clash
     assert ">Ramu</option>" in html and "Hidden tech" not in html  # only active technicians offered
 

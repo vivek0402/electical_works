@@ -3,14 +3,16 @@
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.accounts.decorators import role_required
-from apps.accounts.roles import ADMIN
+from apps.accounts.roles import ADMIN, OFFICE
 
 from .filters import _text
 from .models import Company, FittingType, Location, SpareType, StockBalance
+from .services import MasterError, add_master
 
 KINDS = {
     "location": (Location, "Locations", "map-pin"),
@@ -84,3 +86,14 @@ def masters_toggle(request):
         row.save(update_fields=["is_active"])
         messages.success(request, f"{row.name} is now {'active' if row.is_active else 'hidden from forms'}.")
     return redirect("masters")
+
+
+@role_required(OFFICE)
+@require_POST
+def master_add(request):
+    """Add a master typed into a form picker; returns JSON for the picker."""
+    try:
+        row, created = add_master(kind=request.POST.get("kind"), name=request.POST.get("name"))
+    except MasterError as exc:
+        return JsonResponse({"ok": False, "error": exc.message})
+    return JsonResponse({"ok": True, "id": row.pk, "name": row.name, "created": created})

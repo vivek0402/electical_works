@@ -2,9 +2,15 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.db.models import Q
+from django.urls import reverse_lazy
 from django.utils import timezone
 
 from .models import AdjustReason, Company, FittingType, InSource, Location, OutTarget, SpareType, Unit
+
+
+def _add_attrs(kind, noun):
+    """Widget attributes for a type-to-add picker (static/js/master-select.js)."""
+    return {"data-master-add": kind, "data-noun": noun, "data-url": reverse_lazy("master_add")}
 
 
 class TablerFormMixin:
@@ -139,6 +145,13 @@ class EntryHeaderForm(TablerFormMixin, forms.Form):
 
 
 class StockInForm(EntryHeaderForm):
+    # No preselected supplier or location: a stock IN recorded against the wrong one is easy to miss.
+    location = forms.ModelChoiceField(
+        Location.objects.good().filter(is_active=True),
+        label="Into location",
+        empty_label="Choose…",
+        error_messages={"required": "Choose the location the stock went into."},
+    )
     subtype = forms.ChoiceField(
         choices=InSource.choices, initial=InSource.SUPPLIER, widget=forms.RadioSelect, label="Received from"
     )
@@ -147,6 +160,7 @@ class StockInForm(EntryHeaderForm):
         required=False,
         label="Supplier / company",
         empty_label="Choose…",
+        widget=forms.Select(attrs=_add_attrs("company", "supplier")),
     )
     party = forms.CharField(
         max_length=120,
@@ -163,10 +177,7 @@ class StockInForm(EntryHeaderForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.is_bound and not self.initial.get("company"):
-            default = _default_company()
-            if default:
-                self.fields["company"].initial = default.pk
+        self.fields["location"].widget.attrs.update(_add_attrs("location", "location"))
 
     def clean(self):
         data = super().clean()
@@ -211,7 +222,11 @@ class StockOutForm(EntryHeaderForm):
 
 class TransferForm(EntryHeaderForm):
     to_location = forms.ModelChoiceField(
-        Location.objects.good().filter(is_active=True), empty_label=None, label="To location"
+        Location.objects.good().filter(is_active=True),
+        label="To location",
+        empty_label="Choose…",
+        error_messages={"required": "Choose the location to move the stock to."},
+        widget=forms.Select(attrs=_add_attrs("location", "location")),
     )
 
     def clean(self):

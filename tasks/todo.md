@@ -186,3 +186,33 @@ Spec: `docs/superpowers/specs/2026-10-12-defectives-complaints-design.md`. Appro
   - Fix CLAUDE.md (the Build section and its "Demo data" line) and README.md (around lines 18 and 29).
   - The plan header still says port 65030.
   - The walkthrough leaves data behind, so re-seed `svkml_demo` afterwards.
+
+## User change requests (testing round, started 2026-10-19)
+Plan: `~/.claude/plans/enchanted-questing-shamir.md`
+
+### CR1: masters typed in on the forms, Masters tab read-only, empty client install ⛔ approval gate
+User's choices: new locations / companies / fitting types / spare types are added from the dropdown where they are first needed; the Masters tab cannot add or remove; the client install starts empty while demo data stays for testing.
+- [x] Mockup `mockups/service/`: type-to-add pickers (item form: company, spare type, fitting type; Stock IN: supplier + into location; Transfer: to location; New complaint: company; Settle batch: goes into location), read-only Masters screen. Walkthrough step 12 added; exit 0, 0 JS errors.
+- [ ] User approves the mockup
+- [~] Build (started 2026-10-22 at the user's request, after they reported "Stock IN: can't add a supplier, it is a dropdown"). Done so far: `services.add_master` + `masters.master_add` (`POST /masters/add/`, any logged-in user) + `static/js/master-select.js`, wired to Stock IN supplier and "Into location" and Transfer "To location"; 862 tests pass, ruff clean, browser check 0 JS errors. 2026-10-22: pickers redone to match the mockup (type in the field, "＋ Add “name”" row, saved-as-new line, no duplicate Add for a listed name); the user chose NO preselected defaults: Stock IN supplier and location, Transfer To location and New complaint company now start on "Choose…" (the item form's company still defaults, not yet asked). 864 tests pass, walkthrough exit 0 twice. Still to do: item form (company, spare type, fitting type), New complaint company, Settle batch location, read-only Masters page, `SEED_STARTER_MASTERS`, walkthrough step, user approval of the rest. Original plan: `add_master` service + `POST masters/add/`, `static/js/master-select.js`, read-only Masters page, `SEED_STARTER_MASTERS` (test only), tests, e2e walkthrough, reseed `svkml_demo`
+
+### CR2: make the system intelligent (design approved 2026-10-19)
+Design: `docs/superpowers/specs/2026-10-19-smart-features-design.md` (office-hours session; prior-art research; 2 spec-review rounds, 23 issues fixed). Three tiers: rules → learning from history → optional AI. Suggest, never act.
+- [x] Design approved by the user
+- [x] Mockups of every phase in `mockups/service/` (`smart.js` + hooks): Today list + dashboard card + email preview, due dates, parts needed, duplicate site/complaint, typo guard, fault reader, remembered location, sanity checks, reorder suggestions, slow stock, insights, parts usually needed, technician hint, import report, paste-a-message, drafts inbox, label/DC photos, smart settings. Walkthrough step 13 + phone checks: exit 0, 0 JS errors, no layout warnings.
+- [ ] User approves the smart-feature mockups
+- [ ] Client conversation: the 7 open questions in the design + 10 real complaint messages + daily complaint count (user's assignment)
+- [ ] P1 Today list, due dates, digest, ComplaintNeed (mockup first; can run alongside CR1)
+- [ ] P2 pg_trgm, duplicate warnings, typo guard, sanity checks (after CR1)
+- [ ] P3 fault-text reader, smart defaults
+- [ ] P4 legacy import, reorder suggestions, dead stock
+- [ ] P5 fault patterns, parts usually needed, technician hint
+- [ ] P6 AI intake, only after the client approves the cost
+
+## Rigour testing round (2026-10-22)
+Plan: `~/.claude/plans/tingly-booping-cocoa.md`. Report: `tasks/rigour-report.md`. Suite: `e2e/rigour/` (`sh e2e/rigour/run_all.sh 8001`).
+- [x] Excel-driven data (~100 per kind), loaded through the real forms: 475 operations, 0 refused
+- [x] Audit against an independent stock model, scenario matrix (155 cases), concurrency, browser pass, performance: all pass (evidence: `e2e/rigour/out/`, regenerated each run)
+- [x] F1 silent refusal on the batch page fixed (`8eca1fd`); F2 simultaneous double submit fixed with `core.TokenClaim` (`0a8a794`). 855 tests, ruff clean. The "known limit" noted under Task 9 above no longer applies.
+- [ ] Decisions needed from the user: F3 "Answered by companies" tile vs its list, F4 batch dispatch date can't be earlier than the batch's creation day, F5 fault optional on collected parts, F6 no length cap on free text, F7 duplicate-complaint warning (in the smart-features design)
+- [ ] Optional: a 1,000-per-kind scale-up run through the services (only 100 per kind was tested)

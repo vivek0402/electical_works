@@ -53,4 +53,5 @@
 {{ items_data|json_script:"items-data" }}{{ balances_data|json_script:"balances-data" }}{{ initial_lines|json_script:"initial-lines" }}{{ parties|json_script:"parties-data" }}
 {% endblock %}
 {% block scripts %}{% if mode == "in" %}<script src="{% static 'js/item-fields.js' %}"></script>{% endif %}
+<script src="{% static 'js/master-select.js' %}"></script>
 <script src="{% static 'js/entry-form.js' %}"></script>{% endblock %}

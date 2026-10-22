@@ -29,3 +29,11 @@ Read at the start of every session. Each entry: the pattern I got wrong, then th
 ## 2026-10-13 — Two agents edited the same files at once
 - **Pattern:** I queued a follow-up message to an agent that had just finished ("queued for delivery at its next tool round"). Then, because the change hadn't landed, I dispatched a second agent for the same work. The first agent woke up on the queued message and both edited the same files at the same time. It turned out fine (the tree was consistent and the tests passed), but only by luck.
 - **Rule:** Never hand the same work to two agents. If a queued message hasn't been picked up, wait for that agent's notification, or check `git status` and its output first. Only start a fresh agent once the first one has definitely stopped and its queued message is no longer pending. After any overlap, verify consistency yourself: run `git status`, `makemigrations --check` and the full test suite.
+
+## 2026-10-22 — Built a screen that didn't match its mockup
+- **Pattern:** For the type-to-add pickers I built the real Stock IN pickers from memory of the mockup. The search box sat under the field and covered the first option, the Add row read "Add supplier X" with "No results found" beside it, and nothing confirmed the save. The user: "the UI isn't good enough". I had only checked that it worked, not how it looked.
+- **Rule:** Before reporting any UI work as done, open the mockup and the real page side by side at 1366px and 390px, and screenshot every state (closed, open, typing, saved, error). Match the mockup's wording and layout. Look at the pictures, not only the test results.
+
+## 2026-10-22 — Preselected defaults on entry forms
+- **Pattern:** Stock IN started with Wipro Lighting and Vizag Office already chosen, so a wrong supplier or location could be saved without anyone noticing. The user asked "why is there default selected?" and chose no defaults.
+- **Rule:** Never preselect a supplier, company or destination location on an entry form. Start on "Choose…" with a clear "required" message. A default is allowed only for a harmless value such as today's date.

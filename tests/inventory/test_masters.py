@@ -183,3 +183,73 @@ def test_office_cannot_toggle(office_client):
     assert office_client.post("/masters/toggle/", {"kind": "location", "pk": place.pk}).status_code == 403
     place.refresh_from_db()
     assert place.is_active is True
+
+
+# --- type-to-add pickers on the entry forms --------------------------------------------------------------
+
+
+def _add(client, kind, name):
+    return client.post("/masters/add/", {"kind": kind, "name": name}).json()
+
+
+def test_office_can_add_supplier_from_picker(office_client):
+    res = _add(office_client, "company", "  Sri   Balaji Traders ")
+    assert res["ok"] and res["created"] and res["name"] == "Sri Balaji Traders"
+    assert Company.objects.get(pk=res["id"]).is_active
+
+
+def test_adding_existing_name_selects_it(office_client):
+    first = _add(office_client, "company", "Sri Balaji Traders")
+    again = _add(office_client, "company", "sri balaji TRADERS")
+    assert again["ok"] and not again["created"] and again["id"] == first["id"]
+    assert Company.objects.filter(name__iexact="sri balaji traders").count() == 1
+
+
+def test_hidden_name_is_refused(office_client):
+    Company.objects.filter(name="Havells").update(is_active=False)
+    res = _add(office_client, "company", "havells")
+    assert not res["ok"] and "hidden" in res["error"]
+
+
+def test_picker_refuses_bad_input(office_client):
+    assert not _add(office_client, "company", "   ")["ok"]
+    assert not _add(office_client, "company", "x" * 200)["ok"]
+    assert not _add(office_client, "nonsense", "A")["ok"]
+    assert office_client.get("/masters/add/").status_code == 405
+
+
+def test_stock_in_page_marks_pickers_and_new_supplier_saves(office_client):
+    page = office_client.get("/stock/in/").content.decode()
+    assert page.count("data-master-add") == 2 and "js/master-select.js" in page
+    from apps.inventory.forms import StockInForm
+
+    new = _add(office_client, "company", "Sri Balaji Traders")["id"]
+    form = StockInForm(
+        {
+            "entry_date": "2026-01-01",
+            "subtype": "SUPPLIER",
+            "company": new,
+            "location": Location.objects.good().first().pk,
+        }
+    )
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["party"] == "Sri Balaji Traders"
+
+
+def test_stock_in_and_transfer_have_no_preselected_supplier_or_location(office_client):
+    page = office_client.get("/stock/in/").content.decode()
+    select = lambda html, name: html.split(f'name="{name}"')[1].split("</select>")[0]  # noqa: E731
+    for name in ("company", "location"):
+        assert 'value="" selected' in select(page, name)  # the "Choose…" row, nothing else
+    assert page.count("Choose…") >= 2
+    assert "selected>TV Shop" not in office_client.get("/stock/transfer/").content.decode()
+
+
+def test_stock_in_refuses_missing_location():
+    from apps.inventory.forms import StockInForm
+
+    form = StockInForm(
+        {"entry_date": "2026-01-01", "subtype": "SUPPLIER", "company": Company.objects.first().pk}
+    )
+    assert not form.is_valid()
+    assert form.first_error() == "Into location: Choose the location the stock went into."

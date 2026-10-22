@@ -141,3 +141,11 @@ td.c-check, th.c-check { width: 1%; }
 .visit-facts dt { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--tblr-secondary); margin-top: .5rem; }
 .visit-facts dt:first-child { margin-top: 0; }
 .visit-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Type-to-add pickers (static/js/master-select.js): while the list is open the typed text replaces the chosen value
+   so it sits alone on one line; the "Add …" row is a button-like row in brand blue (see mockups/service/style.css). */
+.ts-wrapper.single.input-active.dropdown-active .ts-control > .item { display: none; }
+.ts-dropdown .create small { display: block; font-weight: 400; color: var(--tblr-secondary); font-size: .78rem; }
+select[data-master-add] + .ts-wrapper .ts-control { flex-wrap: nowrap; }
+select[data-master-add] + .ts-wrapper .ts-control > input { min-width: 0; flex: 1 1 0; }
+select[data-master-add] + .ts-wrapper .ts-dropdown .create { padding: .55rem .75rem; border-bottom: 1px solid var(--tblr-border-color); }

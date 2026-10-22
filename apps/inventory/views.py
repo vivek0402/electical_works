@@ -360,13 +360,8 @@ def _save_entry(mode, data, parsed, user):
 def _entry_page(request, mode):
     kind, form_class, title, subtitle, icon, button = ENTRY_PAGES[mode]
     initial = {"entry_date": timezone.localdate(), "location": _default_location()}
-    if mode == "trf":
-        others = (
-            Location.objects.good()
-            .filter(is_active=True)
-            .exclude(pk=getattr(initial["location"], "pk", None))
-        )
-        initial["to_location"] = others.filter(name="TV Shop").first() or others.first()
+    if mode == "in":
+        initial["location"] = None  # Stock IN never preselects a location (or supplier)
     form = form_class(request.POST or None, initial=initial)
     error, lines, token = None, [], ""
     if request.method == "POST":

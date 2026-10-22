@@ -16,14 +16,17 @@ from .models import (
     SERVICE_SUBTYPES,
     STORE_SUBTYPES,
     AdjustReason,
+    Company,
     EntryCounter,
     EntryKind,
+    FittingType,
     InSource,
     Item,
     ItemAlias,
     Location,
     OutTarget,
     ServiceSubtype,
+    SpareType,
     StockBalance,
     StockEntry,
     StockLine,
@@ -571,3 +574,44 @@ def search_items(text, limit=8, active_only=False):
         .annotate(rank=rank)
         .order_by("rank", "code")[:limit]
     )
+
+
+MASTER_MODELS = {
+    "location": (Location, "locations"),
+    "company": (Company, "suppliers / companies"),
+    "fitting_type": (FittingType, "fitting types"),
+    "spare_type": (SpareType, "spare types"),
+}
+MASTER_NAME_MAX = Location._meta.get_field("name").max_length
+
+
+class MasterError(ValidationError):
+    """A master name was refused. The message is safe to show to staff as-is."""
+
+
+def add_master(*, kind, name):
+    """Add a location / company / fitting type / spare type typed in on a form.
+
+    Returns (row, created). A name that already exists (any capitals or spacing) returns that row with
+    created=False, so the form simply selects it; a hidden one is refused rather than quietly shown again.
+    """
+    if kind not in MASTER_MODELS:
+        raise MasterError("Unknown list.")
+    model, label = MASTER_MODELS[kind]
+    name = " ".join((name or "").split())
+    if not name:
+        raise MasterError("Type a name.")
+    if len(name) > MASTER_NAME_MAX:
+        raise MasterError(f"That name is too long (most {MASTER_NAME_MAX} characters).")
+    existing = model.objects.filter(name__iexact=name).first()
+    if existing is None:
+        try:
+            with transaction.atomic():
+                return model.objects.create(name=name), True
+        except IntegrityError:  # someone added the same name a moment ago
+            existing = model.objects.filter(name__iexact=name).first()
+            if existing is None:
+                raise
+    if not existing.is_active:
+        raise MasterError(f"{existing.name} is hidden. Ask an admin to show it again in Masters.")
+    return existing, False

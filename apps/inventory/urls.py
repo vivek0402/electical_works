@@ -24,6 +24,7 @@ urlpatterns = [
     path("stock/adjust/", views.adjust, name="adjust"),
     path("search/", views.global_search, name="global_search"),
     path("masters/", masters.masters, name="masters"),
+    path("masters/add/", masters.master_add, name="master_add"),
     path("masters/toggle/", masters.masters_toggle, name="masters_toggle"),
     path("entries/<str:number>/", views.entry_detail, name="entry_detail"),
     path("entries/<str:number>/undo/", views.entry_undo, name="entry_undo"),
