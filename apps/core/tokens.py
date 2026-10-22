@@ -7,13 +7,22 @@ sent to what was already saved. A *different* action with a spent token (Back, t
 treated as expired: nothing is saved and the page comes back with a fresh token and what was typed.
 
 Views use `guarded_post`; `page_token` puts the token on the page.
+
+The session alone can't stop two requests that arrive at the same instant (both read the token as unspent
+before either saves), so a save also claims the token in the database, inside its own transaction: the
+second request waits for the first, then is sent to what the first saved (see TokenClaim).
 """
 
 import hashlib
 import uuid
 from dataclasses import dataclass
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+
+from .models import TokenClaim
 
 FIELD = "entry_token"  # the hidden input every saving form carries
 TOKENS, PAGES, SAVED = "entry_tokens", "entry_token_pages", "entry_saved"
@@ -75,6 +84,26 @@ class Guarded:
     token: str = ""  # the token to put back on a re-rendered page ("" = issue a fresh one)
 
 
+def _claim(token, action):
+    """Take `token` in the database. None when it is ours; otherwise the answer for the request that lost the
+    race: the same action goes to what the winner saved, a different one is treated as expired."""
+    try:
+        with transaction.atomic():  # a savepoint, so a lost race doesn't spoil the caller's transaction
+            TokenClaim.objects.create(token=token, action=action)
+    except IntegrityError:
+        won = TokenClaim.objects.filter(pk=token).first()
+        if won and won.action == action and won.saved:
+            return Guarded(saved=won.saved, replayed=True, token=token)
+        return Guarded(error=EXPIRED)
+    return None
+
+
+def _prune(token):
+    """Drop claims older than two days, on about one save in sixteen (the session has long forgotten them)."""
+    if token.endswith("0"):
+        TokenClaim.objects.filter(created_at__lt=timezone.now() - timedelta(days=2)).delete()
+
+
 def guarded_post(request, run):
     """Run `run()` at most once per one-time token and action.
 
@@ -88,8 +117,14 @@ def guarded_post(request, run):
     if not is_issued(request.session, token):
         return Guarded(error=EXPIRED)
     try:
-        saved = run()
-    except ValidationError as exc:
+        with transaction.atomic():
+            lost = _claim(token, action)
+            if lost:
+                return lost
+            saved = run()
+            TokenClaim.objects.filter(pk=token).update(saved=saved or "")
+            _prune(token)
+    except ValidationError as exc:  # the claim rolled back with the refused save
         return Guarded(error=exc.messages[0], token=token)
     spend_token(request.session, token, saved, action)
     return Guarded(saved=saved, token=token)
