@@ -56,8 +56,8 @@ for page in ("/", "/complaints/", "/defectives/"):
         n, total = int(number.group(1).replace(",", "")), list_total(href)
         known = next((why for key, why in KNOWN_OPEN.items() if key in body), None)
         if known and n != total:
-            print(f"KNOWN {page} tile '{body[:42]}' = {n}; its list shows {total}
-        open finding: {known}")
+            print(f"KNOWN {page} tile '{body[:42]}' = {n}; its list shows {total}")
+            print(f"        open finding: {known}")
             continue
         check(
             f"{page} tile '{body[:42]}' = {n}; its list ({href[:60]}) shows {total}",
