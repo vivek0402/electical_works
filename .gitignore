@@ -14,3 +14,7 @@ data/legacy/import_review*.xlsx
 
 # e2e walkthrough screenshots
 e2e/*.png
+
+# rigour test output: regenerated on every run
+e2e/rigour/*.json
+e2e/rigour/shots/
