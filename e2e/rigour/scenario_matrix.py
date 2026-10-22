@@ -18,6 +18,7 @@ from datetime import date
 from pathlib import Path
 
 import psycopg
+import requests
 from client import Client, text_of
 
 HERE = Path(__file__).resolve().parent
@@ -1075,20 +1076,26 @@ case(
     "status:405",
     lambda: (admin.get("/sites/quick-create/", allow_redirects=False).status_code, "", None),
 )
-case(
-    P,
-    "login 'next' pointing at another website is not followed",
-    "observe",
-    lambda: (
-        200,
-        str(
-            anon.s.get(BASE + "/login/?next=//evil.example", allow_redirects=False).headers.get(
-                "Location", "(no redirect)"
-            )
-        ),
-        None,
-    ),
-)
+
+
+def _login_next(target):
+    """Log in with a hostile ?next= and report where the app sends the user."""
+    s = requests.Session()
+    page = s.get(f"{BASE}/login/", params={"next": target}).text
+    csrf = re.search(r'name="csrfmiddlewaretoken"\s+value="([^"]+)"', page).group(1)
+    r = s.post(
+        f"{BASE}/login/",
+        data={"username": OFFICE, "password": PASSWORD, "csrfmiddlewaretoken": csrf, "next": target},
+        headers={"Referer": f"{BASE}/login/"},
+        allow_redirects=False,
+    )
+    where = r.headers.get("Location", "")
+    return (200 if where.startswith("/") and not where.startswith("//") else 999, f"sent to {where!r}", None)
+
+
+for hostile in ("//evil.example/x", "https://evil.example/", r"/\evil.example", "javascript:alert(1)"):
+    case(P, f"login with next={hostile!r} stays on this site", "status:200", lambda t=hostile: _login_next(t))
+case(P, "login with a genuine next=/stock/ is honoured", "status:200", lambda: _login_next("/stock/"))
 case(
     P,
     "wrong password is refused",
