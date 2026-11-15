@@ -194,7 +194,7 @@ def test_complaint_pages_link_the_site(office_client, office_user):
 
 
 def test_nav_links_sites_and_technicians(office_client):
-    html = office_client.get("/").content.decode()
+    html = office_client.get("/complaints/").content.decode()  # the Complaints section's sub-tabs
     assert 'href="/sites/"' in html and 'href="/technicians/"' in html
 
 

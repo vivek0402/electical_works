@@ -292,7 +292,9 @@ def test_export_buttons_keep_the_filters(office_client, several):
 
 def test_nav_links_complaints(office_client):
     html = office_client.get("/").content.decode()
-    assert 'href="/complaints/"' in html and f'href="{LIST}"' in html
+    assert 'href="/complaints/"' in html and f'href="{LIST}"' in html  # top-bar pill and its count link
+    tabs = office_client.get("/complaints/").content.decode()
+    assert 'class="b-sub"' in tabs and f'href="{LIST}"' in tabs
 
 
 def test_query_counts_are_bounded(office_client, office_user, several, django_assert_max_num_queries):

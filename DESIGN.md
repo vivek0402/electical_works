@@ -1,61 +1,80 @@
-# Design System: SVKML Stock
+# Design System: SVKML Service (direction B)
 
 ## Product Context
-- **What this is:** Stock management for SVKML Electrical Works (a Wipro Lighting service partner, Visakhapatnam): stock IN/OUT, transfers, count corrections, stock by location, Excel exports, plus the Complaints and Defective pieces modules in the same app (since 2026-10-12; the app is branded "SVKML Service").
+- **What this is:** Stock management for SVKML Electrical Works (a Wipro Lighting service partner, Visakhapatnam): stock IN/OUT, transfers, count corrections, stock by location, Excel exports, plus the Complaints and Defective pieces modules in the same app (since 2026-10-12; the app is branded "SVKML Service"). No company is special in the UI: Wipro is one company among several.
 - **Who it's for:** Admin and office staff with low tech comfort, mostly on desktop, sometimes on phones.
-- **Project type:** Internal web app with an admin-dashboard layout.
-- **Memorable thing:** "Calm, serious business software where colour always means something."
+- **Project type:** Internal web app.
+- **Memorable thing:** "Bold, clear business software where colour always means something."
 
 ## Aesthetic Direction
-- **Direction:** Industrial/utilitarian, modern admin dashboard (user's choice): left sidebar, top search bar, white cards, sortable and paged tables.
-- **Decoration:** Minimal. Colour carries meaning, never decoration.
-- **UI kit:** Tabler 1.6.1 + Tabler Icons 3.49.0, Tom Select 2.6.2 (Bootstrap 5 CSS), ApexCharts for charts. django-unfold for the Django admin.
+- **Direction:** Bold and graphic (direction B), chosen by the user on 2026-11-15 from three mocked directions (A Light and airy, B Bold and graphic, C Task-first) after the user rejected a tidy-up of the old look.
+- **Look:** a dark ink top bar and hero over a warm cream page; white rounded cards; big display type for titles and figures; one amber accent; pill buttons.
+- **Decoration:** none beyond colour blocks. Colour carries meaning (IN blue, OUT orange, red attention, amber waiting).
+- **Mocks (source of truth):** `mockups/design-b/` (dashboard, current stock, Stock IN form, complaints list, complaint page) and `mockups/design-directions/directions.css`.
+- **UI kit underneath:** Tabler 1.6.1 + Tabler Icons 3.49.0 (grid, modals, dropdowns), Tom Select 2.6.2 (searchable selects). All vendored; `static/css/app.css` loads last and restyles them. django-unfold for the Django admin.
 
-## Color: Navy & Amber (chosen by the user, 2026-10-11)
-- **Approach:** Restrained. One brand blue, neutrals, and meaning colours (IN, OUT, alerts). Everything else is quiet.
+## Color
+Approach: restrained. Ink and cream do the structure, amber is the one accent, meaning colours do the talking. Contrast ratios below were computed (WCAG relative luminance) on 2026-11-15.
 
 | Role | Hex | Use | Contrast |
 |---|---|---|---|
-| Sidebar (navy) | `#0f2744` | Left menu background | text `#c9d6e8` on it 10.2:1; section labels `#8ea3bf` 5.8:1 |
-| Brand accent (amber) | `#f5b301` | **Logo mark only** (the bulb, the lighting trade) | navy icon on amber 8.1:1 |
-| Primary (brand blue) | `#1f5fbf` | Primary buttons, links, active page, focus, KPI icons on `#e8eef8` | white text 6.1:1 |
-| Primary hover | `#1a51a3` | Hover/pressed | |
-| Page background | `#f4f6fa` | Behind cards | body text `#1f2937` 13.6:1 |
-| Surface | `#ffffff` | Cards, tables, inputs | muted text `#5b6b80` 5.4:1 |
-| Border | Tabler default (`#e6e7e9`-ish) | Cards, inputs | |
+| Ink | `#0d1321` | Top bar, hero, text, active pill, dark buttons | on cream 16.2:1, on white 18.6:1 |
+| Page (cream) | `#f3efe6` | Page background, shaded "not counted" column, segmented-control track | muted text on it 5.4:1 |
+| Surface | `#ffffff` | Cards, inputs, active top-bar pill | |
+| Line | `#e6e0d2` | Hairlines inside cards; inputs use `#cfc8b8` | |
+| Muted text | `#5a6170` | Captions, labels, hints | on white 6.2:1, on cream 5.4:1 |
+| Muted on dark | `#b8c0d0` | Hero context line, inactive pills, back link | on ink 10.2:1 |
+| Amber | `#f5b301` | Primary button, count badges, sub-tab counts, the bulb mark, focus ring on dark | ink on amber 10.0:1; amber on ink 10.0:1 |
+| Danger | `#b42318` | Errors, required marks, attention figures | on white 6.6:1 |
+| Placeholder | `#6b7080` | Input placeholders | on white 4.9:1 |
+| Zero quantities | `#6f6a5d` | The "0" in stock matrices | on white 5.4:1, on cream 4.7:1 |
 
-**Meaning colours (identical in every module):**
+**Meaning colours (identical in every module; unchanged by the redesign):**
 
 | Meaning | Marks/charts | Buttons (white text) | Tint (badges/backgrounds) |
 |---|---|---|---|
-| **Stock IN** | `#2a78d6` | `#2268c0` (5.5:1) | `rgba(42,120,214,.12)` with text `#1f5fae` |
-| **Stock OUT** | `#eb6834` | `#c2410c` (5.2:1) | `rgba(235,104,52,.14)` with text `#a8441b` |
-| Needs attention (low stock, errors, undo) | `#d63939` (Tabler red) | Tabler `btn-danger` | `#fde8e8` with text `#b42318` |
-| OK / success | Tabler green | | `#e7f6ec` with text `#1e7e34` |
-| Transfer / adjustment / neutral | slate | white "quiet" button with blue icon | `rgba(71,85,105,.12)` with text `#334155` |
+| **Stock IN** | `#2a78d6` | `#2268c0` (5.5:1) | `rgba(42,120,214,.12)` with text `#1f5fae` (5.4:1) |
+| **Stock OUT** | `#eb6834` | `#c2410c` (5.2:1) | `rgba(235,104,52,.14)` with text `#a8441b` (5.3:1) |
+| Needs attention | `#d63939` | `btn-danger` `#b42318` | `#fde8e8` with text `#b42318` (5.6:1) |
+| OK / success | `#2e9e4f` | | `#e7f6ec` with text `#1e7e34` (4.6:1) |
+| Waiting | `#f5b301` | | `#fef3c7` with text `#854d0e` (6.2:1) |
+| Transfer / adjustment / neutral | slate | white quiet button | `rgba(71,85,105,.12)` with text `#334155` (opaque `#e6e9ee` on the dark hero, 8.5:1) |
+| Finished | grey | | `#eef0f3` with text `#475569` (6.6:1) |
 
-- The **IN/OUT chart pair** (`#2a78d6` / `#eb6834`) passed the colour-blindness validator: worst adjacent CVD ΔE 24.7, normal-vision ΔE 33.6. Green/orange **failed** (deutan ΔE 5.5), so never use green for IN.
-- The **button pair** (`#2268c0` / `#c2410c`) also passes the CVD check (ΔE 25.0), and both pass WCAG AA with white text.
-- **Rules:**
-  - Never use purple or other decorative colours for actions.
-  - Secondary actions (Transfer, Adjust, Cancel) are white "quiet" buttons.
-  - Status always pairs colour with an icon or word, never colour alone.
-- **Status pills** (complaints, pieces, batches, outcomes) are tinted badges with an icon and a word, never colour alone. Five tints (`.st-*` in `static/css/app.css`): `st-alert` red `#fde8e8`/`#b42318` (Not attended, Urgent, rejected outcomes); `st-wait` amber `#fef3c7`/`#854d0e` (Awaiting material, High, Sent/Dispatched, Partly settled); `st-ok` green `#e7f6ec`/`#1e7e34` (Resolved, Settled, Replaced, Repaired); `st-neutral` slate `rgba(71,85,105,.12)`/`#334155` (Attended, Material need to check, In store, Draft); `st-done` grey `#eef0f3`/`#475569` (Closed, Not covered, Scrapped).
-- **Defective store:** shown next to stock as its own shaded column (dashed left border, "not counted" under the heading; a recycle icon marks it in Movements), never part of a total or low-stock check.
-- **Excel exports:** company title in navy `#0F2744`, header in Excel's "Table Style Medium 2" (blue).
-- **Dark mode:** not in v1.
+- The IN/OUT chart pair (`#2a78d6` / `#eb6834`) and button pair (`#2268c0` / `#c2410c`) passed the colour-blindness check; green/orange failed, so never use green for IN.
+- Status pills (`.st-alert .st-wait .st-ok .st-neutral .st-done`) always carry an icon and a word, never colour alone. Entry badges are `.k-IN .k-OUT .k-TRF .k-ADJ .k-REV`; quantities `.qty-in .qty-out`.
+- **Defective store** is shown as its own shaded column ("Not counted"), never part of a total or low-stock check.
+- **Excel exports:** company title in navy `#0F2744`, header in Excel's "Table Style Medium 2". Unchanged.
+- Never use purple or other decorative colours for actions. Dark mode: not in v1.
 
 ## Typography
-- Tabler's default sans-serif stack (system UI fonts), monospace for item codes and entry numbers, tabular figures for quantities. Not reviewed yet; the user asked only about colours. Revisit if wanted.
+Three typefaces, vendored as woff2 (SIL OFL) in `static/vendor/fonts/`, declared in `app.css` with `font-display: swap`:
+- **Bricolage Grotesque** 800 (and 600): page titles, card titles, figures.
+- **Instrument Sans** 400 and 600: all text, labels, buttons, inputs.
+- **Geist Mono** 600: item codes, entry numbers, tags (`.code`).
 
-## Spacing, Layout, Motion
-- Tabler defaults: 4px base, comfortable density, cards with `row-cards` gutters, `container-xl`.
-- Large tap targets: quick-action buttons at least 4.5rem tall; form controls are Tabler's standard size.
-- Motion: minimal and functional (Bootstrap modal/collapse transitions only). Charts have animations off.
+Exactly **five sizes**, as CSS variables: `--s1` 13px (captions, labels, pills, table headers), `--s2` 15px (body, inputs, buttons), `--s3` 18px (card titles, lead text), `--s4` 28px (large figures, phone page title), `--s5` 48px (page title on desktop, hero figures). Weights: 400 and 600 for text, 800 for display headings and figures. Tabular figures for quantities.
+
+## Layout and shell
+- **Top bar** (ink, 68px): brand with the amber bulb mark and "SVKML Service"; five section pills Home, Stock, Complaints, Defectives, Setup (active = white pill); open-complaints and pieces-in-store count badges in amber beside their pills (hidden at zero, each linking to the list that shows exactly that many rows); global search; low-stock bell; user menu (Users for admins, Logout).
+- **Hero** (ink, under the bar): optional back link, page title, one line of context, the section's actions, then the section's sub-tabs. Content cards overlap the hero's bottom edge by 72px.
+- **Sub-tabs and actions per section:** Stock (Current stock, Movements, Low stock; Stock IN, Stock OUT, Transfer, Adjust), Complaints (Overview, All complaints, Sites, Technicians; New complaint), Defectives (Overview, Pieces, Return batches; Mark defective, New return batch), Setup (Items, Masters for admins; New item), Home (no tabs; Stock IN, Stock OUT, New complaint, Transfer, Adjust). Form and detail pages show a back link, not tabs or section actions. A page's own action is never shown twice.
+- **Phones:** the top bar scrolls sideways, search takes the full width, no hamburger. Entry lines stack as cards. No horizontal page scroll.
+- **Screen order rule:** main actions, then what needs attention, then related groups, then history.
+- **One card style:** white, 18px corners, no border, 26px padding (18px on phones). Cards group one subject each.
+- **Controls:** pill buttons 44px high; inputs 48px high with 12px radius; segmented control for 2-4 choices; checkboxes 22px. Touch targets at least 44px. Visible `:focus-visible` rings (ink on light, amber on dark).
+- **Tables:** header row 13px 600 with a 2px ink rule, hairlines between rows, no striping, numbers right-aligned.
+- **Motion:** minimal and functional.
 
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-11-15 | Redesign direction **B · Bold and graphic** | The user rejected a tidy-up of the sidebar look as "not major changes", allowed layout, colour, typeface and components to change, and chose B over A (Light and airy) and C (Task-first) |
+| 2026-11-15 | Dark top bar and hero replace the left sidebar; five sections with sub-tabs | Fewer menu entries to scan; each section's actions sit with its title. Form and detail pages get a back link |
+| 2026-11-15 | Screen order: main actions, what needs attention, related groups, history | The user asked for clearer hierarchy with related things grouped |
+| 2026-11-15 | Bricolage Grotesque + Instrument Sans + Geist Mono, vendored; five sizes 13/15/18/28/48 | Distinct display type for titles and figures; no external font request; one scale everywhere |
+| 2026-11-15 | Tabler stays underneath, restyled by `app.css` | Keeps modals, dropdowns, pickers and every script working while the look changes completely |
+| 2026-11-15 | Zero quantities darkened to `#6f6a5d`; opaque neutral tint on the hero | The mock's lighter zero and the translucent neutral tint failed AA contrast |
 | 2026-10-11 | Modern admin dashboard on Tabler | User chose it over Pico/minimal. No build step, complete components |
 | 2026-10-11 | IN blue / OUT orange | Green/orange failed the CVD check; blue/orange passes |
 | 2026-10-11 | Deeper IN/OUT button shades | White text on `#eb6834` was 3.2:1 (fails AA); `#c2410c` is 5.2:1 |

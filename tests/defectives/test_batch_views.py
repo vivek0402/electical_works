@@ -359,7 +359,7 @@ def test_entry_page_links_its_return_batch(office_client, office_user, pieces):
 
 
 def test_nav_links_return_batches(office_client):
-    assert 'href="/defectives/batches/"' in office_client.get("/").content.decode()
+    assert 'href="/defectives/batches/"' in office_client.get("/defectives/").content.decode()
 
 
 # ---------------------------------------------------------------- review fixes: tokens, tags, links, queries

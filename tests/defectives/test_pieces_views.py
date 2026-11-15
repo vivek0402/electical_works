@@ -154,8 +154,8 @@ def test_piece_card_offers_scrap_and_scraps(office_client, mixed):
 
 
 def test_nav_links_pieces(office_client):
-    # the menu opens on the pieces in store, the rows its badge counts
-    assert f'href="{LIST}?status=IN_STORE"' in office_client.get("/").content.decode()
+    # the Defectives sub-tab opens on the pieces in store, the rows its badge counts
+    assert f'href="{LIST}?status=IN_STORE"' in office_client.get("/defectives/").content.decode()
 
 
 @pytest.mark.parametrize(

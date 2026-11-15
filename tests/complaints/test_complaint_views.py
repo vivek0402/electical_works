@@ -274,8 +274,10 @@ def test_piece_source_links_its_complaint(office_client, office_user):
     )
 
 
-def test_nav_links_new_complaint(office_client):
+def test_menu_links_new_complaint(office_client):
+    # the Home hero and the Complaints section hero both offer it
     assert 'href="/complaints/new/"' in office_client.get("/").content.decode()
+    assert 'href="/complaints/new/"' in office_client.get("/complaints/").content.decode()
 
 
 def test_unknown_complaint_is_404(office_client):

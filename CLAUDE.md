@@ -14,15 +14,16 @@ SVKML Electrical Works (Wipro Lighting service partner, Visakhapatnam). We are b
 - **The Excel files in `data/legacy/` show what data exists. They are never a UI template.** Use proper forms: date pickers, dropdowns/searchable selects, number inputs, validation. Excel is only an "Export to Excel" download with clean app columns.
 - Tick todo items only with evidence. After any correction, add a rule to `tasks/lessons.md`.
 
-## Design direction (chosen by the user, 2026-10-11)
-- **Modern admin dashboard**: left sidebar menu (hamburger on phones), top bar with global search, white cards, KPI tiles with icons, data tables with sorting and paging, modals and toasts.
-- UI kit: **Tabler 1.6.1 + Tabler Icons 3.49.0** (vendored, no build step), **Tom Select 2.6.2** with its Bootstrap 5 CSS for searchable selects, ApexCharts (bundled with Tabler) for charts. The Django admin back-office will use **django-unfold**.
+## Design direction (direction B "Bold and graphic", chosen by the user on 2026-11-15; replaces the 2026-10-11 sidebar dashboard)
+- **Shell**: dark top bar (brand, five section pills Home / Stock / Complaints / Defectives / Setup, global search, low-stock bell, user menu), then a dark hero with the page title, one line of context, the section's actions and sub-tabs. Cream page (`#f3efe6`), white cards with 18px corners, pill buttons 44px high, inputs 48px high. On phones the top bar scrolls sideways (no hamburger). Form and detail pages show a back link instead of sub-tabs. Screens read in the order main actions, what needs attention, related groups, history.
+- **Type**: Bricolage Grotesque (headings, figures), Instrument Sans (text), Geist Mono (codes), **vendored** as woff2 in `static/vendor/fonts/` (no Google Fonts). Exactly five sizes: 13/15/18/28/48px.
+- **UI kit underneath**: Tabler 1.6.1 + Tabler Icons 3.49.0 (vendored, no build step) and Tom Select 2.6.2 stay loaded for grid, modals, dropdowns and pickers; `static/css/app.css` loads last and restyles them, and holds the new `b-*` components. Charts are server-rendered CSS bars (no ApexCharts on the new screens). The Django admin back-office will use **django-unfold**.
 - IN/OUT colours are a colour-blind-safe validated pair: blue `#2a78d6` (IN) and orange `#eb6834` (OUT). Green and orange failed the CVD check.
-- Gotchas found while building: Tabler needs `data-bs-navbar-position="vertical"` on `<html>`, and the top bar must sit inside `.page-wrapper`, otherwise the sidebar or top bar is hidden. Tom Select needs its own `tom-select.bootstrap5.css` underneath `tabler-vendors.css`.
+- Gotchas found while building: do **not** set `data-bs-navbar-position` on `<html>` any more (the sidebar is gone). Tabler's `.page-header` is a column flex and `.page-title` is `display:flex`; `app.css` resets both for the hero. `.visually-hidden` inside a scrolling top-bar strip must sit in a `position: relative` parent or it widens the page on phones. Tom Select needs its own `tom-select.bootstrap5.css` underneath `tabler-vendors.css`. The section's default hero actions are dropped by `static/js/app.js` when the page already offers the same link.
 
 ## Design System
 Always read DESIGN.md before making any visual or UI decisions.
-All colours, spacing and aesthetic direction are defined there.
+All colours, spacing, type and aesthetic direction are defined there (direction B).
 Do not deviate without explicit user approval.
 In QA mode, flag any code that doesn't match DESIGN.md.
 

@@ -1,5 +1,5 @@
 {% load static %}<!doctype html>
-<html lang="en-IN" data-bs-navbar-position="vertical">
+<html lang="en-IN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}SVKML Service{% endblock %} · SVKML</title>
@@ -10,62 +10,55 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
-<div class="page">
-  <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-    <div class="container-fluid">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button>
-      <a href="{% url 'dashboard' %}" class="navbar-brand navbar-brand-autodark brand"><span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Service</span></a>
-      <div class="collapse navbar-collapse" id="sidebar-menu">
-        <ul class="navbar-nav pt-lg-3" id="nav">
-          {% for title, entries in nav_sections %}
-            <li class="nav-section">{{ title }}</li>
-            {% for e in entries %}{% if not e.admin_only or is_admin %}
-              <li class="nav-item"><a class="nav-link{% if e.active %} active{% endif %}{% if not e.url %} disabled{% endif %}"
-                href="{{ e.url|default:'#' }}"{% if not e.url %} aria-disabled="true"{% endif %}>
-                <span class="nav-link-icon {{ e.cls }}"><i class="ti ti-{{ e.icon }}"></i></span><span class="nav-link-title">{{ e.label }}</span>
-                {% if e.name == 'low_stock' and nav_low_count %}<span class="badge bg-red-lt ms-auto">{{ nav_low_count }}</span>{% endif %}
-                {% if e.name == 'complaints' and nav_open_complaints %}<span class="badge nav-badge ms-auto" title="Open complaints">{{ nav_open_complaints }}<span class="visually-hidden"> open</span></span>{% endif %}
-                {% if e.name == 'defective_pieces' and nav_pieces_in_store %}<span class="badge nav-badge ms-auto" title="Pieces in the Defective store">{{ nav_pieces_in_store }}<span class="visually-hidden"> in store</span></span>{% endif %}</a></li>
-            {% endif %}{% endfor %}
-          {% endfor %}
-        </ul>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="b-top d-print-none">
+  <div class="b-bar">
+    <a href="{% url 'dashboard' %}" class="b-brand"><span class="brand-mark"><i class="ti ti-bulb" aria-hidden="true"></i></span>SVKML <span class="brand-sub">Service</span></a>
+    <nav class="b-nav" aria-label="Main">
+      {% for p in nav_top %}<span class="b-pill{% if p.active %} on{% endif %}"><a class="b-pill-link{% if not p.url %} disabled{% endif %}" href="{{ p.url|default:'#' }}"{% if p.active %} aria-current="page"{% endif %}{% if not p.url %} aria-disabled="true"{% endif %}>{{ p.label }}</a>
+        {% if p.key == 'complaints' and nav_open_complaints %}<a class="b-count-link" href="{{ p.count_url }}"><span class="badge nav-badge" title="Open complaints">{{ nav_open_complaints }}<span class="visually-hidden"> open</span></span></a>{% endif %}
+        {% if p.key == 'defectives' and nav_pieces_in_store %}<a class="b-count-link" href="{{ p.count_url }}"><span class="badge nav-badge" title="Pieces in the Defective store">{{ nav_pieces_in_store }}<span class="visually-hidden"> in store</span></span></a>{% endif %}</span>{% endfor %}
+    </nav>
+    <div class="global-search">
+      <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
+        <input id="gsearch" type="search" class="form-control" placeholder="Search items, entries, complaints, sites, tags…" autocomplete="off" aria-label="Search" role="combobox" aria-controls="gresults" aria-autocomplete="list" aria-expanded="false" data-url="{{ nav_urls.global_search|default:'' }}"></div>
+      <div id="gresults" class="dropdown-menu gresults" role="listbox" aria-label="Search results"></div>
+      <div id="gstatus" class="visually-hidden" aria-live="polite"></div>
+    </div>
+    <div class="b-right">
+      <a href="{{ nav_urls.low_stock|default:'#' }}" class="b-icon-link position-relative" title="Low stock" aria-label="Low stock"><i class="ti ti-bell" aria-hidden="true"></i><span class="bell-count">{% if nav_low_count %}{{ nav_low_count }}{% endif %}</span></a>
+      <div class="dropdown">
+        <a href="#" class="b-user" data-bs-toggle="dropdown" aria-label="User menu" aria-expanded="false" role="button">
+          <span class="b-avatar">{{ user.username|slice:":2"|upper }}</span><span class="b-user-name">{{ user.first_name|default:user.username }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end">
+          <div class="dropdown-header">{% if is_admin %}Admin{% else %}Office staff{% endif %}</div>
+          {% if is_admin %}<a href="{% url 'admin:index' %}" class="dropdown-item"><i class="ti ti-users"></i>Users (admin)</a>{% endif %}
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="dropdown-item" type="submit"><i class="ti ti-logout"></i>Logout</button></form>
+        </div>
       </div>
     </div>
-  </aside>
-  <div class="page-wrapper">
-    <header class="navbar navbar-expand-md d-print-none topbar">
-      <div class="container-xl">
-        <div class="global-search">
-          <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
-            <input id="gsearch" type="search" class="form-control" placeholder="Search items, entries, complaints, sites, tags…" autocomplete="off" aria-label="Search" role="combobox" aria-controls="gresults" aria-autocomplete="list" aria-expanded="false" data-url="{{ nav_urls.global_search|default:'' }}"></div>
-          <div id="gresults" class="dropdown-menu gresults" role="listbox" aria-label="Search results"></div>
-          <div id="gstatus" class="visually-hidden" aria-live="polite"></div>
-        </div>
-        <div class="navbar-nav flex-row order-md-last ms-auto align-items-center gap-2">
-          <a href="{{ nav_urls.low_stock|default:'#' }}" class="nav-link px-2 position-relative" title="Low stock" aria-label="Low stock"><i class="ti ti-bell fs-2"></i><span class="badge bg-red text-white badge-notification bell-count">{% if nav_low_count %}{{ nav_low_count }}{% endif %}</span></a>
-          <div class="nav-item dropdown">
-            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="User menu">
-              <span class="avatar avatar-sm kpi-brand">{{ user.username|slice:":2"|upper }}</span>
-              <div class="d-none d-xl-block ps-2"><div>{{ user.first_name|default:user.username }}</div><div class="mt-1 small text-secondary">{% if is_admin %}Admin{% else %}Office staff{% endif %}</div></div>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-              {% if is_admin %}<a href="{% url 'admin:index' %}" class="dropdown-item"><i class="ti ti-users"></i>Users (admin)</a>{% endif %}
-              <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="dropdown-item" type="submit"><i class="ti ti-logout"></i>Logout</button></form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-    <div class="page-header d-print-none"><div class="container-xl"><div class="row g-2 align-items-center">
-      <div class="col"><div class="page-pretitle">{% block pretitle %}{% endblock %}</div><h2 class="page-title">{% block page_title %}{% endblock %}</h2></div>
-      <div class="col-auto ms-auto d-print-none"><div class="btn-list">{% block actions %}{% endblock %}</div></div>
-    </div></div></div>
-    <div class="page-body"><div class="container-xl">
-      {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">{{ message }}<a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>{% endfor %}
-      {% block content %}{% endblock %}
-    </div></div>
+  </div>
+  <div class="b-hero page-header">
+    <div class="b-hero-text">
+      {% block back_link %}{% if nav_back %}<a class="b-back" href="{{ nav_back.url|default:'#' }}"><i class="ti ti-chevron-left" aria-hidden="true"></i>{{ nav_back.label }}</a>{% endif %}{% endblock %}
+      <div class="page-pretitle">{% block pretitle %}{% endblock %}</div>
+      <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
+      <p class="b-context">{% block page_context %}{% endblock %}</p>
+    </div>
+    <div class="b-actions d-print-none">
+      {% for a in nav_actions %}{% if a.url %}<a href="{{ a.url }}" class="btn {{ a.cls }}" data-sec-action><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>{{ a.label }}</a>{% endif %}{% endfor %}
+      {% block actions %}{% endblock %}
+    </div>
+    {% if nav_tabs %}<nav class="b-sub" aria-label="Section pages">
+      {% for t in nav_tabs %}<a href="{{ t.url|default:'#' }}" class="{% if t.active %}on{% endif %}"{% if t.active %} aria-current="page"{% endif %}>{{ t.label }}{% if t.name == 'low_stock' and nav_low_count %}<em>{{ nav_low_count }}</em>{% elif t.name == 'complaints' and nav_open_complaints %}<em>{{ nav_open_complaints }}</em>{% elif t.name == 'defective_pieces' and nav_pieces_in_store %}<em>{{ nav_pieces_in_store }}</em>{% endif %}</a>{% endfor %}
+    </nav>{% endif %}
   </div>
 </div>
+<main class="b-body" id="main">
+  {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">{{ message }}<a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
 <script src="{% static 'vendor/tabler.min.js' %}"></script>
 <script src="{% static 'vendor/tom-select.complete.min.js' %}"></script>
 <script src="{% static 'js/app.js' %}"></script>

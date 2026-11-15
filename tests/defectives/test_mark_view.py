@@ -98,7 +98,7 @@ def test_item_param_prefills_a_line(office_client, drv):
 
 
 def test_nav_links_mark_defective(office_client):
-    assert 'href="/defectives/mark/"' in office_client.get("/").content.decode()
+    assert 'href="/defectives/mark/"' in office_client.get("/defectives/").content.decode()
 
 
 def test_a_user_without_a_role_cannot_open_the_page(client):

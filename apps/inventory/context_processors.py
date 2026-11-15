@@ -1,48 +1,76 @@
 from django.urls import NoReverseMatch, reverse
 from django.utils.functional import SimpleLazyObject
 
+from apps.accounts.roles import ADMIN, has_role
+
 from .selectors import low_stock_count
 
-# (section, [(url_name, label, tabler icon, icon css class, admin_only)])
-NAV = [
-    ("Overview", [("dashboard", "Dashboard", "layout-dashboard", "", False)]),
-    (
-        "Stock",
-        [
-            ("stock_in", "Stock IN", "package-import", "text-in", False),
-            ("stock_out", "Stock OUT", "package-export", "text-out", False),
-            ("transfer", "Transfer", "arrows-exchange", "", False),
-            ("adjust", "Adjust count", "adjustments-horizontal", "", False),
+# The five top-bar sections. Each has a key, a label, the url name its pill opens, the sub-tabs shown under
+# page title on list and overview pages (url_name, label, admin_only), and the hero actions shown on those
+# same pages (url_name, label, tabler icon, css class). Form and detail pages show a back link instead.
+SECTIONS = [
+    {
+        "key": "home",
+        "label": "Home",
+        "open": "dashboard",
+        "tabs": [("dashboard", "Home", False)],
+        "actions": [
+            ("stock_in", "Stock IN", "arrow-down-left", "btn-in"),
+            ("stock_out", "Stock OUT", "arrow-up-right", "btn-out"),
+            ("complaint_new", "New complaint", "plus", "btn-main"),
+            ("transfer", "Transfer", "arrows-exchange", "btn-quiet sep-before"),
+            ("adjust", "Adjust count", "adjustments-horizontal", "btn-quiet"),
         ],
-    ),
-    (
-        "Reports",
-        [
-            ("current_stock", "Current stock", "building-warehouse", "", False),
-            ("movements", "Movements", "history", "", False),
-            ("low_stock", "Low stock", "alert-triangle", "", False),
+    },
+    {
+        "key": "stock",
+        "label": "Stock",
+        "open": "current_stock",
+        "tabs": [
+            ("current_stock", "Current stock", False),
+            ("movements", "Movements", False),
+            ("low_stock", "Low stock", False),
         ],
-    ),
-    (
-        "Complaints",
-        [  # entries whose page isn't built yet render disabled (their URL name doesn't resolve)
-            ("complaints_dashboard", "Dashboard", "message-report", "", False),
-            ("complaints", "All complaints", "list-details", "", False),
-            ("complaint_new", "New complaint", "plus", "", False),
-            ("sites", "Sites", "building", "", False),
-            ("technicians", "Technicians", "users", "", False),
+        "actions": [
+            ("stock_in", "Stock IN", "arrow-down-left", "btn-in"),
+            ("stock_out", "Stock OUT", "arrow-up-right", "btn-out"),
+            ("transfer", "Transfer", "arrows-exchange", "btn-quiet"),
+            ("adjust", "Adjust count", "adjustments-horizontal", "btn-quiet"),
         ],
-    ),
-    (
-        "Defectives",
-        [  # entries whose page isn't built yet render disabled (their URL name doesn't resolve)
-            ("defectives_dashboard", "Dashboard", "recycle", "", False),
-            ("defective_pieces", "Pieces", "tags", "", False),
-            ("mark_defective", "Mark defective", "alert-octagon", "", False),
-            ("return_batches", "Return batches", "truck-return", "", False),
+    },
+    {
+        "key": "complaints",
+        "label": "Complaints",
+        "open": "complaints_dashboard",
+        "tabs": [
+            ("complaints_dashboard", "Overview", False),
+            ("complaints", "All complaints", False),
+            ("sites", "Sites", False),
+            ("technicians", "Technicians", False),
         ],
-    ),
-    ("Setup", [("items", "Items", "box", "", False), ("masters", "Masters", "settings", "", True)]),
+        "actions": [("complaint_new", "New complaint", "plus", "btn-main")],
+    },
+    {
+        "key": "defectives",
+        "label": "Defectives",
+        "open": "defectives_dashboard",
+        "tabs": [
+            ("defectives_dashboard", "Overview", False),
+            ("defective_pieces", "Pieces", False),
+            ("return_batches", "Return batches", False),
+        ],
+        "actions": [
+            ("mark_defective", "Mark defective", "alert-octagon", "btn-quiet"),
+            ("batch_new", "New return batch", "plus", "btn-main"),
+        ],
+    },
+    {
+        "key": "setup",
+        "label": "Setup",
+        "open": "items",
+        "tabs": [("items", "Items", False), ("masters", "Masters", True)],
+        "actions": [("item_new", "New item", "plus", "btn-main")],
+    },
 ]
 EXTRA_URLS = ["global_search"]
 # "?status=..." for the pieces list: the menu entry and the dashboard's piece tiles all build on it.
@@ -64,6 +92,20 @@ ACTIVE_ALIASES = {
     "site_edit": "sites",
     "technician_edit": "technicians",
 }
+
+
+# Form pages that highlight no menu entry of their own: the tab their back link returns to.
+FORM_BACK = {
+    "stock_in": "current_stock",
+    "stock_out": "current_stock",
+    "transfer": "current_stock",
+    "adjust": "current_stock",
+    "complaint_new": "complaints",
+    "mark_defective": "defectives_dashboard",
+}
+# Menu entries are the sub-tabs of every section (plus Home), keyed by url name.
+TAB_SECTION = {name: sec for sec in SECTIONS for name, *_ in sec["tabs"]}
+URL_NAMES = [name for sec in SECTIONS for name, *_ in sec["tabs"] + sec["actions"]]
 
 
 def _url(name):
@@ -101,35 +143,73 @@ def _pieces_in_store(request):
 
 
 def nav(request):
-    """Sidebar sections, URLs by name (None until built), active entry, and the menu badges' counts.
+    """Top-bar sections, the current section's sub-tabs, hero actions or back link, URLs by name (None until
+    built), and the menu badges' counts.
 
     Each badge is lazy: its one counting query runs only if the template shows it."""
     if not request.user.is_authenticated:
         return {}
-    urls = {name: _url(name) for _, entries in NAV for name, *_ in entries}
+    urls = {name: _url(name) for name in URL_NAMES}
     urls.update({name: _url(name) for name in EXTRA_URLS})
     current = request.resolver_match.url_name if request.resolver_match else ""
     active = ACTIVE_ALIASES.get(current, current)
+    is_admin = has_role(request.user, ADMIN)
+
+    def entry(name, label, admin=False):
+        return {
+            "name": name,
+            "label": label,
+            "admin_only": admin,
+            "url": urls[name] and urls[name] + NAV_QUERY.get(name, ""),
+            "active": name == active,
+        }
+
     sections = [
-        (
-            title,
-            [
-                {
-                    "name": n,
-                    "label": label,
-                    "icon": ic,
-                    "cls": cls,
-                    "admin_only": admin,
-                    "url": urls[n] and urls[n] + NAV_QUERY.get(n, ""),
-                    "active": n == active,
-                }
-                for n, label, ic, cls, admin in entries
-            ],
-        )
-        for title, entries in NAV
+        (sec["label"], [entry(n, label, admin) for n, label, admin in sec["tabs"]]) for sec in SECTIONS
     ]
+    # Where this page lives. A tab page (a list or overview) shows the section's tabs and actions; any other
+    # page (a form or a detail page) shows a back link to the tab it came from.
+    is_tab_page = current in TAB_SECTION
+    back_name = None if is_tab_page else FORM_BACK.get(current) or ACTIVE_ALIASES.get(current)
+    home_name = current if is_tab_page else back_name
+    section = TAB_SECTION.get(home_name)
+    top = []
+    for sec in SECTIONS:
+        top.append(
+            {
+                "key": sec["key"],
+                "label": sec["label"],
+                "url": urls[sec["open"]],
+                "active": sec is section,
+                "count_url": {
+                    "complaints": urls["complaints"],
+                    "defectives": urls["defective_pieces"]
+                    and urls["defective_pieces"] + NAV_QUERY["defective_pieces"],
+                }.get(sec["key"]),
+            }
+        )
+    tabs, actions, back = [], [], None
+    if section and is_tab_page:
+        tabs = [
+            e
+            for e in (entry(n, label, admin) for n, label, admin in section["tabs"])
+            if is_admin or not e["admin_only"]
+        ]
+        if section["key"] == "home":
+            tabs = []  # Home has one page, so no tab strip
+        actions = [
+            {"name": n, "label": label, "icon": icon, "cls": cls, "url": urls[n]}
+            for n, label, icon, cls in section["actions"]
+        ]
+    elif section and back_name:
+        label = next(label for n, label, _ in section["tabs"] if n == back_name)
+        back = {"url": urls[back_name] and urls[back_name] + NAV_QUERY.get(back_name, ""), "label": label}
     return {
         "nav_sections": sections,
+        "nav_top": top,
+        "nav_tabs": tabs,
+        "nav_actions": actions,
+        "nav_back": back,
         "nav_urls": urls,
         "nav_low_count": SimpleLazyObject(low_stock_count),
         "nav_open_complaints": SimpleLazyObject(lambda: _open_complaints(request)),

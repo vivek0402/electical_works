@@ -87,14 +87,14 @@ def test_nav_masters_hidden_and_stock_screens_live(office_client):
 
 
 def test_nav_masters_live_for_admin_only(admin_client, office_client):
-    admin_html = admin_client.get("/").content.decode()
+    admin_html = admin_client.get("/items/").content.decode()
     assert 'href="/masters/"' in admin_html
     assert admin_html.count('aria-disabled="true"') == len(UNBUILT)
-    assert 'href="/masters/"' not in office_client.get("/").content.decode()
+    assert 'href="/masters/"' not in office_client.get("/items/").content.decode()
 
 
 def test_nav_masters_visible_to_admin(admin_client):
-    assert "Masters" in admin_client.get("/").content.decode()
+    assert "Masters" in admin_client.get("/items/").content.decode()
 
 
 def test_nav_active_alias(office_user, monkeypatch):
@@ -106,3 +106,21 @@ def test_nav_active_alias(office_user, monkeypatch):
     items = next(e for title, entries in ctx["nav_sections"] for e in entries if e["name"] == "items")
     dash = next(e for title, entries in ctx["nav_sections"] for e in entries if e["name"] == "dashboard")
     assert items["active"] and not dash["active"]
+
+
+def test_tab_pages_show_section_tabs_and_actions_form_pages_show_a_back_link(office_client):
+    stock = office_client.get("/stock/").context
+    assert [t["name"] for t in stock["nav_tabs"]] == ["current_stock", "movements", "low_stock"]
+    assert [a["name"] for a in stock["nav_actions"]] == ["stock_in", "stock_out", "transfer", "adjust"]
+    assert stock["nav_back"] is None
+    form = office_client.get("/stock/in/").context
+    assert form["nav_tabs"] == [] and form["nav_actions"] == []
+    assert form["nav_back"]["url"] == "/stock/" and form["nav_back"]["label"] == "Current stock"
+    top = {p["key"]: p["active"] for p in form["nav_top"]}
+    assert top == {"home": False, "stock": True, "complaints": False, "defectives": False, "setup": False}
+
+
+def test_masters_tab_is_admin_only_and_home_has_no_tab_strip(office_client, admin_client):
+    assert office_client.get("/").context["nav_tabs"] == []
+    assert [t["name"] for t in office_client.get("/items/").context["nav_tabs"]] == ["items"]
+    assert [t["name"] for t in admin_client.get("/items/").context["nav_tabs"]] == ["items", "masters"]
