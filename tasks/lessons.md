@@ -37,3 +37,7 @@ Read at the start of every session. Each entry: the pattern I got wrong, then th
 ## 2026-10-22 — Preselected defaults on entry forms
 - **Pattern:** Stock IN started with Wipro Lighting and Vizag Office already chosen, so a wrong supplier or location could be saved without anyone noticing. The user asked "why is there default selected?" and chose no defaults.
 - **Rule:** Never preselect a supplier, company or destination location on an entry form. Start on "Choose…" with a clear "required" message. A default is allowed only for a harmless value such as today's date.
+
+## 2026-11-14 — "Elevate the design" answered with a tidy-up
+- **Pattern:** Asked to elevate the frontend, I kept the existing layout, palette and components and only tightened type sizes, card borders and icons. I treated DESIGN.md as a fence and never asked how far the redesign could go. The user: "This isn't major changes."
+- **Rule:** "Elevate", "redesign" or "modernise" means a change someone sees in the first second, not a clean-up. Before mocking, settle what may change (layout and navigation, colour, typeface, density), then show 2–3 visibly different directions on the same screen next to today's screen. If the before and after look alike at thumbnail size, it is not done. DESIGN.md records past choices; a redesign request reopens them.

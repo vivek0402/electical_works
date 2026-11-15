@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en-IN" data-bs-navbar-position="vertical">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SVKML Service · design refresh mock</title>
+  <!-- Same vendored kit as the real app (serve the repo root: python -m http.server 8080) -->
+  <link rel="stylesheet" href="../../static/vendor/tabler.min.css">
+  <link rel="stylesheet" href="../../static/vendor/tabler-icons.min.css">
+  <!-- Mock only: lets you try a second typeface. The app would vendor the font files instead. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+  <link rel="stylesheet" href="refresh.css">
+</head>
+<body>
+<div class="page">
+  <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Open menu"><span class="navbar-toggler-icon"></span></button>
+      <a href="#dashboard" class="navbar-brand brand"><span class="brand-mark"><i class="ti ti-bulb"></i></span> SVKML <span class="brand-sub">Service</span></a>
+      <div class="collapse navbar-collapse" id="sidebar-menu"><ul class="navbar-nav pt-lg-2" id="nav"></ul></div>
+    </div>
+  </aside>
+  <div class="page-wrapper">
+    <header class="navbar topbar d-print-none">
+      <div class="container-xl">
+        <div class="global-search"><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+          <input type="search" class="form-control" placeholder="Search items, entries, complaints, sites, tags…" aria-label="Search"></div></div>
+        <div class="d-flex align-items-center gap-3 ms-auto">
+          <a href="#stock" class="bell" title="Low stock" aria-label="6 items are low on stock"><i class="ti ti-bell"></i><b>6</b></a>
+          <div class="d-flex align-items-center gap-2"><span class="avatar-me">OF</span>
+            <div class="who d-none d-md-block"><div>Office</div><div class="caption">Office staff</div></div></div>
+        </div>
+      </div>
+    </header>
+    <main class="page-body"><div class="container-xl" id="view"></div></main>
+  </div>
+</div>
+
+<div class="mockbar" role="region" aria-label="Mock controls">
+  <span><b>Mock</b><span class="wide-only"> · typeface</span></span>
+  <button type="button" data-font="system" class="on">System<span class="wide-only"> (today)</span></button>
+  <button type="button" data-font="plex"><span class="wide-only">IBM </span>Plex Sans</button>
+  <button type="button" id="show-before"><i class="ti ti-arrows-diff"></i> <span class="wide-only">Compare with today’s screen</span><span class="narrow-only">Before</span></button>
+</div>
+<dialog class="before-dialog" id="before-dialog">
+  <header><b id="before-title">Today</b><span class="caption">The screen as it is in the app now</span>
+    <button type="button" class="btn btn-quiet ms-auto" id="before-close">Close</button></header>
+  <img id="before-img" alt="Screenshot of the current screen">
+</dialog>
+
+<script src="../../static/vendor/tabler.min.js"></script>
+<script src="../../static/vendor/apexcharts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

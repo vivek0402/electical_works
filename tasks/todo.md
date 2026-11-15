@@ -209,6 +209,23 @@ Design: `docs/superpowers/specs/2026-10-19-smart-features-design.md` (office-hou
 - [ ] P5 fault patterns, parts usually needed, technician hint
 - [ ] P6 AI intake, only after the client approves the cost
 
+## Design refresh: one type scale, one card, less clutter (requested 2026-11-14) ⛔ approval gate
+Audit of the running app (demo data, 1366px + 390px): 12 font sizes and 4 weights rendered, 6 card looks, 8 icon-in-circle KPI tiles, capital-letter table headings, icons on some titles only, up to 3 competing buttons per page. Palette and layout are fine and stay.
+- [x] Mockup `mockups/design-refresh/` (Dashboard, Current stock, All complaints, Stock IN, complaint page, Style rules page). Built on the app's vendored Tabler with `refresh.css` in place of `app.css`. Evidence: every screen renders exactly 5 sizes (12/14/16/20/28px) and 2 weights (400/600), no horizontal overflow at 1366px or 390px, 0 console errors; "Compare with today's screen" shows the current app screenshot; typeface switch (System / IBM Plex Sans) works.
+- [ ] User approves the mockup and decides: (1) typeface: keep system or IBM Plex Sans; (2) complaints list: Priority as a pill beside the fault (loses sort-by-priority) or keep the column; (3) dashboard: drop the section word above page titles
+- [x] 2026-11-14 user feedback on that mockup: "This isn't major changes" (lesson added). User then allowed everything to change: layout and navigation, colours, typeface and sizing, components.
+- [x] Three directions on the same two screens (dashboard + complaints list) in `mockups/design-directions/`: A Light and airy, B Bold and graphic, C Task-first, plus "Today's app" for comparison. Evidence: each direction renders at most 5 font sizes, fonts load, no horizontal overflow at 1366px or 390px, 0 console errors.
+- [x] 2026-11-15 hierarchy pass on all three dashboards (user: "improve the information hierarchy, group related elements, most important actions at the top"): order is now actions (grouped Stock / Complaints, daily ones filled, Transfer and Adjust secondary) → Needs attention (most urgent first) → one group each for Stock, Complaints, Defective pieces → recent entries last. Evidence: screenshots at 1366px and 390px, no overflow, 0 console errors, at most 5 font sizes each.
+- [x] 2026-11-15 user picked **B (Bold and graphic)**. Remaining key screens mocked in `mockups/design-b/` (dashboard, current stock, Stock IN form, complaints list, complaint page): no overflow at 1366px or 390px, 0 console errors.
+- [x] Build plan approved 2026-11-15: `docs/superpowers/plans/2026-11-15-design-b.md` (branch `design-b`). User's rule: Fable plans and dispatches only; every build, fix and review task runs in a Sonnet subagent.
+  - [ ] T0 Prep: branch, commit mocks, baseline tests
+  - [ ] T1 Foundation: app.css, fonts, base.html shell, menu, login, DESIGN.md
+  - [ ] T2 Stock screens
+  - [ ] T3 Complaints screens
+  - [ ] T4 Defectives screens
+  - [ ] T5 Walkthrough and docs
+  - [ ] T6 Review and fixes
+
 ## Rigour testing round (2026-10-22)
 Plan: `~/.claude/plans/tingly-booping-cocoa.md`. Report: `tasks/rigour-report.md`. Suite: `e2e/rigour/` (`sh e2e/rigour/run_all.sh 8001`).
 - [x] Excel-driven data (~100 per kind), loaded through the real forms: 475 operations, 0 refused

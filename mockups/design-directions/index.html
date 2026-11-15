@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SVKML Service · three design directions</title>
+  <!-- Serve the repo root: python -m http.server 8080, then open /mockups/design-directions/ -->
+  <link rel="stylesheet" href="../../static/vendor/tabler-icons.min.css">
+  <!-- Mock only: typefaces from Google Fonts. The app would vendor the chosen one. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Bricolage+Grotesque:wght@600;800&family=Geist+Mono:wght@600&family=Geist:wght@400;600&family=Instrument+Sans:wght@400;600&display=swap">
+  <link rel="stylesheet" href="directions.css?v=3">
+</head>
+<body>
+<nav class="chrome" aria-label="Mock controls">
+  <span>Mock</span>
+  <a href="#today" data-dir="today">Today’s app</a>
+  <a href="#a" data-dir="a">A · Light and airy</a>
+  <a href="#b" data-dir="b">B · Bold and graphic</a>
+  <a href="#c" data-dir="c">C · Task-first</a>
+  <b class="gap">Screen</b>
+  <a href="#" data-screen="home">Dashboard</a>
+  <a href="#" data-screen="list">Complaints list</a>
+</nav>
+<div id="stage"></div>
+<script src="directions.js?v=3"></script>
+</body>
+</html>
