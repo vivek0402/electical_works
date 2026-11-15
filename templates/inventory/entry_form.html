@@ -1,44 +1,70 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}{{ title }}{% endblock %}
-{% block pretitle %}Stock{% endblock %}
-{% block page_title %}<i class="ti ti-{{ icon }}"></i> {{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_context %}{{ subtitle }}.{% endblock %}
 {% block content %}
-<form method="post" id="entry-form" novalidate data-mode="{{ mode }}">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-  <div class="card mb-3"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3>
-    <div class="card-subtitle ms-2 text-secondary">{{ subtitle }}</div></div>
-    <div class="card-body"><div class="row g-3">
-      {% if subtypes %}<div class="col-12"><label class="form-label required">{{ form.subtype.label }}</label><div class="form-selectgroup">
+<form method="post" id="entry-form" novalidate data-mode="{{ mode }}" class="b-form">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <div class="b-steps">
+    <section class="card b-card"><h2><span class="stepn">1</span>{% if mode == "in" %}Where it came from{% elif mode == "out" %}Who it goes to{% elif mode == "trf" %}Where it moves from{% else %}Which location is counted{% endif %}</h2>
+      <div class="b-grid">
+      {% if subtypes %}<div class="fld wide"><span class="form-label required" id="subtype-label">{{ form.subtype.label }}</span><div><div class="form-selectgroup" role="radiogroup" aria-labelledby="subtype-label">
         {% for value, label, ic in subtypes %}<label class="form-selectgroup-item">
           <input type="radio" name="subtype" value="{{ value }}" class="form-selectgroup-input"{% if form.subtype.value == value %} checked{% endif %}>
-          <span class="form-selectgroup-label"><i class="ti ti-{{ ic }}"></i> {{ label }}</span></label>{% endfor %}</div></div>{% endif %}
-      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.entry_date.id_for_label }}">Date</label>
-        <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-calendar"></i></span>{{ form.entry_date }}</div></div>
+          <span class="form-selectgroup-label"><i class="ti ti-{{ ic }}" aria-hidden="true"></i> {{ label }}</span></label>{% endfor %}</div></div></div>{% endif %}
       {% if mode == "in" %}
-        <div class="col-12 col-md-3" data-show="SUPPLIER"><label class="form-label required" for="{{ form.company.id_for_label }}">Supplier / company</label>{{ form.company }}</div>
-        <div class="col-12 col-md-3" data-show="RETURN"><label class="form-label required" for="{{ form.party.id_for_label }}">Site / customer</label>{{ form.party }}</div>
-      {% endif %}
-      <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "in" %}Into location{% elif mode == "adj" %}Location{% else %}From location{% endif %}</label>{{ form.location }}</div>
-      {% if mode == "in" %}
-        <div class="col-12 col-md-3"><label class="form-label" for="{{ form.ref.id_for_label }}">DC / bill no.</label>{{ form.ref }}</div>
+        <div class="fld" data-show="SUPPLIER"><label class="form-label required" for="{{ form.company.id_for_label }}">Supplier / company</label>{{ form.company }}<span class="hint">Required. Type a new name to add it.</span></div>
+        <div class="fld" data-show="RETURN"><label class="form-label required" for="{{ form.party.id_for_label }}">Site / customer</label>{{ form.party }}</div>
+        <div class="fld"><label class="form-label" for="{{ form.ref.id_for_label }}">DC / bill no.</label>{{ form.ref }}</div>
       {% elif mode == "out" %}
-        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.party.id_for_label }}" id="party-label">Site / customer</label>{{ form.party }}</div>
-        <div class="col-12 col-md-3"><label class="form-label" for="{{ form.ref.id_for_label }}">Job / reference no.</label>{{ form.ref }}</div>
-      {% elif mode == "trf" %}
-        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.to_location.id_for_label }}">To location</label>{{ form.to_location }}</div>
+        <div class="fld"><label class="form-label required" for="{{ form.party.id_for_label }}" id="party-label">Site / customer</label>{{ form.party }}</div>
+        <div class="fld"><label class="form-label" for="{{ form.ref.id_for_label }}">Job / reference no.</label>{{ form.ref }}</div>
       {% else %}
-        <div class="col-12 col-md-3"><label class="form-label required" for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}</div>
+        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "adj" %}Location{% else %}From location{% endif %}</label>{{ form.location }}{% if mode == "trf" %}<span class="hint">Required. Type a new name to add it.</span>{% endif %}</div>
       {% endif %}
-      <div class="col-12"><label class="form-label{% if mode == 'adj' %} required{% endif %}" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>{{ form.note }}</div>
-    </div></div></div>
-  <div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-list-details"></i> Items</h3></div>
-    <div class="card-body"><div class="lines-wrap"><table class="table table-vcenter lines-table mb-0"><thead><tr><th class="w-1">#</th><th>Item</th>
+      <div class="fld"><label class="form-label required" for="{{ form.entry_date.id_for_label }}">Date</label>{{ form.entry_date }}</div>
+      </div></section>
+    <section class="card b-card"><h2><span class="stepn">2</span>{% if mode == "in" %}Where it goes{% elif mode == "out" %}Where it comes from{% elif mode == "trf" %}Where it moves to{% else %}Why the count changes{% endif %}</h2>
+      <div class="b-grid">
+      {% if mode == "in" or mode == "out" %}
+        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "in" %}Into location{% else %}From location{% endif %}</label>{{ form.location }}{% if mode == "in" %}<span class="hint">Required. Type a new name to add it.</span>{% endif %}</div>
+      {% elif mode == "trf" %}
+        <div class="fld"><label class="form-label required" for="{{ form.to_location.id_for_label }}">To location</label>{{ form.to_location }}<span class="hint">Required. Type a new name to add it.</span></div>
+      {% else %}
+        <div class="fld"><label class="form-label required" for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}</div>
+      {% endif %}
+      <div class="fld{% if mode == 'adj' %} wide2{% else %} wide2{% endif %}"><label class="form-label{% if mode == 'adj' %} required{% endif %}" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>{{ form.note }}</div>
+      </div></section>
+    <section class="card b-card"><h2><span class="stepn">3</span>{% if mode == "in" %}What was received{% elif mode == "out" %}What was issued{% elif mode == "trf" %}What was moved{% else %}What was counted{% endif %}</h2>
+      <div class="lines-wrap"><table class="table table-vcenter lines-table mb-0"><thead><tr><th class="w-1">#</th><th>Item</th>
       {% if mode == "in" %}<th>Quantity</th><th>Batch code</th><th>PKD (packed)</th>{% elif mode == "adj" %}<th>System qty</th><th>Counted qty</th><th>Difference</th>{% else %}<th>Available</th><th>Quantity</th>{% endif %}<th></th></tr></thead>
       <tbody id="lines"></tbody></table></div>
-      <button type="button" class="btn btn-outline-primary mt-3" id="add-line"><i class="ti ti-plus"></i> Add another item</button></div>
-    <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span id="lines-summary" class="text-secondary"></span>
-      <div class="ms-auto btn-list"><a href="{% url 'dashboard' %}" class="btn btn-link link-secondary">Cancel</a>
-        <button type="submit" class="btn {{ button }}"><i class="ti ti-device-floppy"></i> Save {{ title }}</button></div></div></div>
-  <div id="form-error" class="mt-3" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+      <button type="button" class="add" id="add-line"><i class="ti ti-plus" aria-hidden="true"></i> Add another item</button>
+      <p id="lines-summary" class="cap" style="margin:12px 0 0"></p></section>
+    <div id="form-error" tabindex="-1" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle" aria-hidden="true"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+  </div>
+  <aside class="card b-card b-summary" aria-label="Summary"><h2>Summary</h2>
+    <dl>
+      <div><dt>Items</dt><dd class="total" id="sum-items">0</dd></div>
+      {% if mode != "adj" %}<div><dt>Quantity</dt><dd class="total" id="sum-qty">0</dd></div>{% endif %}
+      {% if mode == "in" %}
+        <div><dt>From</dt><dd id="sum-who" class="need" data-need="Choose a supplier">Choose a supplier</dd></div>
+        <div><dt>Into</dt><dd id="sum-where" class="need" data-need="Choose a location">Choose a location</dd></div>
+      {% elif mode == "out" %}
+        <div><dt>To</dt><dd id="sum-who" class="need" data-need="Enter who it goes to">Enter who it goes to</dd></div>
+        <div><dt>From</dt><dd id="sum-where" class="need" data-need="Choose a location">Choose a location</dd></div>
+      {% elif mode == "trf" %}
+        <div><dt>From</dt><dd id="sum-where" class="need" data-need="Choose a location">Choose a location</dd></div>
+        <div><dt>To</dt><dd id="sum-who" class="need" data-need="Choose a location">Choose a location</dd></div>
+      {% else %}
+        <div><dt>Location</dt><dd id="sum-where" class="need" data-need="Choose a location">Choose a location</dd></div>
+        <div><dt>Reason</dt><dd id="sum-who" class="need" data-need="Choose a reason">Choose a reason</dd></div>
+      {% endif %}
+      <div><dt>Date</dt><dd id="sum-date" data-need="Choose a date"></dd></div>
+    </dl>
+    <button type="submit" class="btn {{ button }}">Save {{ title }}</button>
+    <a href="{% url 'current_stock' %}" class="cancel">Cancel</a>
+    <p class="cap" style="margin-top:14px">Nothing is saved until you press Save.</p>
+  </aside>
 </form>
 <datalist id="parties"></datalist>
 {% if mode == "in" %}

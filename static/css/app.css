@@ -452,3 +452,104 @@ body.b-login { background: var(--ink); color: #fff; }
 @media (max-width: 520px) { .card-footer .pagination { gap: 2px; } .card-footer .page-link { min-width: 44px; padding: 0 4px; } }
 /* status tints keep their meaning on the dark hero: opaque so they read there */
 .b-hero .st-neutral { background: #e6e9ee !important; }
+
+/* ======================================================================================================
+   Stock screens (task T2): home dashboard, stock lists, item and entry pages, entry forms.
+   Appended after the shell rules above; nothing above was rewritten. Same five sizes and tokens.
+   ====================================================================================================== */
+
+/* Lists inside a card: the card already pads 26px, so the table's own first/last-cell padding is not doubled */
+.b-card .card-table > :not(caption) > * > *:first-child { padding-left: 0; }
+.b-card .card-table > :not(caption) > * > *:last-child { padding-right: 0; }
+.b-card .card-table > :not(caption) > * > th.col-def, .b-card .card-table > :not(caption) > * > td.col-def, .b-card .card-table > :not(caption) > * > th.def { padding-right: 14px; }
+.b-card > .b-filters { margin-bottom: 20px; }
+/* A scroll box is also the containing block of the visually-hidden header labels inside it, so they are clipped with the table */
+.table-responsive, .scroll { position: relative; }
+.pagination { --tblr-pagination-font-size: var(--s2); } .page-link { font-size: var(--s2); }
+.form-selectgroup-label { font-size: var(--s2); } .input-group-text { font-size: var(--s1); font-weight: 600; background: var(--page); border-color: var(--line-strong); color: var(--ink); }
+.fld > .form-label { margin: 0; }
+.fld .form-control, .fld .form-select { width: 100%; }
+.fld .ts-wrapper { width: 100%; }
+.b-filters .switch { padding-bottom: 0; }
+/* the footer of a list card: count, Export, rows per page, pages */
+.b-foot { border-top: 1px solid var(--line); margin-top: 8px; }
+.b-foot .cap { margin-right: 4px; }
+.b-foot .rows-per-page .form-select { width: auto; min-height: var(--btn-h); }
+.b-foot .pagination { margin: 0 0 0 auto; flex-wrap: wrap; }
+.b-foot .rows-per-page { margin: 0; }
+/* the entry-kind pill: icon + word on every Type cell */
+.badge-k .ti { font-size: var(--s2); }
+.pill-low { white-space: nowrap; }
+td .pill-low { margin-right: 6px; }
+@media (min-width: 961px) {
+  .b-filters.f-4s { grid-template-columns: repeat(4, minmax(0, 170px)) minmax(0, 1fr); }
+  .b-filters.f-3 { grid-template-columns: repeat(3, minmax(0, 200px)); }
+  .b-filters.f-s4 { grid-template-columns: minmax(0, 1fr) repeat(4, minmax(0, 170px)); }
+}
+
+/* Home dashboard */
+.b-block.card { margin-bottom: 0; } /* Tabler gives .card a bottom margin; the blocks sit in a grid */
+.b-block.attn { text-decoration: none; }
+.b-block.attn b { font-weight: 600; }
+.b-block.attn .go { margin-top: auto; }
+.b-block.attn.wait .fig { color: #854d0e; }
+.b-block.attn.alert .fig { color: var(--danger); }
+.b-block.amber .go { color: var(--ink); }
+.b-block.attn.amber .fig { color: var(--ink); }
+.b-block.panel .fig { margin-top: auto; }
+.b-block .lbl .ti { margin-right: 4px; }
+.b-spark { margin-top: 14px; }
+.b-spark i { min-width: 6px; }
+.b-locs .cap { text-align: right; }
+.b-headline a.fig { text-decoration: none; color: var(--ink); }
+.b-headline .cap a { color: inherit; }
+.b-seg i { min-width: 6px; }
+.legend a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; min-height: 24px; }
+.legend a:hover { text-decoration: underline; }
+.seg-NOT_ATTENDED { background: #d63939; } .seg-ATTENDED { background: #475569; } .seg-MATERIAL_CHECK { background: #94a3b8; }
+.seg-AWAITING_MATERIAL { background: var(--amber); } .seg-RESOLVED { background: #2e9e4f; }
+.b-age a { text-decoration: none; display: grid; grid-template-columns: 96px minmax(0, 1fr) 40px; align-items: center; gap: 14px; color: var(--ink); }
+.b-age a:hover span { text-decoration: underline; }
+.b-flow > div { position: relative; padding: 16px; border-radius: 12px; background: var(--page); }
+.b-flow > div b { display: block; font: 800 var(--s4)/1.1 var(--display); margin-bottom: 4px; }
+.b-flow a.wait .cap, .b-flow a .cap { display: block; }
+.b-flow .cap { color: var(--muted); }
+.b-flow a.wait .cap { color: #854d0e; }
+@media (max-width: 520px) { .b-age a { grid-template-columns: 80px minmax(0, 1fr) 32px; } }
+
+/* Item card and entry detail: key/value rows, the shaded Defective store panel */
+.b-kv { list-style: none; margin: 0; padding: 0; }
+.b-kv li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.b-kv li:first-child { border-top: 0; padding-top: 0; }
+.b-kv li.tot { font-weight: 600; border-top: 2px solid var(--ink); }
+.b-kv .v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.b-panel { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: var(--page); }
+.b-panel > .ti { font-size: 22px; color: var(--muted); }
+.b-panel .btn { margin-left: auto; }
+.b-facts .wide { grid-column: 1 / -1; }
+.b-card .b-facts + .b-facts { margin-top: 18px; }
+.b-card > .b-head-tools { margin: -4px 0 18px; }
+.b-card > h2 .btn { margin-left: auto; font-family: var(--font); }
+.b-note { margin-top: 14px; color: var(--muted); font-size: var(--s1); }
+
+/* Entry forms and the item form: the Summary card on the right */
+.b-card > h2 .stepn + * { margin-left: 0; }
+.b-steps > .card { scroll-margin-top: 16px; }
+.b-grid .fld { align-content: start; }
+.b-grid .wide2 { grid-column: span 2; }
+.b-summary .need, .b-summary dd.need { color: var(--danger); }
+.b-summary .lines-note { margin: 0 0 16px; }
+.b-form .form-selectgroup { max-width: 100%; }
+.b-form .lines-table thead th { color: var(--ink); }
+.b-form .add { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.b-form [hidden] { display: none !important; }
+.fld.need .form-select, .fld.need .ts-control { border-color: var(--danger); }
+.fld.need .hint { color: var(--danger); font-weight: 600; }
+#lines-summary { color: var(--muted); }
+.b-form .hint { display: block; margin-top: 2px; }
+@media (max-width: 960px) { .b-grid .wide2 { grid-column: 1 / -1; } }
+/* the entry-kind pills on the dark hero (entry page title): opaque, so IN blue and OUT orange keep their contrast */
+.b-hero .k-IN { background: #e5effa; color: #1f5fae; } .b-hero .k-OUT { background: #fceae3; color: #a8441b; }
+.b-hero .k-TRF, .b-hero .k-ADJ { background: #e6e9ee; color: #334155; }
+/* phones: a segmented control that wraps becomes a tidy stack, not a blob (same as .seg above) */
+@media (max-width: 520px) { .b-form .form-selectgroup { display: grid; border-radius: 16px; width: 100%; } .b-form .form-selectgroup-label { border-radius: 12px !important; justify-content: flex-start; } }

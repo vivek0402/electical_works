@@ -1,26 +1,25 @@
 {% extends "base.html" %}{% load core_tags %}
 {% block title %}Stock movements{% endblock %}
-{% block pretitle %}Reports{% endblock %}
 {% block page_title %}Stock movements{% endblock %}
-{% block actions %}<a href="{% export_url 'movements_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
+{% block page_context %}{{ table.total }} movement{{ table.total|pluralize }}, {{ f.date_from|date }} to {{ f.date_to|date }}. Rows at the Defective store are failed pieces, not good stock.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-from">From date</label><input id="m-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-to">To date</label><input id="m-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-kind">Type</label><select id="m-kind" name="kind" class="form-select" onchange="this.form.submit()"><option value="">All types</option>
+<section class="card b-card">
+  <form method="get" class="b-filters f-4s">
+    <div class="fld"><label class="form-label" for="m-from">From date</label><input id="m-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="fld"><label class="form-label" for="m-to">To date</label><input id="m-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="fld"><label class="form-label" for="m-kind">Type</label><select id="m-kind" name="kind" class="form-select" onchange="this.form.submit()"><option value="">All types</option>
       {% for v, label in kinds %}<option value="{{ v }}" {% if f.kind == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="m-loc">Location</label><select id="m-loc" name="location" class="form-select" onchange="this.form.submit()"><option value="">All locations</option>
+    <div class="fld"><label class="form-label" for="m-loc">Location</label><select id="m-loc" name="location" class="form-select" onchange="this.form.submit()"><option value="">All locations</option>
       {% for p in all_locations %}<option value="{{ p.pk }}" {% if f.location == p %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="m-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+    <div class="fld grow"><label class="form-label" for="m-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
       <input id="m-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Item, supplier, customer, ref, CMP / RB no."></div></div>
-  </form></div>
-  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+  </form>
+  <div class="table-responsive"><table class="table table-vcenter card-table t">
     <thead><tr>{% sort_th "date" "Date" %}{% sort_th "no" "Entry" %}{% sort_th "kind" "Type" %}<th>Details</th>{% sort_th "code" "Item code" %}<th>Description</th>{% sort_th "loc" "Location" %}
       {% sort_th "in" "In" True %}{% sort_th "out" "Out" True %}<th>Unit</th>{% sort_th "party" "Supplier / issued to" %}<th>Ref</th>{% sort_th "by" "By" %}</tr></thead>
     <tbody>{% for r in table.page %}<tr class="{% if r.undone %}undone{% endif %}">
-      <td class="nowrap">{{ r.entry.entry_date|date }}</td><td><a class="code" href="{% url 'entry_detail' r.entry.number %}">{{ r.entry.number }}</a></td><td class="keep"><span class="badge badge-k k-{{ r.entry.kind }}">{{ r.entry.get_kind_display }}</span>{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td>
-      <td class="cell-wrap">{{ r.entry.details }}{% if r.entry.complaint %}<div class="small"><i class="ti ti-message-report text-secondary" aria-hidden="true"></i> <a class="code" href="{% url 'complaint_detail' r.entry.complaint.number %}">{{ r.entry.complaint.number }}</a></div>{% endif %}{% if r.entry.return_batch %}<div class="small"><i class="ti ti-truck-return text-secondary" aria-hidden="true"></i> <a class="code" href="{% url 'batch_detail' r.entry.return_batch.number %}">{{ r.entry.return_batch.number }}</a></div>{% endif %}</td>
+      <td class="nowrap">{{ r.entry.entry_date|date }}</td><td><a class="code" href="{% url 'entry_detail' r.entry.number %}">{{ r.entry.number }}</a></td><td class="keep">{% include "inventory/_kind_pill.html" with kind=r.entry.kind label=r.entry.get_kind_display %}{% if r.undone %}<span class="badge bg-secondary-lt ms-1">Undone</span>{% endif %}</td>
+      <td class="cell-wrap">{{ r.entry.details }}{% if r.entry.complaint %}<span class="sub"><i class="ti ti-message-report" aria-hidden="true"></i> <a class="code" href="{% url 'complaint_detail' r.entry.complaint.number %}">{{ r.entry.complaint.number }}</a></span>{% endif %}{% if r.entry.return_batch %}<span class="sub"><i class="ti ti-truck-return" aria-hidden="true"></i> <a class="code" href="{% url 'batch_detail' r.entry.return_batch.number %}">{{ r.entry.return_batch.number }}</a></span>{% endif %}</td>
       <td><a class="code" href="{% url 'item_detail' r.line.item.pk %}">{{ r.line.item.code }}</a></td><td>{{ r.line.item.description }}</td>
       <td>{% if r.line.location.is_defective_store %}<span class="text-secondary"><i class="ti ti-recycle" aria-hidden="true"></i> {{ r.line.location.name }}</span>{% else %}{{ r.line.location.name }}{% endif %}</td>
       <td class="num">{% if r.line.qty > 0 %}<span class="qty-in">+{{ r.line.qty }}</span>{% endif %}</td>
@@ -28,7 +27,7 @@
       <td>{{ r.line.item.unit }}</td><td>{{ r.entry.party|default:r.entry.get_reason_display }}</td><td>{{ r.entry.ref }}</td><td>{{ r.entry.created_by.first_name|default:r.entry.created_by.username }}</td></tr>
     {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No movements in this period.</td></tr>{% endfor %}</tbody>
   </table></div>
-  {% include "core/_pagination.html" %}
-</div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Struck-through rows were undone; an "Undo" entry reverses them. Rows at the Defective store are failed pieces, not good stock.</p>
+  {% include "inventory/_foot.html" with export_name="movements_xlsx" %}
+  <p class="b-note">Struck-through rows were undone; an "Undo" entry reverses them.</p>
+</section>
 {% endblock %}

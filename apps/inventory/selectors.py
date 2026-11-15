@@ -83,37 +83,73 @@ def dashboard_stats(today):
         "active_items": Item.objects.filter(is_active=True).count(),
         "nos_in_stock": nos,
         "low_count": low_stock_count(),
-        # one per ledger line, as the Movements list counts its rows; the tile links to the same 7 days
+        # one per ledger line, as the Movements list counts its rows; the caption links to the same 7 days
         "movements_week": StockLine.objects.filter(
             entry__entry_date__gte=movements_week_from(today), entry__entry_date__lte=today
         ).count(),
-        "movements_today": StockLine.objects.filter(entry__entry_date=today).count(),
     }
 
 
 def movements_week_from(today):
-    """First day of the dashboard's "Movements, last 7 days" tile (today and the 6 days before)."""
+    """First day of the dashboard's "last 7 days" (today and the 6 days before)."""
     return today - timedelta(days=6)
 
 
-SERVICE_WINDOW_DAYS = 7  # "Complaints visited" tile: visits dated after today - 7 days
+SERVICE_WINDOW_DAYS = 7  # "Complaints visited" caption: visits dated after today - 7 days
+ANSWER_WINDOW_DAYS = 90  # "answered" figure: company answers dated after today - 90 days
+
+
+def _oldest(rows):
+    """The row that has waited longest (ties broken by complaint number, so the choice is stable)."""
+    return min(rows, key=lambda r: (-r["age"], r["c"].number), default=None)
 
 
 def service_stats(today, counts, pieces):
-    """The service tiles on the main dashboard. `counts` and `pieces` are the complaints' status_counts() and
-    the defectives' piece_counts(), never recounted here (the view shares them with the menu badges), so both
-    module dashboards and the badges always agree. Each figure is the row count of the list its tile links to.
+    """The complaint and defective-piece figures on the main dashboard. `counts` and `pieces` are the
+    complaints' status_counts() and the defectives' piece_counts(), never recounted here (the view shares them
+    with the menu badges), so both module dashboards and the badges always agree. Each figure is the row count
+    of the list it links to, except "answered", which has no list of its own and is shown without a link.
     """
-    from apps.complaints.models import OPEN_STATUSES, Status  # imported here: complaints depends on inventory
-    from apps.complaints.selectors import visits_since
+    from apps.complaints.filters import AGE_BUCKETS, LATE_DAYS
+    from apps.complaints.models import OPEN_STATUSES, Status
+    from apps.complaints.selectors import age_counts, open_rows, visits_since
+    from apps.defectives.models import BatchLine, PieceStatus, ReturnBatch
 
     since = today - timedelta(days=SERVICE_WINDOW_DAYS)
     visits = visits_since(since)
+    rows = open_rows(today)  # two queries (complaints, technicians); no events
+    ages = age_counts(rows)
+    late = [r for r in rows if r["age"] > LATE_DAYS]
+    oldest_late = _oldest(late)
+    oldest_unattended = _oldest([r for r in rows if r["c"].status == Status.NOT_ATTENDED])
+    answers_since = today - timedelta(days=ANSWER_WINDOW_DAYS)
+    oldest_sent = None
+    if pieces["sent"]:
+        oldest_sent = (
+            ReturnBatch.objects.filter(pieces__status=PieceStatus.SENT)
+            .select_related("company")
+            .order_by("dispatched_on", "id")
+            .first()
+        )
     return {
         "open": sum(counts[s] for s in OPEN_STATUSES),
         "not_attended": counts[Status.NOT_ATTENDED],
+        "statuses": [(s.value, s.label, counts[s]) for s in OPEN_STATUSES],
+        "resolved": counts[Status.RESOLVED],
+        "ages": ages,
+        "ages_top": max([a["n"] for a in ages] + [1]),
+        "late": len(late),
+        "late_key": AGE_BUCKETS[-1][0],
+        "late_days": LATE_DAYS,
+        "oldest_unattended": oldest_unattended,
+        "oldest_late": oldest_late,
         "in_store": pieces["in_store"],
+        "in_batch": pieces["in_batch"],
         "sent": pieces["sent"],
+        "oldest_sent": oldest_sent,
+        "oldest_sent_days": (today - oldest_sent.dispatched_on).days if oldest_sent else None,
+        "answered": BatchLine.objects.exclude(outcome="").filter(settled_on__gt=answers_since).count(),
+        "answers_since": answers_since,
         "visited": visits["complaints"],
         "visits": visits["visits"],
         "since": since,

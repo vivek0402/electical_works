@@ -110,6 +110,34 @@
     if (mode !== "adj") for (const r of chosen) { const it = items.get(r.ts.getValue()), v = Number(r.qty.value); if (it && v > 0) totals[it.unit] = (totals[it.unit] || 0) + v; }
     const parts = Object.entries(totals).map(([u, q]) => `${q} ${u}`);
     $("lines-summary").textContent = chosen.length ? `${chosen.length} item${chosen.length > 1 ? "s" : ""}${parts.length ? " · " + parts.join(" · ") : ""}` : "";
+    fillSummary(chosen.length, parts);
+  }
+
+  // The Summary card beside the form (display only): item count, quantity, who, where and the date, so the person
+  // saving can see what they are about to save. Nothing here is posted or validated.
+  function fillSummary(count, parts) {
+    const put = (id, text) => { const el = $(id); if (!el) return; el.textContent = text || el.dataset.need || ""; el.classList.toggle("need", !text && !!el.dataset.need); };
+    const val = id => { const el = $(id); return el ? el.value.trim() : ""; };
+    const pick = id => { const el = $(id); return el && el.value ? el.options[el.selectedIndex].text.trim() : ""; };
+    put("sum-items", String(count));
+    put("sum-qty", parts.join(" · ") || "0");
+    put("sum-where", pick("id_location"));
+    const sub = form.querySelector("input[name=subtype]:checked"), kind = sub ? sub.value : "";
+    let who = "";
+    if (mode === "in") who = kind === "SUPPLIER" ? pick("id_company") : kind === "RETURN" ? val("id_party") : "Opening stock";
+    else if (mode === "out") who = val("id_party");
+    else if (mode === "trf") who = pick("id_to_location");
+    else who = pick("id_reason");
+    const whoEl = $("sum-who");
+    if (whoEl && mode === "in") whoEl.dataset.need = kind === "RETURN" ? "Enter the site / customer" : "Choose a supplier";
+    put("sum-who", who);
+    const d = val("id_entry_date");
+    put("sum-date", d ? d.split("-").reverse().join("-") : "");
+    // a required "Choose…" field is marked until something is chosen (display only; the server still checks)
+    ["id_company", "id_location", "id_to_location"].forEach(id => {
+      const el = $(id), box = el && el.closest(".fld");
+      if (box) box.classList.toggle("need", !el.value && !box.hidden);
+    });
   }
 
   // Subtype radios: show the matching "who" field and fill name suggestions.
@@ -131,6 +159,11 @@
 
   // A server error stays until the user changes something.
   form.addEventListener("input", () => { $("form-error").innerHTML = ""; });
+  // Keep the Summary card in step with the header fields (supplier, location, date, who it goes to).
+  const refreshSummary = () => summary();
+  form.addEventListener("input", refreshSummary);
+  form.addEventListener("change", refreshSummary);
+  form.querySelectorAll("select").forEach(sel => { if (sel.tomselect) sel.tomselect.on("change", refreshSummary); });
 
   // Client-side check before posting; the server checks everything again.
   form.addEventListener("submit", e => {

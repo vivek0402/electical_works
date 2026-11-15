@@ -1,55 +1,68 @@
-{% extends "base.html" %}{% load static %}
-{% block title %}Dashboard{% endblock %}
-{% block pretitle %}Overview{% endblock %}
-{% block page_title %}Stock dashboard{% endblock %}
-{% block actions %}<span class="text-secondary align-self-center"><i class="ti ti-calendar"></i> {{ today|date }}</span>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block page_title %}{{ today|date:"l, j F" }}{% endblock %}
+{% block page_context %}{% if attention %}{{ attention|length }} thing{{ attention|length|pluralize }} need{{ attention|length|pluralize:"s," }} attention today.{% else %}Nothing needs attention today.{% endif %}{% endblock %}
 {% block content %}
-<div class="row row-deck row-cards">
-  <div class="col-sm-6 col-lg-3"><a href="{% url 'items' %}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-box"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.active_items }}</div><div class="text-secondary">Active items</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{% url 'current_stock' %}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-building-warehouse"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.nos_in_stock }} NOS</div><div class="text-secondary">In stock (all locations)</div><div class="small text-secondary">other units shown per location</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{% url 'low_stock' %}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar {% if stats.low_count %}kpi-alert{% else %}kpi-ok{% endif %}"><i class="ti ti-alert-triangle"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.low_count }}</div><div class="text-secondary">Low stock items</div><div class="small text-secondary">at or below reorder level</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{% url 'movements' %}?date_from={{ movements_from|date:'Y-m-d' }}&amp;date_to={{ today|date:'Y-m-d' }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-arrows-exchange"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ stats.movements_week }}</div><div class="text-secondary">Movements, last 7 days</div><div class="small text-secondary">{{ stats.movements_today }} today</div></div></div></div></a></div>
-  {% if nav_urls.complaints %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.complaints }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar {% if service.not_attended %}kpi-alert{% else %}kpi-brand{% endif %}"><i class="ti ti-message-report"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ service.open }}</div><div class="text-secondary">Open complaints</div><div class="small text-secondary">{% if service.not_attended %}{{ service.not_attended }} not attended yet{% else %}all attended{% endif %}</div></div></div></div></a></div>{% endif %}
-  {% if nav_urls.defective_pieces %}<div class="col-sm-6 col-lg-3"><a href="{{ pieces_urls.IN_STORE }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-recycle"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ service.in_store }}</div><div class="text-secondary">Defective pieces in store</div><div class="small text-secondary">not counted in stock above</div></div></div></div></a></div>
-  <div class="col-sm-6 col-lg-3"><a href="{{ pieces_urls.SENT }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar {% if service.sent %}kpi-wait{% else %}kpi-brand{% endif %}"><i class="ti ti-truck-return"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ service.sent }}</div><div class="text-secondary">Pieces with companies</div><div class="small text-secondary">sent, awaiting the company's answer</div></div></div></div></a></div>{% endif %}
-  {% if nav_urls.complaints %}<div class="col-sm-6 col-lg-3"><a href="{{ nav_urls.complaints }}?tab=all&amp;visited_since={{ service.since|date:'Y-m-d' }}" class="card card-sm card-link card-link-pop"><div class="card-body"><div class="row align-items-center">
-    <div class="col-auto"><span class="avatar kpi-brand"><i class="ti ti-clipboard-check"></i></span></div>
-    <div class="col"><div class="fw-medium fs-3">{{ service.visited }}</div><div class="text-secondary">Complaints visited, last 7 days</div><div class="small text-secondary">{{ service.visits }} visit{{ service.visits|pluralize }} recorded</div></div></div></div></a></div>{% endif %}
-  <div class="col-12"><div class="card"><div class="card-body"><div class="row g-2 quick">
-    <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_in|default:'#' }}" class="btn btn-in w-100 flex-column"><i class="ti ti-package-import"></i> Stock IN<small>Material received</small></a></div>
-    <div class="col-6 col-lg-3"><a href="{{ nav_urls.stock_out|default:'#' }}" class="btn btn-out w-100 flex-column"><i class="ti ti-package-export"></i> Stock OUT<small>Material issued</small></a></div>
-    <div class="col-6 col-lg-3"><a href="{{ nav_urls.transfer|default:'#' }}" class="btn btn-quiet w-100 flex-column"><i class="ti ti-arrows-exchange"></i> Transfer<small>Between locations</small></a></div>
-    <div class="col-6 col-lg-3"><a href="{{ nav_urls.adjust|default:'#' }}" class="btn btn-quiet w-100 flex-column"><i class="ti ti-adjustments-horizontal"></i> Adjust<small>Correct a count</small></a></div>
-  </div></div></div></div>
-  <div class="col-lg-8"><div class="card"><div class="card-header"><div><h3 class="card-title">Stock IN vs OUT</h3>
-      <div class="card-subtitle">Quantity per week, last 5 weeks (items counted in NOS)</div></div>
-      <div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="chart-toggle" aria-pressed="false" aria-controls="chart-table"><i class="ti ti-table"></i> Table view</button></div></div>
-    <div class="card-body"><div id="chart-weekly" class="chart-box" role="img" aria-label="Bar chart of stock in and stock out per week"></div>
-      <table class="table table-sm" id="chart-table" hidden><thead><tr><th>Week</th><th class="num">Stock IN (NOS)</th><th class="num">Stock OUT (NOS)</th></tr></thead>
-        <tbody>{% for w in weeks %}<tr><td>{{ w.label }}</td><td class="num">{{ w.qty_in }}</td><td class="num">{{ w.qty_out }}</td></tr>{% endfor %}</tbody></table></div></div></div>
-  <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title">Stock by location</h3></div>
-    <div class="list-group list-group-flush">{% for place, units in locations %}
-      <a href="{% url 'current_stock' %}?location={{ place.pk }}" class="list-group-item list-group-item-action d-flex align-items-center"><span class="avatar avatar-sm bg-secondary-lt me-3"><i class="ti ti-map-pin"></i></span>
-        <div class="flex-fill"><div class="fw-medium">{{ place.name }}</div><div class="text-secondary small">{% for u, q in units.items %}{{ q }} {{ u }}{% if not forloop.last %} · {% endif %}{% empty %}Empty{% endfor %}</div></div><i class="ti ti-chevron-right text-secondary" aria-hidden="true"></i></a>
-    {% endfor %}</div></div></div>
-  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title">Recent entries</h3>
-    {% if nav_urls.movements %}<div class="card-actions"><a href="{{ nav_urls.movements }}" class="btn btn-sm btn-outline-primary">All movements <i class="ti ti-arrow-right"></i></a></div>{% endif %}</div>
-    {% include "inventory/_entries_table.html" with entries=recent %}</div></div>
+{% if attention %}
+<div class="b-blocks" id="attention">{% for a in attention %}
+  <a class="b-block attn {% if a.tone == 'amber' %}amber{% else %}card {{ a.tone }}{% endif %}" href="{{ a.href }}" data-count="{{ a.n }}">
+    <span class="lbl"><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>{{ a.group }}</span>
+    <div class="fig">{{ a.n }}</div>
+    <b>{{ a.title }}</b>
+    <span class="cap">{{ a.sub }}</span>
+    <span class="go">{{ a.go }} →</span>
+  </a>{% endfor %}
 </div>
-{{ weeks_chart|json_script:"weeks-data" }}
+{% endif %}
+
+<section class="card b-card"><h2>Stock <a href="{% url 'current_stock' %}">Current stock</a></h2>
+  <div class="b-stock">
+    <a class="b-block in" href="{% url 'movements' %}?kind=IN&amp;{{ week_range }}">
+      <span class="lbl">Stock IN this week</span>
+      <div class="b-spark" role="img" aria-label="Stock IN in NOS, last five weeks: {% for b in bars_in %}{{ b.label }} {{ b.qty }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% for b in bars_in %}<i style="height:{{ b.pct }}%" title="{{ b.label }}: {{ b.qty }} NOS"></i>{% endfor %}</div>
+      <div class="fig">{{ this_week.qty_in }} <small>NOS</small></div>
+      <span class="cap">{{ last_week.qty_in }} the week before</span></a>
+    <a class="b-block out" href="{% url 'movements' %}?kind=OUT&amp;{{ week_range }}">
+      <span class="lbl">Stock OUT this week</span>
+      <div class="b-spark" role="img" aria-label="Stock OUT in NOS, last five weeks: {% for b in bars_out %}{{ b.label }} {{ b.qty }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% for b in bars_out %}<i style="height:{{ b.pct }}%" title="{{ b.label }}: {{ b.qty }} NOS"></i>{% endfor %}</div>
+      <div class="fig">{{ this_week.qty_out }} <small>NOS</small></div>
+      <span class="cap">{{ last_week.qty_out }} the week before</span></a>
+    <a class="b-block panel" href="{% url 'current_stock' %}">
+      <span class="lbl">In stock now</span>
+      <div class="fig">{{ stats.nos_in_stock }} <small>NOS</small></div>
+      <span class="cap">{% for u, q in other_units.items %}{% if forloop.first %}plus {% endif %}{{ q }} {{ u }} · {% endfor %}{{ stats.active_items }} active items</span></a>
+    <div class="b-block panel"><span class="lbl">By location</span>
+      <div class="b-locs">{% for place, units in locations %}
+        <a href="{% url 'current_stock' %}?location={{ place.pk }}"><b>{{ place.name }}</b><span class="cap">{% for u, q in units.items %}{{ q }} {{ u }}{% if not forloop.last %} · {% endif %}{% empty %}Empty{% endfor %}</span></a>{% endfor %}
+      </div></div>
+  </div>
+</section>
+
+<div class="b-two">
+  <section class="card b-card"><h2>Complaints <a href="{% url 'complaints' %}">All complaints</a></h2>
+    <div class="b-headline"><a class="fig" href="{% url 'complaints' %}">{{ service.open }}</a>
+      <div><b>open</b>
+        <div class="cap"><a href="{% url 'complaints' %}?tab=RESOLVED">{{ service.resolved }} resolved, ready to close</a> · <a href="{% url 'complaints' %}?tab=all&amp;visited_since={{ service.since|date:'Y-m-d' }}">{{ service.visited }} visited in the last 7 days</a> ({{ service.visits }} visit{{ service.visits|pluralize }})</div></div></div>
+    <div class="b-seg" role="img" aria-label="Open complaints by status: {% for value, label, n in service.statuses %}{{ n }} {{ label|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% for value, label, n in service.statuses %}{% if n %}<i class="seg-{{ value }}" style="flex:{{ n }}"></i>{% endif %}{% endfor %}</div>
+    <div class="legend">{% for value, label, n in service.statuses %}<a href="{% url 'complaints' %}?tab={{ value }}"><i class="seg-{{ value }}"></i>{{ n }} {{ label|lower }}</a>{% endfor %}</div>
+    <p class="cap" style="margin:22px 0 12px">Open complaints by age</p>
+    <div class="b-age">{% for a in service.ages %}
+      <a href="{% url 'complaints' %}?age={{ a.key|urlencode }}" class="{% if a.alert %}late{% endif %}"><span>{{ a.label }}</span><i style="width:{% widthratio a.n service.ages_top 100 %}%"></i><b>{{ a.n }}</b></a>{% endfor %}
+    </div>
+  </section>
+  <section class="card b-card"><h2>Defective pieces <a href="{{ nav_urls.defective_pieces }}">All pieces</a></h2>
+    <div class="b-flow">
+      <a href="{{ pieces_urls.IN_STORE }}"><b>{{ service.in_store }}</b>in the Defective store</a>
+      <a href="{{ pieces_urls.IN_BATCH }}"><b>{{ service.in_batch }}</b>in a draft batch</a>
+      <a href="{{ pieces_urls.SENT }}" class="{% if service.sent %}wait{% endif %}"><b>{{ service.sent }}</b>with companies{% if service.oldest_sent %}<span class="cap">oldest {{ service.oldest_sent_days }} day{{ service.oldest_sent_days|pluralize }}</span>{% endif %}</a>
+      <div><b>{{ service.answered }}</b>answered in the last 90 days</div>
+    </div>
+    <p class="cap" style="margin-top:14px">Defective pieces are never counted in stock.</p>
+  </section>
+</div>
+
+<section class="card b-card"><h2>Recent entries <a href="{% url 'movements' %}">All movements</a></h2>
+  {% include "inventory/_entries_table.html" with entries=recent %}
+  <p class="b-note"><a href="{% url 'movements' %}?{{ week_range }}">{{ stats.movements_week }} movement{{ stats.movements_week|pluralize }} in the last 7 days</a></p>
+</section>
 {% endblock %}
-{% block scripts %}<script src="{% static 'vendor/apexcharts.min.js' %}"></script><script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}

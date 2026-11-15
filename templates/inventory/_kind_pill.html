@@ -1,0 +1,2 @@
+{# The entry kind as a pill with an icon and the word. Needs `kind` (IN/OUT/TRF/ADJ/REV) and `label`. #}
+<span class="badge badge-k k-{{ kind }}"><i class="ti ti-{% if kind == 'IN' %}arrow-down-left{% elif kind == 'OUT' %}arrow-up-right{% elif kind == 'TRF' %}arrows-exchange{% elif kind == 'ADJ' %}adjustments-horizontal{% else %}arrow-back-up{% endif %}" aria-hidden="true"></i>{{ label }}</span>

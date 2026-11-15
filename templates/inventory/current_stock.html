@@ -1,40 +1,40 @@
 {% extends "base.html" %}{% load core_tags %}
 {% block title %}Current stock{% endblock %}
-{% block pretitle %}Reports{% endblock %}
 {% block page_title %}Current stock{% endblock %}
-{% block actions %}{% block export_button %}<a href="{% export_url 'current_stock_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}{% endblock %}
+{% block page_context %}{% for u, q in held.items %}{{ q }} {{ u }}{% if not forloop.last %} · {% endif %}{% empty %}Nothing in stock{% endfor %} in {{ locations|length }} location{{ locations|length|pluralize }}. {% if n_low %}{{ n_low }} item{{ n_low|pluralize }} {{ n_low|pluralize:"is,are" }} low.{% else %}Nothing is low.{% endif %}{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-header"><form method="get" class="row g-2 w-100 align-items-end">
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="f-loc">Location</label>
+<section class="card b-card">
+  <form method="get" class="b-filters">
+    <div class="fld"><label class="form-label" for="f-loc">Location</label>
       <select id="f-loc" name="location" class="form-select" onchange="this.form.submit()"><option value="">All locations</option>
         {% for p in all_locations %}<option value="{{ p.pk }}" {% if f.location == p %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="f-type">Spare type</label>
+    <div class="fld"><label class="form-label" for="f-type">Spare type</label>
       <select id="f-type" name="spare_type" class="form-select" onchange="this.form.submit()"><option value="">All types</option>
         {% for t in spare_types %}<option value="{{ t.pk }}" {% if f.spare_type == t %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="f-co">Company</label>
+    <div class="fld"><label class="form-label" for="f-co">Company</label>
       <select id="f-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
         {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-4"><label class="form-label small text-secondary mb-1" for="f-q">Search</label>
-      <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+    <div class="fld grow"><label class="form-label" for="f-q">Search</label>
+      <div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
         <input id="f-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Code, old spelling, description, fitting"></div></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="low" value="1" {% if f.low %}checked{% endif %} onchange="this.form.submit()"><span class="form-check-label">Only low stock</span></label></div>
-  </form></div>
-  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
-    <thead><tr>{% sort_th "code" "Item code" %}{% sort_th "desc" "Description" %}{% sort_th "company" "Company" %}
+    <label class="switch"><input class="form-check-input" type="checkbox" name="low" value="1" {% if f.low %}checked{% endif %} onchange="this.form.submit()">Only low stock</label>
+  </form>
+  <div class="table-responsive"><table class="table table-vcenter card-table t">
+    <thead>
+      <tr class="grp"><th colspan="3"></th><th class="span" colspan="{{ locations|length|default:1 }}">{% if f.location %}Good stock{% else %}Good stock, by location{% endif %}</th>{% if not f.location %}<th></th><th class="def">Not counted</th>{% endif %}</tr>
+      <tr>{% sort_th "code" "Item code" %}{% sort_th "desc" "Description" %}{% sort_th "company" "Company" %}
       {% for p in locations %}{% sort_th p.sort_key p.name True "col-loc" %}{% endfor %}
       {% if not f.location %}{% sort_th "total" "Total" True %}{% endif %}
-      {% if not f.location %}{% sort_th "def" "Defective store" True "col-def" sub="not counted" %}{% endif %}</tr></thead>
+      {% if not f.location %}{% sort_th "def" "Defective store" True "col-def" %}{% endif %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
-      <td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a><div class="small text-secondary nowrap">{{ r.item.spare_type.name }}</div></td>
-      <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<div><span class="code">{{ r.item.cat_ref }}</span></div>{% endif %}{% if r.item.fitting_type %}<div class="text-secondary small">{{ r.item.fitting_type.name }}</div>{% endif %}</td>
+      <td><a class="code" href="{% url 'item_detail' r.item.pk %}">{{ r.item.code }}</a><span class="sub">{{ r.item.spare_type.name }}</span></td>
+      <td>{{ r.item.description }}{% if r.item.cat_ref and r.item.cat_ref != r.item.code %}<span class="sub"><span class="code">{{ r.item.cat_ref }}</span></span>{% endif %}{% if r.item.fitting_type %}<span class="sub">{{ r.item.fitting_type.name }}</span>{% endif %}</td>
       <td class="text-truncate" style="max-width:8rem" title="{{ r.item.company.name }}">{{ r.item.company.name }}</td>
-      {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}{% if f.location %} <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endfor %}
-      {% if not f.location %}<td class="num">{% if r.low %}<span class="badge bg-red-lt">{{ r.total }} {{ r.item.unit }}</span>{% else %}<b>{{ r.total }}</b> <span class="text-secondary small">{{ r.item.unit }}</span>{% endif %}</td>{% endif %}
+      {% for p in locations %}<td class="num">{{ r.per_loc|get_item:p.pk|qty }}{% if f.location %} <span class="cap">{{ r.item.unit }}</span>{% endif %}</td>{% endfor %}
+      {% if not f.location %}<td class="num tot">{% if r.low %}<span class="pill st-alert pill-low"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Low</span>{% endif %}{{ r.total }} <span class="cap">{{ r.item.unit }}</span></td>{% endif %}
       {% if not f.location %}<td class="num col-def">{% if r.defective and nav_urls.defective_pieces %}<a href="{{ nav_urls.defective_pieces }}?item={{ r.item.pk }}&amp;status=IN_STORE" title="Open the pieces">{{ r.defective }}</a>{% else %}{{ r.defective|qty }}{% endif %}</td>{% endif %}</tr>
     {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing matches these filters.</td></tr>{% endfor %}</tbody>
   </table></div>
-  {% include "core/_pagination.html" %}
-</div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Red total = at or below the item's reorder level. The <b>Defective store</b> column shows failed pieces waiting to go back to the company; they are never part of the total.</p>
+  {% include "inventory/_foot.html" with export_name="current_stock_xlsx" %}
+</section>
 {% endblock %}

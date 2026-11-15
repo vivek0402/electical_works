@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Masters{% endblock %}
-{% block pretitle %}Setup · Admin only{% endblock %}
 {% block page_title %}Masters{% endblock %}
-{% block actions %}<a href="{% url 'admin:index' %}" class="btn btn-outline-secondary"><i class="ti ti-users"></i> Users &amp; full admin</a>{% endblock %}
+{% block page_context %}The names offered in dropdowns. Hidden names stay on old records but are not offered again; show them any time. Users and passwords are in the full admin.{% endblock %}
+{% block actions %}<a href="{% url 'admin:index' %}" class="btn"><i class="ti ti-users" aria-hidden="true"></i> Users &amp; full admin</a>{% endblock %}
 {% block content %}
 <div class="row row-cards">{% for key, label, icon, rows in groups %}
-  <div class="col-md-6 col-xl-3"><div class="card h-100"><div class="card-header"><h3 class="card-title"><i class="ti ti-{{ icon }}"></i> {{ label }}</h3><span class="badge bg-secondary-lt ms-auto">{{ rows|length }}</span></div>
+  <div class="col-md-6 col-xl-3"><section class="card h-100"><div class="card-header"><h3 class="card-title"><i class="ti ti-{{ icon }}" aria-hidden="true"></i> {{ label }}</h3><span class="badge bg-secondary-lt ms-auto">{{ rows|length }}</span></div>
     <div class="list-group list-group-flush">{% for row in rows %}
       <div class="list-group-item d-flex align-items-center"><span class="{% if not row.is_active %}text-secondary text-decoration-line-through{% endif %}">{{ row.name }}</span>
         <form method="post" action="{% url 'masters_toggle' %}" class="ms-auto">{% csrf_token %}<input type="hidden" name="kind" value="{{ key }}"><input type="hidden" name="pk" value="{{ row.pk }}">
-          <button class="btn btn-sm btn-ghost-secondary" title="{% if row.is_active %}Hide from forms{% else %}Show in forms{% endif %}">{% if row.is_active %}Hide{% else %}Show{% endif %}</button></form></div>
+          <button class="btn btn-sm" title="{% if row.is_active %}Hide from forms{% else %}Show in forms{% endif %}">{% if row.is_active %}Hide{% else %}Show{% endif %}</button></form></div>
     {% endfor %}</div>
     <div class="card-footer"><form method="post" class="input-group">{% csrf_token %}<input type="hidden" name="kind" value="{{ key }}">
       <input name="name" class="form-control" maxlength="{{ name_max }}" placeholder="Add new…" aria-label="New {{ label|lower }}" required>
-      <button class="btn btn-primary"><i class="ti ti-plus"></i> Add</button></form></div></div></div>
+      <button class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></form></div></section></div>
 {% endfor %}</div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Hidden entries stay on old records but no longer appear in dropdowns. Hidden entries can be shown again at any time. Users and passwords are managed in the full admin.</p>
 {% endblock %}

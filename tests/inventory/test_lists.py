@@ -125,7 +125,7 @@ def test_inactive_location_with_stock_gets_a_column(office_client, office_user):
     gone.save()
     html = office_client.get("/stock/").content.decode()
     assert "Svkml" in html and "OLDLOC" in html
-    assert "<b>7</b>" in html
+    assert 'class="num tot">7 ' in html  # the total, in the bold Total cell
 
 
 def test_inactive_empty_location_has_no_column(office_client, office_user):

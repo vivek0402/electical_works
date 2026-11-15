@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
@@ -43,26 +44,127 @@ from .services import (
 )
 
 
+def _week_bars(weeks, key):
+    """Heights (percent of the tallest of the five weeks) for the dashboard's mini bar strip."""
+    top = max([w[key] for w in weeks] + [1])
+    return [{"label": w["label"], "qty": w[key], "pct": max(round(w[key] * 100 / top), 6)} for w in weeks]
+
+
+def _days(n):
+    return f"{n} day{'' if n == 1 else 's'}"
+
+
+def _attention(service, stats, pieces_urls):
+    """The blocks at the top of the dashboard: only what is above zero. Each links to an existing list whose
+    row count is the number shown (low stock: the Low stock list; the others: the filtered complaint and
+    piece lists)."""
+    complaints = reverse("complaints")
+    blocks = []
+    if service["not_attended"]:
+        old = service["oldest_unattended"]
+        blocks.append(
+            {
+                "tone": "alert",
+                "icon": "alert-circle",
+                "group": "Complaints",
+                "n": service["not_attended"],
+                "title": "Complaints nobody has attended",
+                "sub": f"Oldest: {old['c'].site.name}, {old['c'].site.city}, {_days(old['age'])} ago",
+                "href": f"{complaints}?{urlencode({'tab': 'NOT_ATTENDED'})}",
+                "go": "See them",
+            }
+        )
+    if service["late"]:
+        old = service["oldest_late"]
+        blocks.append(
+            {
+                "tone": "alert",
+                "icon": "clock",
+                "group": "Complaints",
+                "n": service["late"],
+                "title": f"Complaints open for more than {service['late_days']} days",
+                "sub": (
+                    f"Oldest: {old['c'].site.name}, {_days(old['age'])} "
+                    f"({old['c'].get_status_display().lower()})"
+                ),
+                "href": f"{complaints}?{urlencode({'age': service['late_key']})}",
+                "go": "See them",
+            }
+        )
+    if stats["low_count"]:
+        blocks.append(
+            {
+                "tone": "amber",
+                "icon": "alert-triangle",
+                "group": "Stock",
+                "n": stats["low_count"],
+                "title": "Items low on stock",
+                "sub": "At or below their reorder level, good stock only",
+                "href": reverse("low_stock"),
+                "go": "See what to order",
+            }
+        )
+    if service["sent"]:
+        old = service["oldest_sent"]
+        blocks.append(
+            {
+                "tone": "wait",
+                "icon": "hourglass",
+                "group": "Defectives",
+                "n": service["sent"],
+                "title": "Defective pieces waiting on a company",
+                "sub": (
+                    f"Oldest: batch {old.number} to {old.company.name}, "
+                    f"sent {_days(service['oldest_sent_days'])} ago"
+                ),
+                "href": pieces_urls["SENT"],
+                "go": "See the pieces",
+            }
+        )
+    return blocks
+
+
 @role_required(OFFICE)
 def dashboard(request):
     today = timezone.localdate()
     weeks = selectors.weekly_in_out(today)
+    stats = selectors.dashboard_stats(today)
+    # NOS first, then the other units alphabetically, in every list on the page
+    locations = [
+        (place, dict(sorted(units.items(), key=lambda kv: (kv[0] != "NOS", kv[0]))))
+        for place, units in selectors.location_unit_totals()
+    ]
+    service = selectors.service_stats(today, *service_counts(request))
+    pieces_urls = {
+        status: reverse("defective_pieces") + PIECES_STATUS_QUERY.format(status)
+        for status in ("IN_STORE", "IN_BATCH", "SENT")
+    }
+    week_from = selectors.movements_week_from(today)
+    attention = _attention(service, stats, pieces_urls)
+    other_units = {}  # units other than NOS, summed over the good locations ("plus 729 MTR")
+    for _, units in locations:
+        for unit, q in units.items():
+            if unit != "NOS":
+                other_units[unit] = other_units.get(unit, 0) + q
+    other_units = dict(sorted(other_units.items()))
     return render(
         request,
         "inventory/dashboard.html",
         {
-            "stats": selectors.dashboard_stats(today),
+            "stats": stats,
             "weeks": weeks,
-            "weeks_chart": [{"label": w["label"], "in": w["qty_in"], "out": w["qty_out"]} for w in weeks],
-            "locations": selectors.location_unit_totals(),
+            "this_week": weeks[-1],
+            "last_week": weeks[-2],
+            "bars_in": _week_bars(weeks, "qty_in"),
+            "bars_out": _week_bars(weeks, "qty_out"),
+            "locations": locations,
+            "other_units": other_units,
             "recent": selectors.recent_entries(),
-            "service": selectors.service_stats(today, *service_counts(request)),
-            "pieces_urls": {
-                status: reverse("defective_pieces") + PIECES_STATUS_QUERY.format(status)
-                for status in ("IN_STORE", "SENT")
-            },
+            "service": service,
+            "attention": attention,
+            "pieces_urls": pieces_urls,
             "today": today,
-            "movements_from": selectors.movements_week_from(today),
+            "week_range": f"date_from={week_from:%Y-%m-%d}&date_to={today:%Y-%m-%d}",
         },
     )
 
@@ -92,10 +194,24 @@ def current_stock(request):
         p.sort_key = f"L{p.pk}"
         sorters[p.sort_key] = lambda r, pk=p.pk: r["per_loc"].get(pk, 0)
     table = sort_and_page(request, rows, sorters, "code")
+    # the hero's line describes what is listed: quantity per unit (good stock; the chosen location's if one is
+    # chosen) and how many of the listed items are low
+    held = {}
+    for r in rows:
+        q = r["per_loc"].get(f.location.pk, 0) if f.location else r["total"]
+        held[r["item"].unit] = held.get(r["item"].unit, 0) + q
+    held = {unit: q for unit, q in sorted(held.items(), key=lambda kv: (kv[0] != "NOS", kv[0])) if q}
     return render(
         request,
         "inventory/current_stock.html",
-        {"f": f, "table": table, "locations": locations, **_masters()},
+        {
+            "f": f,
+            "table": table,
+            "locations": locations,
+            "held": held,
+            "n_low": sum(1 for r in rows if r["low"]),
+            **_masters(),
+        },
     )
 
 
@@ -226,6 +342,7 @@ def item_detail(request, pk):
             "item": item,
             "per_loc": per_loc,
             "total": total,
+            "holding": sum(1 for _, q in per_loc if q),  # locations that hold some of it (fact tile)
             "defective": held.get(store_id, 0),
             "low": selectors.is_low(item, total),
             "history": selectors.item_history(item, date_from, date_to, location),

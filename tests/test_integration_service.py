@@ -108,16 +108,26 @@ def test_menu_badges_hidden_when_zero(office_client):
 # ---------------------------------------------------------------- main dashboard
 
 
-def _tile(html, label):
-    """(count, href) of the dashboard tile with this label."""
-    m = re.search(
-        r'<a href="([^"]+)" class="card card-sm card-link[^>]*>(?:(?!</a>).)*?'
-        r'<div class="fw-medium fs-3">(\d+)</div><div class="text-secondary">' + re.escape(label),
-        html,
-        re.S,
+def _blocks(html):
+    """{title: (count, href)} for the dashboard's "needs attention" blocks."""
+    found = re.findall(
+        r'<a class="b-block attn[^"]*" href="([^"]+)" data-count="(\d+)">.*?<b>([^<]+)</b>', html, re.S
     )
+    return {title: (int(n), href.replace("&amp;", "&")) for href, n, title in found}
+
+
+def _flow(html, label):
+    """(count, href) of the Defective pieces card's step with this label."""
+    m = re.search(r'<a href="([^"]+)"[^>]*><b>(\d+)</b>' + re.escape(label), html)
     assert m, label
     return int(m.group(2)), m.group(1).replace("&amp;", "&")
+
+
+def _link(html, text):
+    """href of the link whose text starts with `text`."""
+    m = re.search(r'<a href="([^"]+)">' + re.escape(text), html)
+    assert m, text
+    return m.group(1).replace("&amp;", "&")
 
 
 def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_client, office_user, visited):
@@ -147,29 +157,72 @@ def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_cl
     )
     html = office_client.get("/").content.decode()
 
-    n, href = _tile(html, "Open complaints")
-    assert n == 3 and "1 not attended yet" in html
-    path, _, query = href.partition("?")
-    assert path == "/complaints/list/"
-    rows, _ = complaint_rows(complaint_filters(QueryDict(query)), TODAY)
+    # the open count is the row count of the list its figure links to
+    n = int(re.search(r'<a class="fig" href="/complaints/list/">(\d+)</a>', html).group(1))
+    assert n == 3 and "1 not attended" in html
+    rows, _ = complaint_rows(complaint_filters(QueryDict("")), TODAY)
     assert len(rows) == n
 
-    for label, expected in (("Defective pieces in store", 2), ("Pieces with companies", 1)):
-        n, href = _tile(html, label)
+    # the attention blocks: not attended and pieces with companies, each the row count of its list
+    blocks = _blocks(html)
+    count, href = blocks["Complaints nobody has attended"]
+    assert count == 1 and "Oldest: BARC" in html
+    rows, _ = complaint_rows(complaint_filters(QueryDict(href.partition("?")[2])), TODAY)
+    assert len(rows) == count
+    count, href = blocks["Defective pieces waiting on a company"]
+    path, _, query = href.partition("?")
+    assert path == "/defectives/pieces/" and count == 1
+    assert len(piece_rows(piece_filters(QueryDict(query)))) == count
+
+    for label, expected in (("in the Defective store", 2), ("with companies", 1)):
+        n, href = _flow(html, label)
         path, _, query = href.partition("?")
         assert path == "/defectives/pieces/" and n == expected
         assert len(piece_rows(piece_filters(QueryDict(query)))) == n
 
-    n, href = _tile(html, "Complaints visited")
+    href = _link(html, "1 visited in the last 7 days")
     path, _, query = href.partition("?")
-    assert path == "/complaints/list/" and n == 1 and "2 visits recorded" in html
+    assert path == "/complaints/list/" and "(2 visits)" in html
     rows, _ = complaint_rows(complaint_filters(QueryDict(query)), TODAY)
     assert [r["c"].number for r in rows] == ["CMP-0001"]
     listed = office_client.get(href).content.decode()
     assert listed.count('<a class="code" href="/complaints/CMP-') == 1
 
 
-def test_movements_tile_counts_the_lines_its_list_shows(office_client, office_user, visited):
+def test_dashboard_late_complaints_block_lists_what_it_counts(office_client, office_user):
+    make_complaint(office_user, site=make_site("Fresh Site"), reported_on=TODAY - timedelta(days=15))
+    make_complaint(office_user, site=make_site("Late Site"), reported_on=TODAY - timedelta(days=16))
+    make_complaint(office_user, site=make_site("Later Site"), reported_on=TODAY - timedelta(days=40))
+    html = office_client.get("/").content.decode()
+    count, href = _blocks(html)["Complaints open for more than 15 days"]
+    assert count == 2 and "Oldest: Later Site, 40 days" in html  # day 15 is not late, day 16 is
+    rows, _ = complaint_rows(complaint_filters(QueryDict(href.partition("?")[2])), TODAY)
+    assert sorted(r["age"] for r in rows) == [16, 40]
+    listed = office_client.get(href).content.decode()
+    assert listed.count('<a class="code" href="/complaints/CMP-') == count
+
+
+def test_dashboard_low_stock_block_lists_what_it_counts(office_client, office_user):
+    low = make_item("LOWDASH", reorder=5)
+    post_entry(kind=EntryKind.IN, entry_date=TODAY, lines=[Line(low, loc(), 2)], user=office_user)
+    html = office_client.get("/").content.decode()
+    count, href = _blocks(html)["Items low on stock"]
+    assert count == 1 and href == "/low-stock/"
+    assert office_client.get(href).content.decode().count('<a class="code" href="/items/') == count
+
+
+def test_dashboard_has_no_attention_blocks_when_nothing_needs_it(office_client):
+    html = office_client.get("/").content.decode()
+    assert 'class="b-block attn' not in html and "Nothing needs attention today." in html
+
+
+def test_dashboard_counts_the_things_that_need_attention(office_client, office_user):
+    make_complaint(office_user, site=make_site("BARC"), reported_on=TODAY - timedelta(days=20))
+    html = office_client.get("/").content.decode()
+    assert len(_blocks(html)) == 2 and "2 things need attention today." in html  # not attended and late
+
+
+def test_movements_caption_counts_the_lines_its_list_shows(office_client, office_user, visited):
     # visited: IN-0001 (1 line), OUT-0001 (1 line), IN-0002 (1 line), all today; plus a 2-line IN 6 days ago
     # (inside the window) and one 7 days ago (outside it, though the Movements default range would list it)
     a, b = make_item("W1"), make_item("W2")
@@ -181,10 +234,11 @@ def test_movements_tile_counts_the_lines_its_list_shows(office_client, office_us
             user=office_user,
         )
     html = office_client.get("/").content.decode()
-    n, href = _tile(html, "Movements, last 7 days")
-    assert n == 5 and "3 today" in html
+    m = re.search(r'<a href="(/movements/\?[^"]+)">(\d+) movements in the last 7 days</a>', html)
+    assert m
+    n, href = int(m.group(2)), m.group(1).replace("&amp;", "&")
+    assert n == 5
     path, _, query = href.partition("?")
-    assert path == "/movements/"
     assert len(movement_rows(movement_filters(QueryDict(query), TODAY))) == n
     listed = office_client.get(href).content.decode()
     assert listed.count('<a class="code" href="/entries/') == n

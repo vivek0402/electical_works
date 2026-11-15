@@ -3,10 +3,11 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from apps.inventory.models import EntryKind
+from apps.defectives.services import create_batch, dispatch
+from apps.inventory.models import Company, EntryKind
 from apps.inventory.selectors import dashboard_stats, weekly_in_out
 from apps.inventory.services import Line, post_entry
-from tests.factories import loc, make_item
+from tests.factories import loc, make_item, make_pieces
 
 pytestmark = pytest.mark.django_db
 TODAY = timezone.localdate()
@@ -38,7 +39,7 @@ def test_dashboard_stats(stocked):
     assert stats["active_items"] == 2
     assert stats["nos_in_stock"] == 6  # MTR items are not added to NOS
     assert stats["low_count"] == 1  # 6 <= reorder 10
-    assert stats["movements_week"] == 3 and stats["movements_today"] == 3  # ledger lines, not entries
+    assert stats["movements_week"] == 3  # ledger lines, not entries
 
 
 def test_weekly_in_out_counts_nos_only(stocked):
@@ -52,15 +53,17 @@ def test_dashboard_page(office_client, stocked):
     assert page.status_code == 200
     html = page.content.decode()
     for text in [
-        "Stock dashboard",
+        f"{TODAY:%A}, {TODAY.day} {TODAY:%B}",  # the hero title is today's date in words
         "Stock IN",
         "Stock OUT",
+        "Stock IN this week",
+        "Stock OUT this week",
         "Recent entries",
         "OUT-0001",
         "Vizag Office",
-        "chart-weekly",
     ]:
         assert text in html
+    assert "apexcharts" not in html and "chart-weekly" not in html  # the charts are server-rendered bars
 
 
 def test_dashboard_requires_login(client):
@@ -123,14 +126,37 @@ def test_dashboard_query_count(office_client, office_user, django_assert_max_num
             lines=[Line(a, loc(), 2), Line(b, loc(), 1)],
             user=office_user,
         )
-    # measured 19: the stock figures and the service figures (status and piece counts shared with the badges)
-    with django_assert_max_num_queries(20):
+    # a piece with a company, so the oldest-sent-batch line is drawn too (the worst case)
+    pieces = make_pieces(make_item("QP"), 1, office_user)
+    batch = create_batch(company=Company.objects.get(name="Wipro Lighting"), user=office_user, pieces=pieces)
+    dispatch(batch=batch, dispatched_on=TODAY, courier="DTDC", docket_no="D1", user=office_user)
+    # measured 21 (was 19 with the tiles): the stock figures; the service figures (status and piece counts are
+    # shared with the menu badges); +2 the open complaints (rows and technicians) behind the age bars and the
+    # "oldest" lines; +1 the answered count; +1 the oldest sent batch (only when pieces are with companies);
+    # -1 the "movements today" count the old tile needed
+    with django_assert_max_num_queries(21):
         assert office_client.get("/").status_code == 200
 
 
-def test_dashboard_tiles_and_locations_are_links(office_client, stocked):
+def test_dashboard_stock_card_shows_this_and_last_week_and_each_bar_is_readable(office_client, office_user):
+    a = make_item("WKCARD")
+    for days, qty in ((0, 8), (3, 4), (8, 5)):
+        post_entry(
+            kind=EntryKind.IN,
+            entry_date=TODAY - timedelta(days=days),
+            lines=[Line(a, loc(), qty)],
+            user=office_user,
+        )
+    html = office_client.get("/").content.decode()
+    assert '<div class="fig">12 <small>NOS</small></div>' in html  # this week: 8 + 4
+    assert "5 the week before" in html
+    # five bars per strip, each with its week and quantity as text for screen readers
+    assert html.count('title="') >= 10 and "Stock IN in NOS, last five weeks:" in html
+
+
+def test_dashboard_links_to_lists_and_locations(office_client, stocked):
     html = office_client.get("/").content.decode()
     week = f"date_from={TODAY - timedelta(days=6):%Y-%m-%d}&amp;date_to={TODAY:%Y-%m-%d}"
-    for url in ["/items/", "/stock/", "/low-stock/", f"/movements/?{week}"]:
-        assert f'href="{url}" class="card card-sm card-link' in html
+    for url in ["/stock/", f"/movements/?{week}", f"/movements/?kind=IN&amp;{week}", "/low-stock/"]:
+        assert f'href="{url}"' in html
     assert f'href="/stock/?location={loc().pk}"' in html

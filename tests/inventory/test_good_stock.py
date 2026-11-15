@@ -44,7 +44,9 @@ def test_current_stock_has_a_separate_defective_column(office_client, stocked):
     assert [r["total"] for r in rows] == [6] and rows[0]["defective"] == 4
     assert all(not p.is_defective_store for p in locations)
     html = office_client.get("/stock/").content.decode()
-    assert ">not counted<" in html and "never part of the total" in html
+    # the header says it (grouped "Not counted" over the shaded Defective store column), the total is 6 not 10
+    assert ">Not counted<" in html and "Defective store" in html and "Good stock, by location" in html
+    assert '6 <span class="cap">NOS</span>' in html and '10 <span class="cap">NOS</span>' not in html
 
 
 def test_item_with_only_failed_pieces_is_still_listed(office_user):

@@ -1,0 +1,20 @@
+{# Footer of a list card: the count, Export to Excel (when `export_name` is given), rows per page and the page links. Needs `table`. #}
+{% load core_tags %}
+<div class="b-foot">
+  <span class="cap">Showing {% if table.total %}{{ table.page.start_index }}–{{ table.page.end_index }}{% else %}0{% endif %} of {{ table.total }}</span>
+  {% if export_name %}<a href="{% export_url export_name %}" class="btn"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Export to Excel</a>{% endif %}
+  <form method="get" class="rows-per-page">{% hidden_params "size,page" %}
+    <select name="size" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Rows per page">
+      {% for s in table.sizes %}<option value="{{ s }}" {% if s == table.size %}selected{% endif %}>{{ s }} / page</option>{% endfor %}
+    </select></form>
+  {% if table.page.paginator.num_pages > 1 %}
+  <ul class="pagination">
+    <li class="page-item {% if not table.page.has_previous %}disabled{% endif %}"><a class="page-link" href="{% if table.page.has_previous %}{% url_with page=table.page.previous_page_number %}{% else %}#{% endif %}" aria-label="Previous"><i class="ti ti-chevron-left" aria-hidden="true"></i></a></li>
+    {% for n in table.page.paginator.page_range %}
+      {% if n == table.page.number %}<li class="page-item active"><span class="page-link" aria-current="page">{{ n }}</span></li>
+      {% elif n == 1 or n == table.page.paginator.num_pages or n|add:"-1" == table.page.number or n|add:"1" == table.page.number %}<li class="page-item"><a class="page-link" href="{% url_with page=n %}">{{ n }}</a></li>
+      {% elif n|add:"-2" == table.page.number or n|add:"2" == table.page.number %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+    {% endfor %}
+    <li class="page-item {% if not table.page.has_next %}disabled{% endif %}"><a class="page-link" href="{% if table.page.has_next %}{% url_with page=table.page.next_page_number %}{% else %}#{% endif %}" aria-label="Next"><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>
+  </ul>{% endif %}
+</div>

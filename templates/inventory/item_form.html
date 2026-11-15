@@ -1,13 +1,16 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}{% if item %}Edit {{ item.code }}{% else %}Add item{% endif %}{% endblock %}
-{% block pretitle %}Setup · Items{% endblock %}
-{% block page_title %}{% if item %}Edit item <span class="code">{{ item.code }}</span>{% else %}<i class="ti ti-plus"></i> Add item{% endif %}{% endblock %}
+{% block page_title %}{% if item %}Edit item <span class="code">{{ item.code }}</span>{% else %}Add item{% endif %}{% endblock %}
+{% block page_context %}{% if item %}Change how this item is described or when to reorder it. Its movement history is kept.{% else %}A spare or fitting you keep in stock. You can add other spellings of its code so searches find it.{% endif %}{% endblock %}
 {% block content %}
-<form method="post" novalidate id="item-form">{% csrf_token %}
-  <div class="card"><div class="card-body">{% include "inventory/_item_fields.html" %}
-    {% if item %}<label class="form-check form-switch mt-3">{{ form.is_active }}<span class="form-check-label">Active (untick to hide from entry forms; history is kept)</span></label>{% else %}<input type="hidden" name="is_active" value="on">{% endif %}</div>
-    <div class="card-footer d-flex"><div class="ms-auto btn-list"><a href="{% if item %}{% url 'item_detail' item.pk %}{% else %}{% url 'items' %}{% endif %}" class="btn btn-link link-secondary">Cancel</a>
-      <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Save item</button></div></div></div>
+<form method="post" novalidate id="item-form" class="b-form">{% csrf_token %}
+  <div class="b-steps"><section class="card b-card"><h2>Item details</h2>{% include "inventory/_item_fields.html" %}</section></div>
+  <aside class="card b-card b-summary"><h2>{% if item %}Save changes{% else %}Save{% endif %}</h2>
+    {% if item %}<label class="form-check form-switch mb-3">{{ form.is_active }}<span class="form-check-label">Active (untick to hide from entry forms; history is kept)</span></label>{% else %}<input type="hidden" name="is_active" value="on">{% endif %}
+    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save item</button>
+    <a href="{% if item %}{% url 'item_detail' item.pk %}{% else %}{% url 'items' %}{% endif %}" class="cancel">Cancel</a>
+    <p class="cap" style="margin-top:14px">Nothing is saved until you press Save.</p>
+  </aside>
 </form>
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/item-fields.js' %}"></script>
