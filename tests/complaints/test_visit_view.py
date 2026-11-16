@@ -197,7 +197,7 @@ def test_a_post_to_a_finished_complaint_saves_nothing(office_client, office_user
 def test_record_visit_button_while_open(office_client, setup):
     drv, tech, c = setup
     html = office_client.get(f"/complaints/{c.number}/").content.decode()
-    assert html.count(f'href="{url(c)}"') == 2  # the page action and the Visits card
+    assert html.count(f'href="{url(c)}"') == 1  # the page action only: the Visits card no longer repeats it
 
 
 def test_visit_page_highlights_all_complaints_in_the_menu(office_client, setup):

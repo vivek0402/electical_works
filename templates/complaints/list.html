@@ -1,42 +1,42 @@
 {% extends "base.html" %}{% load core_tags complaint_tags %}
 {% block title %}Complaints{% endblock %}
-{% block pretitle %}Complaints{% endblock %}
-{% block page_title %}All complaints{% endblock %}
-{% block actions %}<a href="{% url 'complaint_new' %}" class="btn btn-primary"><i class="ti ti-plus"></i> New complaint</a>
-  <a href="{% export_url 'complaints_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
+{% block page_title %}Complaints{% endblock %}
+{% block page_context %}{% if summary.n %}{{ summary.n }} open. The oldest has waited {{ summary.oldest_days }} day{{ summary.oldest_days|pluralize }}.{% else %}Nothing is open.{% endif %}{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-header pb-0 border-0"><ul class="nav nav-tabs card-header-tabs status-tabs mb-0">{% for key, label, n in tabs %}
-    <li class="nav-item"><a href="{% url_with tab=key page=None closed_since=None %}" class="nav-link{% if f.tab == key %} active{% endif %}"{% if f.tab == key %} aria-current="page"{% endif %}>{{ label }} <span class="badge {% if f.tab == key %}bg-primary text-white{% else %}bg-secondary-lt{% endif %} ms-1">{{ n }}</span></a></li>{% endfor %}</ul></div>
-  <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end"><input type="hidden" name="tab" value="{{ f.tab }}">
+<div class="b-tiles" role="navigation" aria-label="Complaint status">{% for key, label, n in tabs|slice:":6" %}
+  <a href="{% url_with tab=key page=None closed_since=None %}" class="{% if f.tab == key %}on{% endif %}{% if key == 'NOT_ATTENDED' %} alert{% endif %}"{% if f.tab == key %} aria-current="page"{% endif %}><b>{{ n }}</b>{{ label }}</a>{% endfor %}
+</div>
+<section class="card b-card">
+  <div class="b-also"><span class="cap">Finished, or everything:</span>{% for key, label, n in tabs|slice:"6:" %}
+    <a href="{% url_with tab=key page=None closed_since=None %}" class="{% if f.tab == key %}on{% endif %}"{% if f.tab == key %} aria-current="page"{% endif %}>{{ label }} <b>{{ n }}</b></a>{% endfor %}</div>
+  {% if finished or since_active or f.visited_since %}<div class="b-chips">
+    {% if finished or since_active %}<span class="badge st st-done"><i class="ti ti-lock" aria-hidden="true"></i>Closed or not covered{% if since_active %} after {{ f.closed_since|date }}{% endif %}</span>
+      <a href="{% url 'complaints' %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off" aria-hidden="true"></i> Clear filters</a>{% endif %}
+    {% if f.visited_since %}<span class="badge st st-neutral"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Visited after {{ f.visited_since|date }}</span>
+      <a href="{% url_with visited_since=None page=None %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off" aria-hidden="true"></i> Remove this filter</a>{% endif %}</div>{% endif %}
+  <form method="get" class="b-filters f-4s"><input type="hidden" name="tab" value="{{ f.tab }}">
     {% if since_active %}<input type="hidden" name="closed_since" value="{{ f.closed_since|date:'Y-m-d' }}">{% endif %}
     {% if f.visited_since %}<input type="hidden" name="visited_since" value="{{ f.visited_since|date:'Y-m-d' }}">{% endif %}
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-co">Company</label><select id="cf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
+    <div class="fld"><label class="form-label" for="cf-co">Company</label><select id="cf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
       {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-city">City</label><select id="cf-city" name="city" class="form-select" onchange="this.form.submit()"><option value="">All cities</option>
+    <div class="fld"><label class="form-label" for="cf-city">City</label><select id="cf-city" name="city" class="form-select" onchange="this.form.submit()"><option value="">All cities</option>
       {% for city in cities %}<option value="{{ city }}" {% if f.city|lower == city|lower %}selected{% endif %}>{{ city }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-tech">Technician</label><select id="cf-tech" name="technician" class="form-select" onchange="this.form.submit()"><option value="">Anyone</option>
+    <div class="fld"><label class="form-label" for="cf-tech">Technician</label><select id="cf-tech" name="technician" class="form-select" onchange="this.form.submit()"><option value="">Anyone</option>
       {% for t in technicians %}<option value="{{ t.pk }}" {% if f.technician == t %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="cf-age">Age</label><select id="cf-age" name="age" class="form-select" onchange="this.form.submit()"><option value="">Any age</option>
+    <div class="fld"><label class="form-label" for="cf-age">Open for</label><select id="cf-age" name="age" class="form-select" onchange="this.form.submit()"><option value="">Any time</option>
       {% for key, label, low, high in ages %}<option value="{{ key }}" {% if f.age == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-lg-4"><label class="form-label small text-secondary mb-1" for="cf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+    <div class="fld grow"><label class="form-label" for="cf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
       <input id="cf-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Complaint no., company ref, site, fault"></div></div>
-    {% if finished or since_active %}<div class="col-12 pb-1"><span class="badge st st-done"><i class="ti ti-lock" aria-hidden="true"></i>Closed or not covered{% if since_active %} after {{ f.closed_since|date }}{% endif %}</span>
-      <a href="{% url 'complaints' %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off" aria-hidden="true"></i> Clear filters</a></div>{% endif %}
-    {% if f.visited_since %}<div class="col-12 pb-1"><span class="badge st st-neutral"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Visited after {{ f.visited_since|date }}</span>
-      <a href="{% url_with visited_since=None page=None %}" class="btn btn-link link-secondary px-1"><i class="ti ti-filter-off" aria-hidden="true"></i> Remove this filter</a></div>{% endif %}
-  </form></div>
-  <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
-    <thead><tr>{% sort_th "no" "Complaint" %}{% sort_th "reported" "Reported" %}{% sort_th "site" "Site" %}{% sort_th "company" "Company" %}<th>Fault</th>{% sort_th "techs" "Technicians" %}{% sort_th "priority" "Priority" %}{% sort_th "status" "Status" %}{% sort_th "age" "Age" True %}</tr></thead>
+  </form>
+  <div class="table-responsive"><table class="table table-vcenter card-table t">
+    <thead><tr>{% sort_th "reported" "Complaint" %}{% sort_th "site" "Site" %}<th>Fault</th>{% sort_th "techs" "Technician" %}{% sort_th "status" "Status" %}{% sort_th "age" "Open for" True %}</tr></thead>
     <tbody>{% for r in table.page %}<tr>
-      <td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td class="nowrap">{{ r.c.reported_on|date }}</td>
-      <td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><div class="small text-secondary">{{ r.c.site.city }}</div></td>
-      <td>{{ r.c.company.name }}{% if r.c.company_ref %}<div class="small text-secondary code">{{ r.c.company_ref }}</div>{% endif %}</td>
-      <td class="cell-wrap">{{ r.c.fault }}{% if r.c.qty_affected %} <span class="text-secondary">({{ r.c.qty_affected }})</span>{% endif %}</td>
-      <td>{{ r.techs|default:"Not assigned" }}</td><td>{{ r.c.priority|priority_badge }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open %}</td></tr>
+      <td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a><span class="sub">{{ r.c.reported_on|date }}</span></td>
+      <td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><span class="sub">{{ r.c.site.city }}</span></td>
+      <td class="cell-wrap">{% if r.c.priority != "NORMAL" %}{{ r.c.priority|priority_badge }} {% endif %}{{ r.c.fault }}<span class="sub">{{ r.c.company.name }}{% if r.c.company_ref %} · <span class="code">{{ r.c.company_ref }}</span>{% endif %}{% if r.c.qty_affected %} · {{ r.c.qty_affected }} fitting{{ r.c.qty_affected|pluralize }}{% endif %}</span></td>
+      <td>{% if r.techs %}{{ r.techs }}{% else %}<span class="cap">Not assigned</span>{% endif %}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open True %}</td></tr>
     {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No complaints match these filters.</td></tr>{% endfor %}</tbody>
   </table></div>
-  {% include "core/_pagination.html" %}
-</div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Age = days since the complaint was reported (until it was closed). Red = open for more than 15 days.</p>
+  {% include "inventory/_foot.html" with export_name="complaints_xlsx" %}
+</section>
 {% endblock %}

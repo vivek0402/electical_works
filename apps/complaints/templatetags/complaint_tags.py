@@ -47,11 +47,12 @@ def priority_badge(priority):
 
 
 @register.simple_tag
-def age_badge(days, is_open):
-    """'12 d', or a red badge when an open complaint is older than LATE_DAYS days."""
+def age_badge(days, is_open, long=False):
+    """'12 d' (or '12 days' with long), or a red badge when an open complaint is older than LATE_DAYS days."""
+    text = f"{days} day{'' if days == 1 else 's'}" if long else f"{days} d"
     if is_open and days > LATE_DAYS:
-        return format_html('<span class="badge st st-alert">{} d</span>', days)
-    return f"{days} d"
+        return format_html('<span class="badge st st-alert">{}</span>', text)
+    return text
 
 
 @register.filter

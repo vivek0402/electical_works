@@ -179,7 +179,7 @@ def test_not_covered_from_the_page(office_client, office_user):
     assert "CMP-0001 closed as Not covered (Out of warranty)." in html
     c.refresh_from_db()
     assert c.status == Status.NOT_COVERED
-    assert "Change status" not in html and "Not covered: <b>Out of warranty</b>" in html
+    assert "Change status" not in html and "Closed as not covered</dt><dd>Out of warranty</dd>" in html
 
 
 def test_reopen_is_admin_only(office_client, admin_client, office_user):

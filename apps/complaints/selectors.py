@@ -4,7 +4,7 @@ import re
 from collections import Counter
 from datetime import timedelta
 
-from django.db.models import Count, Max, Prefetch, Q
+from django.db.models import Count, Max, Min, Prefetch, Q
 
 from apps.defectives.models import DefectivePiece
 
@@ -194,6 +194,14 @@ def closed_since_count(since):
     return Complaint.objects.filter(status__in=FINISHED_STATUSES, closed_on__gt=since).count()
 
 
+def open_summary(today):
+    """{"n", "oldest_days"}: open complaints and the age of the oldest, in one query (hero context line)."""
+    found = Complaint.objects.filter(status__in=OPEN_STATUSES).aggregate(
+        n=Count("id"), first=Min("reported_on")
+    )
+    return {"n": found["n"], "oldest_days": (today - found["first"]).days if found["first"] else 0}
+
+
 def visits_since(since):
     """{"visits", "complaints"}: visits dated after `since` and the complaints they were on, in one query.
     "complaints" is what the list shows with visited_since=since (tab All)."""
@@ -218,6 +226,11 @@ def dashboard(today):
         "ages": ages,
         "ages_top": max([a["n"] for a in ages] + [1]),
         "oldest": sorted(rows, key=lambda r: (-r["age"], r["c"].number))[:6],
+        "oldest_unattended": min(
+            (r for r in rows if r["c"].status == Status.NOT_ATTENDED),
+            key=lambda r: (-r["age"], r["c"].number),
+            default=None,
+        ),
         "companies": [
             {"id": cid, "label": name, "n": n}
             for (cid, name), n in sorted(companies.items(), key=lambda kv: (-kv[1], kv[0][1]))

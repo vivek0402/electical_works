@@ -1,59 +1,61 @@
 {% extends "base.html" %}{% load static complaint_tags %}
 {% block title %}{{ c.number }}{% endblock %}
-{% block pretitle %}Complaint · {{ c.company.name }}{% endblock %}
 {% block page_title %}<span class="code">{{ c.number }}</span> {{ c.status|status_badge }}{% endblock %}
+{% block page_context %}{{ c.site.name }}, {{ c.site.city }}. Reported {{ c.reported_on|date }}.{% endblock %}
 {% block actions %}
-  {% if c.is_open %}<a href="{% url 'visit_new' c.number %}" class="btn btn-primary"><i class="ti ti-clipboard-plus"></i> Record visit</a>{% endif %}
-  {% if c.status != "NOT_COVERED" %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#status-modal"><i class="ti ti-arrows-right-left"></i> Change status</button>{% endif %}
-  {% if c.is_open %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#nc-modal"><i class="ti ti-ban"></i> Close as Not covered</button>{% endif %}
+  {% if c.is_open %}<a href="{% url 'visit_new' c.number %}" class="btn btn-primary"><i class="ti ti-clipboard-plus" aria-hidden="true"></i> Record visit</a>{% endif %}
+  {% if c.status != "NOT_COVERED" %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#status-modal"><i class="ti ti-arrows-right-left" aria-hidden="true"></i> Change status</button>{% endif %}
+  {% if c.is_open %}<button type="button" class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#nc-modal"><i class="ti ti-ban" aria-hidden="true"></i> Close as Not covered</button>{% endif %}
 {% endblock %}
 {% block content %}
 {% for msg in page_errors %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ msg }}</div></div></div>{% endfor %}
-<div class="row row-cards">
-  <div class="col-12"><div class="d-flex flex-wrap gap-2">
-    <span class="chip"><i class="ti ti-calendar"></i> Reported {{ c.reported_on|date }}</span>
-    <span class="chip{% if c.is_open and age > 15 %} chip-alert{% endif %}"><i class="ti ti-clock"></i> Age <b>{{ age }}</b> days{% if c.closed_on %} (closed {{ c.closed_on|date }}){% endif %}</span>
-    <span class="chip{% if c.status == 'AWAITING_MATERIAL' %} chip-wait{% endif %}"><i class="ti ti-hourglass"></i> Awaiting material <b>{{ awaiting }}</b> days</span>
-    {% if c.priority != "NORMAL" %}{{ c.priority|priority_badge }}{% endif %}
-    {% if c.not_covered_reason %}<span class="chip"><i class="ti ti-ban"></i> Not covered: <b>{{ c.get_not_covered_reason_display }}</b></span>{% endif %}
-  </div></div>
-  <div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-file-description"></i> Details</h3></div><div class="card-body"><div class="datagrid">
-    <div class="datagrid-item"><div class="datagrid-title">Site</div><div class="datagrid-content"><a href="{% url 'site_detail' c.site.pk %}">{{ c.site.name }}</a></div></div>
-    <div class="datagrid-item"><div class="datagrid-title">City</div><div class="datagrid-content">{{ c.site.city }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Contact</div><div class="datagrid-content">{{ c.contact_name|default:"—" }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Phone</div><div class="datagrid-content">{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone_display }}</a>{% else %}—{% endif %}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Company</div><div class="datagrid-content">{{ c.company.name }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Company complaint no.</div><div class="datagrid-content">{% if c.company_ref %}<span class="code">{{ c.company_ref }}</span>{% else %}—{% endif %}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Qty affected</div><div class="datagrid-content">{{ c.qty_affected|default:"—" }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Priority</div><div class="datagrid-content">{{ c.get_priority_display }}</div></div>
-    <div class="datagrid-item"><div class="datagrid-title">Technicians</div><div class="datagrid-content">{{ c.technicians.all|join:", "|default:"Not assigned" }}</div></div>
-  </div><div class="mt-3"><div class="datagrid-title">Fault</div><div>{{ c.fault|linebreaksbr }}</div></div></div></div></div>
-  <div class="col-lg-4"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-timeline"></i> Status timeline</h3></div>
-    <div class="card-body"><ul class="tl">{% for ev in events %}<li class="tl-item"><span class="tl-dot {{ ev.to_status|status_css }}"><i class="ti ti-{{ ev.to_status|status_icon }}"></i></span>
-      <div class="tl-body"><div class="fw-medium">{% if ev.from_status %}{{ ev.get_from_status_display }} → {% endif %}{{ ev.get_to_status_display }}</div>
-        <div class="small text-secondary">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}</div>
-        {% if ev.reason %}<div class="small">Reason: <b>{{ ev.get_reason_display }}</b></div>{% endif %}{% if ev.note %}<div class="small">{{ ev.note }}</div>{% endif %}</div></li>{% endfor %}</ul></div></div></div>
-  <div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clipboard-list"></i> Visits</h3><span class="badge bg-secondary-lt ms-2">{{ visits|length }}</span>
-    {% if c.is_open %}<div class="card-actions"><a href="{% url 'visit_new' c.number %}" class="btn btn-sm btn-outline-primary"><i class="ti ti-plus"></i> Record visit</a></div>{% endif %}</div>
-    <div class="table-responsive d-none d-md-block"><table class="table table-vcenter card-table">
-      <thead><tr><th>Visit</th><th>Technicians</th><th>Work done</th><th>Parts given</th><th>Failed parts collected</th><th>Status after</th></tr></thead>
-      <tbody>{% for v in visits %}<tr>
-        <td><span class="code">{{ v.number }}</span><div class="small text-secondary nowrap">{{ v.visit_date|date }}</div></td>
-        <td>{{ v.technicians.all|join:", " }}</td><td class="cell-wrap">{{ v.work_done|linebreaksbr }}</td>
-        <td>{% include "complaints/_visit_parts.html" %}</td>
-        <td>{% include "complaints/_visit_pieces.html" %}</td>
-        <td>{{ v.next_status|status_badge }}</td></tr>
-      {% empty %}<tr><td colspan="6" class="text-center text-secondary py-4">No visits yet.</td></tr>{% endfor %}</tbody>
-    </table></div>
-    <div class="list-group list-group-flush d-md-none">{% for v in visits %}
-      <div class="list-group-item visit-card"><div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="code">{{ v.number }}</span><span class="small text-secondary">{{ v.visit_date|date }}</span><span class="ms-auto">{{ v.next_status|status_badge }}</span></div>
-        <dl class="visit-facts mb-0">
-          <dt>Technicians</dt><dd>{{ v.technicians.all|join:", " }}</dd>
-          <dt>Work done</dt><dd>{{ v.work_done|linebreaksbr }}</dd>
-          <dt>Parts given</dt><dd>{% include "complaints/_visit_parts.html" %}</dd>
-          <dt>Failed parts collected</dt><dd>{% include "complaints/_visit_pieces.html" %}</dd>
-        </dl></div>
-    {% empty %}<div class="list-group-item text-center text-secondary py-4">No visits yet.</div>{% endfor %}</div></div></div>
+<div class="b-tiles four">
+  <div class="{% if c.is_open and age > 15 %}alert{% endif %}"><b>{{ age }} day{{ age|pluralize }}</b>{% if c.closed_on %}from report to close ({{ c.closed_on|date }}){% else %}open{% endif %}<span class="cap d-block">Awaiting material <b>{{ awaiting }}</b> days</span></div>
+  <div><b>{{ c.technicians.all|join:", "|default:"Not assigned" }}</b>technician{% if c.technicians.all|length > 1 %}s{% endif %}</div>
+  <div><b>{{ visits|length }}</b>visit{{ visits|length|pluralize }} so far</div>
+  <div><b>{{ c.qty_affected|default:"—" }}</b>fitting{{ c.qty_affected|pluralize }} affected</div>
+</div>
+<div class="b-split">
+  <div>
+    <section class="card b-card"><h2>The fault</h2>
+      <p class="b-lead">{{ c.fault|linebreaksbr }}</p>
+      <dl class="b-facts">
+        <div><dt>Company</dt><dd>{{ c.company.name }}</dd></div>
+        <div><dt>Company complaint no.</dt><dd>{% if c.company_ref %}<span class="code">{{ c.company_ref }}</span>{% else %}—{% endif %}</dd></div>
+        <div><dt>Priority</dt><dd>{% if c.priority != "NORMAL" %}{{ c.priority|priority_badge }}{% else %}{{ c.get_priority_display }}{% endif %}</dd></div>
+        {% if c.not_covered_reason %}<div class="wide"><dt>Closed as not covered</dt><dd>{{ c.get_not_covered_reason_display }}</dd></div>{% endif %}
+      </dl></section>
+    <section class="card b-card"><h2>Visits <span class="badge bg-secondary-lt">{{ visits|length }}</span></h2>
+      <div class="table-responsive d-none d-md-block"><table class="table table-vcenter card-table t">
+        <thead><tr><th>Visit</th><th>Technicians</th><th>Work done</th><th>Parts given</th><th>Failed parts collected</th></tr></thead>
+        <tbody>{% for v in visits %}<tr>
+          <td><span class="code">{{ v.number }}</span><span class="sub nowrap">{{ v.visit_date|date }}</span><span class="sub mt-1">Status after</span>{{ v.next_status|status_badge }}</td>
+          <td>{{ v.technicians.all|join:", " }}</td><td class="cell-wrap">{{ v.work_done|linebreaksbr }}</td>
+          <td>{% include "complaints/_visit_parts.html" %}</td>
+          <td>{% include "complaints/_visit_pieces.html" %}</td></tr>
+        {% empty %}<tr><td colspan="5" class="text-center text-secondary py-4">No visits yet.</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <div class="list-group list-group-flush d-md-none">{% for v in visits %}
+        <div class="list-group-item visit-card"><div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="code">{{ v.number }}</span><span class="cap">{{ v.visit_date|date }}</span><span class="ms-auto">{{ v.next_status|status_badge }}</span></div>
+          <dl class="visit-facts mb-0">
+            <dt>Technicians</dt><dd>{{ v.technicians.all|join:", " }}</dd>
+            <dt>Work done</dt><dd>{{ v.work_done|linebreaksbr }}</dd>
+            <dt>Parts given</dt><dd>{% include "complaints/_visit_parts.html" %}</dd>
+            <dt>Failed parts collected</dt><dd>{% include "complaints/_visit_pieces.html" %}</dd>
+          </dl></div>
+      {% empty %}<div class="list-group-item text-center text-secondary py-4">No visits yet.</div>{% endfor %}</div>
+    </section>
+  </div>
+  <div>
+    <section class="card b-card"><h2>Site and contact</h2><dl class="b-facts one">
+      <div><dt>Site</dt><dd><a href="{% url 'site_detail' c.site.pk %}">{{ c.site.name }}</a>, {{ c.site.city }}</dd></div>
+      <div><dt>Contact</dt><dd>{{ c.contact_name|default:"—" }}</dd></div>
+      <div><dt>Phone</dt><dd>{% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone|phone_display }}</a>{% else %}—{% endif %}</dd></div></dl></section>
+    <section class="card b-card"><h2>Status history</h2><ol class="b-tl">{% for ev in events %}
+      <li{% if forloop.first %} class="now"{% endif %}><b>{% if ev.from_status %}{{ ev.get_from_status_display }} → {% endif %}{{ ev.get_to_status_display }}</b>
+        <div class="cap">{{ ev.at|date }} · {{ ev.by.first_name|default:ev.by.username }}</div>
+        {% if ev.reason %}<div class="cap">Reason: <b>{{ ev.get_reason_display }}</b></div>{% endif %}{% if ev.note %}<div class="cap">{{ ev.note }}</div>{% endif %}</li>{% endfor %}</ol></section>
+  </div>
 </div>
 {% if c.status != "NOT_COVERED" %}
 <div class="modal modal-blur fade" id="status-modal" tabindex="-1" aria-labelledby="status-title" aria-hidden="true"{% if errors.status %} data-show-on-load{% endif %}><div class="modal-dialog modal-dialog-centered"><div class="modal-content">

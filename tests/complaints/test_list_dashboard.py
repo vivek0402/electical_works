@@ -16,7 +16,9 @@ from tests.factories import make_complaint, make_site, make_tech
 
 pytestmark = pytest.mark.django_db
 LIST = "/complaints/list/"
-MAX_DASHBOARD, MAX_LIST, MAX_EXPORT = 12, 13, 7  # measured + 1; pages +2 for the two menu badges
+# measured + 1; pages +2 for the two menu badges. Design B: the overview is unchanged at 10 queries; the list
+# went from 12 to 13 for one aggregate (open_summary: open count, oldest date) behind the hero context line.
+MAX_DASHBOARD, MAX_LIST, MAX_EXPORT = 12, 14, 7
 LINK = r'href="/complaints/(CMP-\d{4})/"'
 
 
@@ -114,7 +116,7 @@ def test_tab_counts(several):
 
 
 def test_an_old_open_complaint_shows_a_red_age(office_client, several):
-    assert '<span class="badge st st-alert">20 d</span>' in office_client.get(LIST).content.decode()
+    assert '<span class="badge st st-alert">20 days</span>' in office_client.get(LIST).content.decode()
 
 
 def test_dashboard(office_client, several):
@@ -125,7 +127,7 @@ def test_dashboard(office_client, several):
     assert {r["label"]: r["n"] for r in d["companies"]} == {"Wipro Lighting": 1, "Havells": 1}
     assert [(r["label"], r["n"]) for r in d["cities"]] == [("Visakhapatnam", 2)]
     html = office_client.get("/complaints/").content.decode()
-    assert "Complaints dashboard" in html and "Oldest open complaints" in html
+    assert "Complaints overview" in html and "Oldest open complaints" in html
     assert f'href="{LIST}?tab=NOT_ATTENDED"' in html
 
 
@@ -162,7 +164,9 @@ def test_open_tab_link_from_the_finished_view_lists_open_complaints(office_clien
     html = office_client.get(f"{LIST}?tab=finished&closed_since={since}").content.decode()
     assert re.findall(LINK, html) == ["CMP-0003"]
     assert "Closed or not covered after" in html
-    open_href = re.search(r'href="([^"]+)" class="nav-link"[^>]*>Open ', html).group(1).replace("&amp;", "&")
+    open_href = (
+        re.search(r'href="([^"]+)" class="[^"]*"[^>]*><b>\d+</b>Open<', html).group(1).replace("&amp;", "&")
+    )
     assert "closed_since" not in open_href
     assert numbers(office_client, open_href.removeprefix(LIST)) == ["CMP-0002", "CMP-0001"]
     # even a hand-made URL: closed_since never hides open complaints
@@ -236,7 +240,7 @@ def test_dashboard_open_rows_skip_the_events_query(office_user, several, django_
 
 def test_dashboard_empty_state(office_client):
     html = office_client.get("/complaints/").content.decode()
-    assert html.count("Nothing open.") == 3 and "0 open" in html
+    assert html.count("Nothing open.") == 3 and "Nothing is open." in html
 
 
 def test_list_empty_state(office_client):

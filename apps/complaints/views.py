@@ -379,7 +379,55 @@ def complaints_dashboard(request):
             "href": f"{base}?{urlencode({'tab': FINISHED, 'closed_since': d['since'].isoformat()})}",
         },
     ]
-    return render(request, "complaints/dashboard.html", {"d": d, "tiles": tiles})
+    oldest = d["oldest_unattended"]
+    late = d["ages"][-1]
+    attention = [
+        {
+            "tone": "alert",
+            "icon": "alert-circle",
+            "n": n[Status.NOT_ATTENDED],
+            "title": "Complaints nobody has attended",
+            "sub": (
+                f"Oldest: {oldest['c'].site.name}, {oldest['age']} day{'' if oldest['age'] == 1 else 's'} ago"
+                if oldest
+                else ""
+            ),
+            "go": "Assign a technician",
+            "href": tiles[0]["href"],
+        },
+        {
+            "tone": "alert",
+            "icon": "clock",
+            "n": late["n"],
+            "title": "Complaints open for more than 15 days",
+            "sub": f"Oldest: {d['oldest'][0]['c'].site.name}, {d['oldest'][0]['age']} days"
+            if late["n"]
+            else "",
+            "go": "See them",
+            "href": late["href"],
+        },
+        {
+            "tone": "wait",
+            "icon": "circle-check",
+            "n": n[Status.RESOLVED],
+            "title": "Resolved, ready to close",
+            "sub": "Check the work, then close them.",
+            "go": "Review and close",
+            "href": tiles[4]["href"],
+        },
+    ]
+    statuses = [(s, Status(s).label, n[s], f"{base}?{urlencode({'tab': s})}") for s in OPEN_STATUSES]
+    return render(
+        request,
+        "complaints/dashboard.html",
+        {
+            "d": d,
+            "tiles": tiles,
+            "attention": [a for a in attention if a["n"]],
+            "statuses": statuses,
+            "closed_href": tiles[5]["href"],
+        },
+    )
 
 
 @role_required(OFFICE)
@@ -411,6 +459,7 @@ def complaint_list(request):
             "cities": selectors.cities(),
             "technicians": Technician.objects.all(),
             "ages": AGE_BUCKETS,
+            "summary": selectors.open_summary(timezone.localdate()),
         },
     )
 
@@ -560,6 +609,7 @@ def _technicians_page(request, form, error=None, token=""):
             "form": form,
             "error": error,
             "token": token or page_token(request.session, request.path),
+            "n_active": sum(1 for t in rows if t.is_active),
         },
     )
 

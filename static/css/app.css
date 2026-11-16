@@ -553,3 +553,64 @@ td .pill-low { margin-right: 6px; }
 .b-hero .k-TRF, .b-hero .k-ADJ { background: #e6e9ee; color: #334155; }
 /* phones: a segmented control that wraps becomes a tidy stack, not a blob (same as .seg above) */
 @media (max-width: 520px) { .b-form .form-selectgroup { display: grid; border-radius: 16px; width: 100%; } .b-form .form-selectgroup-label { border-radius: 12px !important; justify-content: flex-start; } }
+
+/* ======================================================================================================
+   Complaints screens (task T3): list, overview, complaint page, forms, sites and technicians.
+   Appended after the T2 block; nothing above was rewritten. Same five sizes and tokens.
+   ====================================================================================================== */
+.b-tiles a, .b-tiles > div { min-width: 0; overflow-wrap: anywhere; }
+.b-tiles a:hover { box-shadow: 0 8px 24px rgba(13, 19, 33, .12); }
+.b-tiles .cap { font-weight: 400; }
+.b-tiles > div.alert b { color: var(--danger); }
+.b-tiles a.on .cap, .b-tiles a.on { color: var(--ink); }
+.b-tiles :focus-visible { outline-color: var(--amber); }
+@media (min-width: 961px) { .b-tiles:not(.four) { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+/* the other tabs (Closed, Not covered, All) sit inside the list card, above the filters */
+.b-also { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 18px; }
+.b-also .cap { margin-right: 4px; }
+.b-also a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--page); color: var(--ink); font-weight: 600; text-decoration: none; }
+.b-also a:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+.b-also a.on { background: var(--ink); color: #fff; }
+.b-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 18px; }
+.b-card .b-filters.f-2 { margin-bottom: 20px; }
+@media (min-width: 961px) { .b-filters.f-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 240px); } }
+.b-grid.one { grid-template-columns: minmax(0, 1fr); }
+.b-grid > .hint.wide { margin: -4px 0 0; }
+.b-card > h2 .badge { font-size: var(--s1); }
+/* overview: attention blocks (1 to 3) and the bar lists */
+.b-blocks.b-n1 { grid-template-columns: minmax(0, 1fr); }
+.b-blocks.b-n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.b-blocks.b-n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 960px) { .b-blocks.b-n3, .b-blocks.b-n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .b-blocks.b-n3, .b-blocks.b-n2 { grid-template-columns: minmax(0, 1fr); } }
+.b-bars { display: grid; gap: 4px; }
+.b-bars a { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 36px; align-items: center; gap: 14px; min-height: 44px; color: var(--ink); text-decoration: none; }
+.b-bars a:hover span { text-decoration: underline; }
+.b-bars i { display: block; height: 22px; min-width: 4px; border-radius: 6px; background: var(--ink); }
+.b-bars .late i { background: #d63939; }
+.b-bars b { font: 800 var(--s3)/1 var(--display); text-align: right; }
+.b-bars .empty { margin: 0; }
+.b-ctx { padding-top: 18px; padding-bottom: 18px; }
+.b-ctx b { font-weight: 600; }
+.b-split .b-card .table-responsive { margin: 0; }
+.b-lead { overflow-wrap: anywhere; }
+.visit-card { padding-left: 0; padding-right: 0; }
+@media (max-width: 960px) { .b-bars a { grid-template-columns: minmax(0, 110px) minmax(0, 1fr) 32px; gap: 10px; } }
+/* Record visit: the item tables share the card with a 320px Summary, so they get tighter minimums */
+.b-form .lines-table .ts-wrapper { min-width: 12rem; }
+.b-form [data-mode="collect"] .lines-table .ts-wrapper { min-width: 10rem; }
+.b-form .lines-table td[data-label="Quantity"] { min-width: 7.5rem !important; }
+.b-form .lines-table td[data-label="Batch code"] { min-width: 6rem; }
+.b-form .lines-table td[data-label="PKD (packed)"] { min-width: 8rem; }
+.b-form .lines-table td.c-fault { min-width: 9rem; }
+@media (max-width: 767.98px) { .b-form .lines-table .ts-wrapper, .b-form [data-mode="collect"] .lines-table .ts-wrapper { min-width: 0; } }
+@media (min-width: 961px) { .b-split > .order-first { order: 0; } }
+.b-tiles .cap b { display: inline; font: 600 var(--s1)/1.4 var(--font); }
+/* Change-status dialog: one bordered row per move; the chosen row gets an ink border (a dark fill would hide the status pill) */
+.form-selectgroup-boxes { background: transparent; padding: 0; border-radius: 0; gap: 8px !important; }
+.form-selectgroup-boxes .form-selectgroup-label { justify-content: flex-start; width: 100%; min-height: 52px; padding: 0 14px !important; border: 1px solid var(--line-strong) !important; border-radius: 12px !important; background: #fff; }
+.form-selectgroup-boxes .form-selectgroup-input:checked + .form-selectgroup-label { background: var(--page); color: var(--ink); border: 2px solid var(--ink) !important; padding: 0 13px !important; }
+.form-selectgroup-boxes .form-selectgroup-check { flex: none; }
+.form-selectgroup-boxes .form-selectgroup-input:checked + .form-selectgroup-label .form-selectgroup-check { background-color: var(--ink); border-color: var(--ink); }
+.form-selectgroup-boxes .form-selectgroup-item { width: 100%; }
+.avatar-xs { width: 28px; height: 28px; font-size: var(--s1); line-height: 28px; vertical-align: middle; }

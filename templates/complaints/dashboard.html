@@ -1,22 +1,42 @@
 {% extends "base.html" %}{% load complaint_tags %}
-{% block title %}Complaints dashboard{% endblock %}
-{% block pretitle %}Complaints{% endblock %}
-{% block page_title %}Complaints dashboard{% endblock %}
-{% block actions %}<a href="{% url 'complaint_new' %}" class="btn btn-primary"><i class="ti ti-plus"></i> New complaint</a>
-  <a href="{% url 'pending_complaints_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Pending complaints</a>{% endblock %}
+{% block title %}Complaints overview{% endblock %}
+{% block page_title %}Complaints overview{% endblock %}
+{% block page_context %}{% if d.open %}{{ d.open }} open. {{ d.counts.NOT_ATTENDED }} not attended. The oldest has waited {{ d.oldest.0.age }} day{{ d.oldest.0.age|pluralize }}.{% else %}Nothing is open.{% endif %}{% endblock %}
+{% block actions %}<a href="{% url 'pending_complaints_xlsx' %}" class="btn btn-quiet"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Pending complaints</a>{% endblock %}
 {% block content %}
-<div class="row row-deck row-cards">
-  {% for t in tiles %}<div class="col-6 col-md-4 col-xl-2"><a class="card card-sm card-link card-link-pop h-100" href="{{ t.href }}"><div class="card-body"><div class="d-flex align-items-center gap-3"><span class="avatar {{ t.css }}"><i class="ti ti-{{ t.icon }}" aria-hidden="true"></i></span>
-    <div class="min-w-0"><div class="fw-medium fs-2 lh-1">{{ t.n }}</div><div class="text-secondary small mt-1">{{ t.label }}</div>{% if t.sub %}<div class="small text-secondary">{{ t.sub }}</div>{% endif %}</div></div></div></a></div>{% endfor %}
-  <div class="col-lg-4"><div class="card"><div class="card-header"><div><h3 class="card-title">Open complaints by age</h3><div class="card-subtitle">{{ d.open }} open · days since reported</div></div></div>
-    {% include "complaints/_bars.html" with rows=d.ages top=d.ages_top %}</div></div>
-  <div class="col-lg-8"><div class="card"><div class="card-header"><h3 class="card-title">Oldest open complaints</h3>
-    <div class="card-actions"><a href="{% url 'complaints' %}" class="btn btn-sm btn-outline-primary">All open <i class="ti ti-arrow-right"></i></a></div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Complaint</th><th>Site</th><th>Company</th><th>Status</th><th class="num">Age</th></tr></thead>
-      <tbody>{% for r in d.oldest %}<tr><td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a></td><td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><div class="small text-secondary">{{ r.c.site.city }}</div></td>
-        <td>{{ r.c.company.name }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open %}</td></tr>
-      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing open.</td></tr>{% endfor %}</tbody></table></div></div></div>
-  <div class="col-md-6"><div class="card"><div class="card-header"><h3 class="card-title">Open by company</h3></div>{% include "complaints/_bars.html" with rows=d.companies top=d.companies_top %}</div></div>
-  <div class="col-md-6"><div class="card"><div class="card-header"><h3 class="card-title">Open by city</h3></div>{% include "complaints/_bars.html" with rows=d.cities top=d.cities_top %}</div></div>
+{% if attention %}
+<div class="b-blocks b-n{{ attention|length }}" id="attention">{% for a in attention %}
+  <a class="b-block attn card {{ a.tone }}" href="{{ a.href }}" data-count="{{ a.n }}">
+    <span class="lbl"><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>Complaints</span>
+    <div class="fig">{{ a.n }}</div>
+    <b>{{ a.title }}</b>
+    {% if a.sub %}<span class="cap">{{ a.sub }}</span>{% endif %}
+    <span class="go">{{ a.go }} →</span>
+  </a>{% endfor %}
 </div>
+{% endif %}
+
+<section class="card b-card"><h2>Open complaints <a href="{% url 'complaints' %}">All complaints</a></h2>
+  <div class="b-headline"><a class="fig" href="{% url 'complaints' %}">{{ d.open }}</a>
+    <div><b>open</b><div class="cap"><a href="{{ closed_href }}">{{ d.closed_30 }} closed or not covered in the last 30 days</a></div></div></div>
+  <div class="b-seg" role="img" aria-label="Open complaints by status: {% for value, label, n, href in statuses %}{{ n }} {{ label|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% for value, label, n, href in statuses %}{% if n %}<i class="seg-{{ value }}" style="flex:{{ n }}"></i>{% endif %}{% endfor %}</div>
+  <div class="legend">{% for value, label, n, href in statuses %}<a href="{{ href }}"><i class="seg-{{ value }}"></i>{{ n }} {{ label|lower }}</a>{% endfor %}</div>
+  <p class="cap" style="margin:22px 0 12px">Open complaints by age</p>
+  <div class="b-age">{% for a in d.ages %}
+    <a href="{{ a.href }}" class="{% if a.alert %}late{% endif %}"><span>{{ a.label }}</span><i style="width:{% widthratio a.n d.ages_top 100 %}%"></i><b>{{ a.n }}</b></a>{% endfor %}
+  </div>
+</section>
+
+<div class="b-two">
+  <section class="card b-card"><h2>Open by company</h2>{% include "complaints/_bars.html" with rows=d.companies top=d.companies_top %}</section>
+  <section class="card b-card"><h2>Open by city</h2>{% include "complaints/_bars.html" with rows=d.cities top=d.cities_top %}</section>
+</div>
+
+<section class="card b-card"><h2>Oldest open complaints <a href="{% url 'complaints' %}">All open</a></h2>
+  <div class="table-responsive"><table class="table table-vcenter card-table t"><thead><tr><th>Complaint</th><th>Site</th><th>Company</th><th>Status</th><th class="num">Open for</th></tr></thead>
+    <tbody>{% for r in d.oldest %}<tr><td><a class="code" href="{% url 'complaint_detail' r.c.number %}">{{ r.c.number }}</a><span class="sub">{{ r.c.reported_on|date }}</span></td>
+      <td><a href="{% url 'site_detail' r.c.site.pk %}">{{ r.c.site.name }}</a><span class="sub">{{ r.c.site.city }}</span></td>
+      <td>{{ r.c.company.name }}</td><td>{{ r.c.status|status_badge }}</td><td class="num">{% age_badge r.age r.c.is_open True %}</td></tr>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing open.</td></tr>{% endfor %}</tbody></table></div>
+</section>
 {% endblock %}

@@ -6,6 +6,7 @@
      the hidden field is also disabled, so it is never sent;
    - forms marked [data-once] disable their submit button after the first click;
    - a .modal[data-show-on-load] opens when the page loads (it holds an error from the last submit);
+   - the Summary card of the New complaint and Record visit forms is filled from the fields (display only);
    - select[data-reload-company] (New batch) reloads the page for the chosen company, keeping the note. */
 (function () {
   const BS = window.bootstrap || (window.tabler && window.tabler.bootstrap);
@@ -88,6 +89,52 @@
     });
     (first || batchModal.querySelector("input[value=new]")).checked = true;
   });
+
+
+  // The Summary card beside the New complaint and Record visit forms (display only: nothing here is posted or
+  // validated). It repeats what has been entered so far, and marks a required value that is still missing.
+  (function () {
+    const form = document.querySelector("form.b-form[data-summary-form], form[data-visit-form]");
+    if (!form) return;
+    const $ = id => document.getElementById(id);
+    const put = (id, text) => {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = text || el.dataset.need || el.dataset.none || "";
+      el.classList.toggle("need", !text && !!el.dataset.need);
+    };
+    const picked = el => (el && el.value ? el.options[el.selectedIndex].text.trim() : "");
+    const many = el => el ? [...el.selectedOptions].map(o => o.text.trim()).filter(Boolean).join(", ") : "";
+    const date = el => (el && el.value ? el.value.split("-").reverse().join("-") : "");
+    const checked = name => { const r = form.querySelector(`input[name=${name}]:checked`); return r ? r.parentElement.textContent.trim() : ""; };
+    const refresh = () => {
+      if (form.hasAttribute("data-visit-form")) {
+        put("sum-date", date($("id_visit_date")));
+        put("sum-techs", many($("id_technicians")));
+        put("sum-parts", ($("parts-summary") || {}).textContent.trim() || "None");
+        put("sum-collected", ($("collect-summary") || {}).textContent.trim() || "None");
+        put("sum-next", checked("next_status"));
+        return;
+      }
+      const site = form.querySelector("#id_site + .ts-wrapper .item");
+      put("sum-site", site ? site.textContent.trim() : "");
+      put("sum-company", picked($("id_company")));
+      put("sum-priority", checked("priority"));
+      put("sum-date", date($("id_reported_on")));
+      put("sum-techs", many($("id_technicians")));
+    };
+    form.addEventListener("input", refresh);
+    form.addEventListener("change", refresh);
+    // Tom Select drops the chosen option into the original select and fires change; the site picker (built
+    // later by site-picker.js) is read from its own control, so look again shortly after it changes.
+    form.addEventListener("click", () => setTimeout(refresh, 0));
+    form.addEventListener("keyup", () => setTimeout(refresh, 0));
+    ["parts-summary", "collect-summary"].forEach(id => {
+      const el = $(id);
+      if (el) new MutationObserver(refresh).observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    setTimeout(refresh, 50);
+  })();
 
   const pending = document.querySelector(".modal[data-show-on-load]");
   if (pending && BS) BS.Modal.getOrCreateInstance(pending).show();
