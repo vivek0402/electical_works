@@ -36,7 +36,7 @@ Read at the start of every session. Each entry: the pattern I got wrong, then th
 
 ## 2026-10-22 — Preselected defaults on entry forms
 - **Pattern:** Stock IN started with Wipro Lighting and Vizag Office already chosen, so a wrong supplier or location could be saved without anyone noticing. The user asked "why is there default selected?" and chose no defaults.
-- **Rule:** Never preselect a supplier, company or destination location on an entry form. Start on "Choose…" with a clear "required" message. A default is allowed only for a harmless value such as today's date.
+- **Rule:** Never preselect a supplier, company or location (source or destination; the user extended this to Stock OUT, Transfer and Adjust on 2026-11-16) on an entry form. Start on "Choose…" with a clear "required" message. A default is allowed only for a harmless value such as today's date.
 
 ## 2026-11-14 — "Elevate the design" answered with a tidy-up
 - **Pattern:** Asked to elevate the frontend, I kept the existing layout, palette and components and only tightened type sizes, card borders and icons. I treated DESIGN.md as a fence and never asked how far the redesign could go. The user: "This isn't major changes."
