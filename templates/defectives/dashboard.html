@@ -21,7 +21,7 @@
     <a href="{{ pieces_url }}?status=IN_STORE"><b>{{ d.in_store }}</b>Pieces in store<span class="cap">not yet in a batch</span></a>
     <a href="{{ pieces_url }}?status=IN_BATCH"><b>{{ d.in_batch }}</b>In a draft batch<span class="cap">{{ d.drafts }} draft batch{{ d.drafts|pluralize:"es" }}</span></a>
     <a href="{{ pieces_url }}?status=SENT" class="{% if d.sent %}wait{% endif %}"><b>{{ d.sent }}</b>With the companies<span class="cap">sent, awaiting settlement</span></a>
-    <a href="{{ batches_url }}"><b>{{ d.answered }}</b>Answered<span class="cap">last 90 days</span></a>
+    <div><b>{{ d.answered }}</b>Answered<span class="cap">last 90 days</span></div>
   </div>
   <p class="b-note">Defective pieces are never counted in stock.</p>
 </section>

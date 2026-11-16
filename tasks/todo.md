@@ -218,13 +218,13 @@ Audit of the running app (demo data, 1366px + 390px): 12 font sizes and 4 weight
 - [x] 2026-11-15 hierarchy pass on all three dashboards (user: "improve the information hierarchy, group related elements, most important actions at the top"): order is now actions (grouped Stock / Complaints, daily ones filled, Transfer and Adjust secondary) → Needs attention (most urgent first) → one group each for Stock, Complaints, Defective pieces → recent entries last. Evidence: screenshots at 1366px and 390px, no overflow, 0 console errors, at most 5 font sizes each.
 - [x] 2026-11-15 user picked **B (Bold and graphic)**. Remaining key screens mocked in `mockups/design-b/` (dashboard, current stock, Stock IN form, complaints list, complaint page): no overflow at 1366px or 390px, 0 console errors.
 - [x] Build plan approved 2026-11-15: `docs/superpowers/plans/2026-11-15-design-b.md` (branch `design-b`). User's rule: Fable plans and dispatches only; every build, fix and review task runs in a Sonnet subagent.
-  - [ ] T0 Prep: branch, commit mocks, baseline tests
+  - [x] T0 Prep: branch, commit mocks, baseline tests. Evidence: branch `design-b`, baseline 864 passed, mocks committed in 478d09e.
   - [x] T1 Foundation: app.css, fonts, base.html shell, menu, login, DESIGN.md. Evidence: commit 79520fe; 866 tests passed.
   - [x] T2 Stock screens. Evidence: commit 24cb355; 871 tests passed.
   - [x] T3 Complaints screens. Evidence: commit 7824fda; 871 tests passed.
   - [x] T4 Defectives screens. Evidence: commit dd90e43; 873 tests passed.
   - [x] T5 Walkthrough and docs. Evidence: commit on `design-b` (`test(e2e): walkthrough and rigour checks for the direction B UI; docs`); 873 tests passed, ruff clean; `e2e/walkthrough.py` exits 0 with no JS errors, twice in a row, on reseeded `svkml_demo`; `e2e/rigour/ui_checks.py` all pass and `consistency.py` tiles/top-bar counts pass on demo data (full `run_all.sh` not run: needs Postgres on 52207).
-  - [ ] T6 Review and fixes
+  - [x] T6 Review and fixes. Evidence: sweep of 78 page/viewport checks (39 pages at 1366 and 390) and contrast on 7 pages x 2 widths come back with 0 offenders after the fixes; see the T6 fix commit `fix(design): review fixes for direction B`; 873 tests passed, ruff clean, makemigrations clean, walkthrough exit 0.
 
 ## Rigour testing round (2026-10-22)
 Plan: `~/.claude/plans/tingly-booping-cocoa.md`. Report: `tasks/rigour-report.md`. Suite: `e2e/rigour/` (`sh e2e/rigour/run_all.sh 8001`).

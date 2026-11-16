@@ -47,7 +47,7 @@
       <p class="b-context">{% block page_context %}{% endblock %}</p>
     </div>
     <div class="b-actions d-print-none">
-      {% for a in nav_actions %}{% if a.url %}<a href="{{ a.url }}" class="btn {{ a.cls }}" data-sec-action><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>{{ a.label }}</a>{% endif %}{% endfor %}
+      {% for a in nav_actions %}{% if a.url %}<a href="{{ a.url }}" class="btn {{ a.cls }}"><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>{{ a.label }}</a>{% endif %}{% endfor %}
       {% block actions %}{% endblock %}
     </div>
     {% if nav_tabs %}<nav class="b-sub" aria-label="Section pages">

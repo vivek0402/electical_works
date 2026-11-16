@@ -62,13 +62,3 @@
   });
   document.addEventListener("click", e => { if (!box.closest(".global-search").contains(e.target)) close(); });
 })();
-
-/* Hero actions: the section adds its default buttons after the page's own. A page that already offers the same
-   destination (same path) keeps its own button and the section's copy is dropped, so nothing shows twice. */
-(function () {
-  const box = document.querySelector(".b-actions");
-  if (!box) return;
-  const path = a => new URL(a.href, location.href).pathname;
-  const own = [...box.querySelectorAll("a[href]:not([data-sec-action])")].map(path);
-  box.querySelectorAll("a[data-sec-action]").forEach(a => { if (own.includes(path(a))) a.remove(); });
-})();
