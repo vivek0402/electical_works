@@ -328,34 +328,25 @@ ROUTES.low = () => {
       { key: "act", label: "", nosort: true, html: i => `<a href="#in/${encodeURIComponent(i.code)}" class="btn btn-sm btn-in">${icon("package-import")} Stock IN</a>` }] })}</div>`;
 };
 
-/* ---------- masters ---------- */
+/* ---------- masters (read-only: new names are added from the forms where they are first needed) ---------- */
 ROUTES.masters = () => {
-  setHeader("Setup", "Masters", `<span class="badge bg-secondary-lt align-self-center">Admin only in the real app</span>`);
-  const box = (title, ic, listKey, ph, extra = "") => `<div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon(ic)} ${title}</h3>
+  setHeader("Setup", "Masters", `<span class="badge bg-secondary-lt align-self-center">Read-only</span>`);
+  const box = (title, ic, listKey, where, extra = "") => `<div class="col-md-6 col-xl-4"><div class="card h-100"><div class="card-header"><h3 class="card-title">${icon(ic)} ${title}</h3>
       <span class="badge bg-secondary-lt ms-auto">${DB[listKey].length}</span></div>
     <div class="list-group list-group-flush">${DB[listKey].map(x => `<div class="list-group-item">${esc(x)}</div>`).join("")}${extra}</div>
-    <div class="card-footer"><form class="input-group" onsubmit="event.preventDefault();addMaster('${listKey}',this.v)">
-      <input name="v" class="form-control" placeholder="${ph}" required><button class="btn btn-primary">${icon("plus")} Add</button></form></div></div></div>`;
-  view().innerHTML = `<div class="row row-cards">${box("Locations", "map-pin", "locations", "New location",
+    <div class="card-footer text-secondary small">${icon("pencil-plus", "me-1")}New ones are added from ${where}.</div></div></div>`;
+  view().innerHTML = `<div class="alert alert-info">${icon("info-circle", "me-2")}These lists fill up as you work. When a location, company or type is not in a
+      dropdown yet, type it there and pick <b>＋ Add … as new</b>. It is saved for next time. Nothing can be added or removed on this page.</div>
+    <div class="row row-cards">${box("Locations", "map-pin", "locations", "Stock IN (Into location), Transfer (To location) and Settle batch",
       `<div class="list-group-item d-flex align-items-center text-secondary">${icon("recycle", "me-2")}${esc(DB.defStore)}
-        <span class="badge st st-done ms-auto" title="Only the defectives screens post here. It can't be hidden or deleted.">${icon("lock")}System</span></div>`)}${box("Companies / suppliers", "building-store", "companies", "New company")}
-    ${box("Fitting types", "bulb", "fittingTypes", "New fitting type")}${box("Spare types", "category", "spareTypes", "New spare type")}
-    ${box("Couriers", "truck", "couriers", "New courier")}${box("Not covered reasons", "ban", "notCoveredReasons", "New reason")}
-    <div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("adjustments")} Defaults</h3></div><div class="card-body">
-      <label class="form-label" for="m-defco">Default company on new complaints and items</label>
-      <select id="m-defco" class="form-select" onchange="setDefaultCompany(this.value)">${opt(DB.companies, DB.config.defaultCompany)}</select>
-      <small class="form-hint">Only a starting value. Every complaint, item and return batch can be for any company.</small></div></div></div>
-    <div class="col-md-6 col-xl-4"><div class="card"><div class="card-header"><h3 class="card-title">${icon("users")} Users</h3></div><div class="list-group list-group-flush">
-      <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">AD</span> Admin <span class="text-secondary small d-block">Everything, incl. masters and users</span></div>
-      <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">OF</span> Office <span class="text-secondary small d-block">Stock IN / OUT / transfer / adjust, items</span></div>
+        <span class="badge st st-done ms-auto" title="Only the defectives screens post here.">${icon("lock")}System</span></div>`)}
+    ${box("Companies / suppliers", "building-store", "companies", "the item form, Stock IN (Supplier) and New complaint")}
+    ${box("Fitting types", "bulb", "fittingTypes", "the item form")}${box("Spare types", "category", "spareTypes", "the item form")}
+    <div class="col-md-6 col-xl-4"><div class="card h-100"><div class="card-header"><h3 class="card-title">${icon("users")} Users</h3></div><div class="list-group list-group-flush">
+      <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">AD</span> Admin <span class="text-secondary small d-block">Everything, incl. users</span></div>
+      <div class="list-group-item"><span class="avatar avatar-xs bg-blue-lt me-2">OF</span> Office <span class="text-secondary small d-block">Stock IN / OUT / transfer / adjust, items, complaints, defectives</span></div>
     </div></div></div></div>`;
 };
-function setDefaultCompany(v) { DB.config.defaultCompany = v; toast(`Default company: <b>${esc(v)}</b>.`); }
-function addMaster(listKey, input) {
-  const v = input.value.trim();
-  if (DB[listKey].some(x => x.toLowerCase() === v.toLowerCase())) { toast(`${esc(v)} already exists.`, "danger"); return; }
-  DB[listKey].push(v); toast(`Added ${esc(v)}.`); route();
-}
 
 ROUTES.in = a => entryForm("in", a);
 ROUTES.out = a => entryForm("out", a);

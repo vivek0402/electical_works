@@ -8,7 +8,8 @@ const factRow = (k, v) => v ? `<div class="datagrid-item"><div class="datagrid-t
 const cLink = no => `<a class="code" href="#complaint/${no}">${no}</a>`;
 const tagLink = t => `<a class="code" href="#piece/${t}">${t}</a>`;
 const siteLink = c => { const s = site(c.site); return s ? `<a href="#site/${s.id}">${esc(s.name)}</a>` : "?"; };
-const ageHtml = c => { const a = ageDays(c); return isOpen(c) && a > 15 ? `<span class="badge st st-alert">${a} d</span>` : `${a} d`; };
+// Lateness is shown by the Due chip (smart.js: due date per priority, paused while awaiting material); age is plain days.
+const ageHtml = c => `${ageDays(c)} d`;
 // Bar list: one hue (brand blue), value labels, red only when the row means "needs attention".
 const barList = (rows, href) => { const max = Math.max(1, ...rows.map(r => r[1]));
   return `<div class="list-group list-group-flush">${rows.map(([label, n, alert, key]) => `<a class="list-group-item list-group-item-action py-2" href="${href(key ?? label)}">
@@ -84,10 +85,10 @@ ROUTES.complaints = arg => {
       { key: "company", label: "Company", html: c => `${esc(c.company)}${c.companyRef ? `<div class="small text-secondary code">${esc(c.companyRef)}</div>` : ""}` },
       { key: "fault", label: "Fault", cls: "cell-wrap", html: c => esc(c.fault) + (c.qty ? ` <span class="text-secondary">(${c.qty})</span>` : "") },
       { key: "techs", label: "Technicians", sort: c => c.techs.join(), html: c => esc(c.techs.join(", ")) || `<span class="text-secondary">Not assigned</span>` },
-      { key: "priority", label: "Priority", sort: c => PRIORITIES.indexOf(c.priority), html: c => prioBadge(c.priority) },
-      { key: "status", label: "Status", sort: c => Object.keys(CSTATUS).indexOf(c.status), html: c => cBadge(c.status) },
-      { key: "age", label: "Age", num: true, sort: ageDays, html: ageHtml }] })}
-  </div><p class="text-secondary small mt-2">${icon("info-circle")} Age = days since the complaint was reported (until it was closed). Red = open for more than 15 days.</p>`;
+      { key: "status", label: "Status · priority", sort: c => Object.keys(CSTATUS).indexOf(c.status),
+        html: c => `${cBadge(c.status)}${c.priority !== "Normal" ? `<div class="mt-1">${prioBadge(c.priority)}</div>` : ""}` },
+      { key: "due", label: "Due", cls: "nowrap", sort: dueSort, html: c => `${dueChip(c)}<div class="small text-secondary mt-1">${ageHtml(c)} old</div>` }] })}
+  </div><p class="text-secondary small mt-2">${icon("info-circle")} Due = working days allowed for the priority (Urgent ${SMART.due.Urgent}, High ${SMART.due.High}, Normal ${SMART.due.Normal}; set in Smart settings). Time in Awaiting material, Sundays and holidays don't count. Age = calendar days since reported.</p>`;
 };
 
 /* ---------- new site modal (also used from the Sites page) ---------- */
@@ -101,9 +102,11 @@ function openSiteModal(name, done) {
       ${fcol(6, lbl("ns-contact", "Contact person", false) + `<input id="ns-contact" class="form-control" placeholder="Name at the site">`)}
       ${fcol(6, lbl("ns-phone", "Phone", false) + `<input id="ns-phone" type="tel" inputmode="tel" maxlength="13" class="form-control" placeholder="10-digit mobile or STD landline">`)}
       ${fcol(12, lbl("ns-address", "Address", false) + `<textarea id="ns-address" class="form-control" rows="2" placeholder="Optional"></textarea>`)}
-    </div><div id="ns-err" class="mt-3"></div></div>
+    </div><div id="ns-dup" class="mt-3"></div><div id="ns-err" class="mt-3"></div></div>
     <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" onclick="closeModal();window._siteDone(null)">Cancel</button>
       <button type="button" class="btn btn-primary ms-auto" id="ns-save" onclick="saveSiteModal()">${icon("check")} Save site</button></div>`, "modal-lg");
+  ["ns-name", "ns-city", "ns-phone"].forEach(id => field(id).addEventListener("input", siteDupCheck));
+  siteDupCheck();
   setTimeout(() => field(name ? "ns-city" : "ns-name").focus(), 300);
 }
 function saveSiteModal() {
@@ -128,7 +131,7 @@ ROUTES["complaint-new"] = siteId => {
         <span class="small text-secondary ms-2">Contact and phone are copied from the site; change them here for this complaint only.</span></div>
     </div></div></div>
     <div class="card mb-3"><div class="card-header"><h3 class="card-title">${icon("file-description")} Complaint</h3></div><div class="card-body"><div class="row g-3">
-      ${fcol(4, lbl("c-company", "Company (whose product failed)") + `<select id="c-company">${opt(DB.companies, def)}</select>
+      ${fcol(4, lbl("c-company", "Company (whose product failed)") + `<select id="c-company" data-master="companies" data-noun="company">${opt(DB.companies, def)}</select>
         <small class="form-hint">Default from Setup: ${esc(def)}. Change it for other companies' products.</small>`)}
       ${fcol(4, lbl("c-ref", "Company complaint no.", false) + `<input id="c-ref" class="form-control" placeholder="The company's ticket no., if any">`)}
       ${fcol(2, lbl("c-date", "Reported on") + `<input id="c-date" type="date" class="form-control" value="${today()}" max="${today()}">`)}
@@ -150,8 +153,8 @@ ROUTES["complaint-new"] = siteId => {
       option_create: d => `<div class="create">＋ New site <b>${esc(d.input)}</b>…</div>`, no_results: () => `<div class="no-results">No saved site. Keep typing to add it.</div>` },
     onChange: v => { const s = site(v); if (s) { field("c-contact").value = s.contact; field("c-phone").value = s.phone; } clearFormError(); },
   });
-  cCompany = new TomSelect("#c-company", { maxOptions: 50, closeAfterSelect: true });
-  cTechs = new TomSelect("#c-techs", { plugins: ["remove_button"], maxOptions: 50 });
+  cCompany = masterPicker(field("c-company"));
+  cTechs = new TomSelect("#c-techs", { plugins: ["remove_button"], maxOptions: 50, render: { option: techOption } });
   if (siteId && site(siteId)) cSite.setValue(Number(siteId));
 };
 function saveComplaint() {
@@ -164,6 +167,7 @@ function saveComplaint() {
     if (r.focus === "site") cSite.focus(); if (r.focus === "company") cCompany.focus();
     return;
   }
+  smartAfterComplaint(r.complaint);
   toastAfterNav(`Complaint <b>${r.complaint.no}</b> filed for ${esc(siteName(r.complaint))}.`);
   go(`#complaint/${r.complaint.no}`);
 }
@@ -182,7 +186,7 @@ ROUTES.complaint = no => {
   view().innerHTML = `<div class="row row-cards">
     <div class="col-12"><div class="d-flex flex-wrap gap-2">
       <span class="chip">${icon("calendar")} Reported ${fmt(c.reportedOn)}</span>
-      <span class="chip ${open && ageDays(c) > 15 ? "chip-alert" : ""}">${icon("clock")} Age <b>${ageDays(c)}</b> days${c.closedOn ? ` (closed ${fmt(c.closedOn)})` : ""}</span>
+      <span class="chip">${icon("clock")} Age <b>${ageDays(c)}</b> days${c.closedOn ? ` (closed ${fmt(c.closedOn)})` : ""}</span>
       <span class="chip ${c.status === "AWAITING_MATERIAL" ? "chip-wait" : ""}">${icon("hourglass")} Awaiting material <b>${aw}</b> days</span>
       ${c.priority !== "Normal" ? prioBadge(c.priority) : ""}
       ${c.notCoveredReason ? `<span class="chip">${icon("ban")} Not covered: <b>${esc(c.notCoveredReason)}</b></span>` : ""}</div></div>

@@ -369,6 +369,101 @@ with sync_playwright() as p:
     assert js(page, "balance('EIO6006','Vizag Office')") == b0 + 1
     assert page.locator("#page-header button:has-text('Undo')").count() == 1
 
+    # 12. Masters are typed in on the forms; the Masters page is read-only.
+    page.goto(URL + "#in")
+    ts_pick(page, ts_of(page, "f-supplier"), "  bajaj   electricals ", create=True)
+    ts_pick(page, ts_of(page, "f-loc"), "Gajuwaka Godown", create=True)
+    assert js(page, "field('f-supplier').value") == "bajaj electricals"
+    assert js(page, "DB.locations.includes('Gajuwaka Godown') && DB.companies.includes('bajaj electricals')")
+    ts_of(page, "f-supplier").locator(".ts-control input").fill("HAVELLS")   # a known name in any case: no "Add" row
+    page.wait_for_timeout(450)
+    assert ts_of(page, "f-supplier").locator(".create").count() == 0
+    page.keyboard.press("Escape")
+    shot(page, "12-in-new-location")
+    page.goto(URL + "#item-new")
+    ts_pick(page, ts_of(page, "it-ftype"), "Gate light", create=True)
+    assert js(page, "DB.fittingTypes.includes('Gate light')")
+    page.goto(URL + "#out")                                     # stock can't leave a new place: OUT stays pick-only
+    assert js(page, "!!field('f-loc').dataset.master") is False
+    page.goto(URL + "#masters")
+    text = page.inner_text("#view")
+    assert "Gajuwaka Godown" in text and "Gate light" in text and "bajaj electricals" in text
+    assert page.locator("#view form, #view input, #view button").count() == 0
+    shot(page, "12-masters-read-only")
+
+    # 13. Smart features (docs/superpowers/specs/2026-10-19-smart-features-design.md). Suggest, never act.
+    page.goto(URL + "#dash")
+    assert "to chase today" in page.inner_text("#view")
+    page.goto(URL + "#today")
+    n0 = js(page, "todayCount()")
+    assert n0 > 0 and "Overdue complaints" in page.inner_text("#view")
+    page.locator("#view button[title='Hide until this changes']").first.click()
+    assert js(page, "todayCount()") == n0 - 1                              # hidden until it changes
+    shot(page, "13-today")
+    page.goto(URL + "#digest")
+    assert "Subject:" in page.inner_text("#view")
+    page.goto(URL + "#complaints")
+    assert "due" in page.inner_text("#dt-complaints thead").lower()
+    assert js(page, "DB.complaints.some(c => dueInfo(c).state === 'over')") and page.locator("#dt-complaints td .badge.st").count() > 0
+    page.goto(URL + "#complaint-new")                                       # paste a message: the form is pre-filled, not saved
+    page.click("#view a:has-text('Show')")
+    page.click("text=Try a sample WhatsApp")
+    page.click("text=Fill the form from this message")
+    page.wait_for_timeout(300)
+    assert js(page, "cSite.getValue()") == "1" and js(page, "field('c-qty').value") == "6"
+    assert "15 W" in page.inner_text("#c-fault-read") and page.locator(".ai-filled").count() >= 3
+    n_before = js(page, "DB.complaints.length")
+    assert js(page, "DB.complaints.length") == n_before                     # nothing filed until Save
+    shot(page, "13-new-complaint-from-message")
+    page.click("#view button:has-text('New site')")                         # duplicate site warning
+    wait_modal(page)
+    page.fill("#ns-phone", "9866832284")
+    assert "Punjab National Bank" in page.inner_text("#ns-dup")
+    page.click("#modal .btn-close")
+    wait_modal(page, "hidden")
+    page.goto(URL + "#in")                                                  # typo guard
+    ts_of(page, "f-supplier").locator(".ts-control").click()
+    ts_of(page, "f-supplier").locator(".ts-control input").fill("Havels")
+    page.wait_for_timeout(450)
+    assert "Did you mean" in ts_of(page, "f-supplier").locator(".ts-dropdown").inner_text()
+    page.keyboard.press("Escape")
+    busy = js(page, "DB.items.find(i => DB.entries.filter(e => e.lines.some(l => l.code === i.code)).length >= 5).code")
+    pick_line(page, "#lines", 0, busy)                                      # sanity check: warn, then allow
+    qty(page, "#lines", 0, 900)
+    page.click("button:has-text('Save Stock IN')")
+    wait_modal(page)
+    assert "usual quantity" in page.inner_text("#modal")
+    page.click("#modal button:has-text('Go back and check')")
+    wait_modal(page, "hidden")
+    page.goto(URL + "#low")
+    page.click("text=Reorder level suggestions")
+    code = page.locator("#dt-sugg tbody tr").first.locator("a.code").inner_text()
+    new_level = js(page, f"reorderSuggestion(item('{code}')).level")
+    page.locator("#dt-sugg button:has-text('Accept')").first.click()
+    assert js(page, f"item('{code}').reorder") == new_level
+    shot(page, "13-reorder-suggestions")
+    page.goto(f"{URL}#item/{code}")
+    assert "Reorder level" in page.inner_text("#view")
+    page.goto(URL + "#visit/" + js(page, "SMART.needs[0].complaint"))       # parts needed -> add to parts given
+    page.locator("#view .suggest button:has-text('Add')").first.click()
+    assert js(page, "visitParts.rows[0].code") == js(page, "SMART.needs[0].code")
+    shot(page, "13-visit-suggestions")
+    for h in ("#slow", "#insights", "#smart", "#import"):
+        page.goto(URL + h)
+        assert page.locator("#view .card").count() > 0, h
+    page.click("text=Check the files")
+    assert "what the import does" in page.inner_text("#view").lower()
+    page.goto(URL + "#drafts")
+    page.locator("#view a:has-text('Open as complaint')").last.click()
+    page.wait_for_timeout(300)
+    assert js(page, "cCompany.getValue()") == "Havells" and "Sri Venkateswara Hospital" in page.inner_text("#c-ai-site")
+    page.goto(URL + "#smart")
+    page.uncheck("#s-ai-on")
+    page.click("button:has-text('Save settings')")
+    page.goto(URL + "#complaint-new")
+    assert "AI assistant is off" in page.locator("#c-paste-body").text_content()
+    shot(page, "13-smart-settings-ai-off")
+
     # 10. Phone (390px): menu behind the hamburger; line editors stack as cards; no sideways scroll.
     phone = browser.new_page(viewport={"width": 390, "height": 844})
     phone.on("pageerror", lambda e: errors.append("phone: " + str(e)))
@@ -389,6 +484,11 @@ with sync_playwright() as p:
     shot(phone, "10-phone-record-visit", check=False)
     phone.goto(f"{URL}#batch/RB-0002")
     assert js(phone, "document.documentElement.scrollWidth <= window.innerWidth + 1"), "phone batch page scrolls sideways"
+    for h in ("#today", "#dash", "#insights", "#smart", "#drafts", "#complaint-new"):
+        phone.goto(URL + h)
+        phone.wait_for_timeout(200)
+        assert js(phone, "document.documentElement.scrollWidth <= window.innerWidth + 1"), f"phone {h} scrolls sideways"
+    shot(phone, "13-phone-today", check=False)
     browser.close()
 
 print("Layout warnings:", wide or "none")

@@ -33,17 +33,17 @@ function makeItemPicker(select, { allowCreate, onPick }) {
 
 /* ---------- item fields (Items page and the quick "create item" modal) ---------- */
 function itemFields(d, p = "it") {
-  const sel = (id, list, v, ph) => `<select id="${p}-${id}" class="form-select">${ph ? `<option value="">${ph}</option>` : ""}${opt(list, v)}</select>`;
+  const sel = (id, list, v, ph, master) => `<select id="${p}-${id}" class="form-select" ${master || ""}>${ph ? `<option value="">${ph}</option>` : ""}${opt(list, v)}</select>`;
   const col = (w, html) => `<div class="col-12 col-md-${w}">${html}</div>`;
   return `<div class="row g-3">
     ${col(4, `<label class="form-label required" for="${p}-code">Item code</label><input id="${p}-code" class="form-control" value="${esc(d.code || "")}" autocomplete="off"
       placeholder="e.g. LG66-040-078-480IT" oninput="checkCodeHint('${p}', this.value, '${esc(d.originalCode || "")}')"><small id="${p}-code-hint" class="form-hint"></small>`)}
-    ${col(4, `<label class="form-label required" for="${p}-type">Spare type</label>${sel("type", DB.spareTypes, d.type, "Choose…")}`)}
-    ${col(4, `<label class="form-label required" for="${p}-company">Company / brand</label>${sel("company", DB.companies, d.company || DB.config.defaultCompany)}`)}
+    ${col(4, `<label class="form-label required" for="${p}-type">Spare type</label>${sel("type", DB.spareTypes, d.type, "Choose…", 'data-master="spareTypes" data-noun="spare type"')}`)}
+    ${col(4, `<label class="form-label required" for="${p}-company">Company / brand</label>${sel("company", DB.companies, d.company || DB.config.defaultCompany, "", 'data-master="companies" data-noun="company"')}`)}
     ${col(12, `<label class="form-label" for="${p}-desc">Description</label><input id="${p}-desc" class="form-control" value="${esc(d.desc || "")}" placeholder="e.g. LED driver 40W 480mA">`)}
     ${col(4, `<label class="form-label" for="${p}-cat">Used in fitting (Product Cat Ref)</label><input id="${p}-cat" class="form-control" list="cat-refs" value="${esc(d.catRef || "")}"
       placeholder="e.g. LF40-192-060-57-HE"><small class="form-hint">The fitting this spare belongs to (optional).</small>`)}
-    ${col(4, `<label class="form-label" for="${p}-ftype">Fitting type</label>${sel("ftype", DB.fittingTypes, d.fittingType, "None")}`)}
+    ${col(4, `<label class="form-label" for="${p}-ftype">Fitting type</label>${sel("ftype", DB.fittingTypes, d.fittingType, "None", 'data-master="fittingTypes" data-noun="fitting type"')}`)}
     ${col(2, `<label class="form-label" for="${p}-watt">Wattage</label><div class="input-group"><input id="${p}-watt" type="number" min="0" step="1" inputmode="numeric" class="form-control" value="${d.watt ?? ""}"><span class="input-group-text">W</span></div>`)}
     ${col(2, `<label class="form-label" for="${p}-ma">Current</label><div class="input-group"><input id="${p}-ma" type="number" min="0" step="1" inputmode="numeric" class="form-control" value="${d.ma ?? ""}"><span class="input-group-text">mA</span></div>`)}
     ${col(4, `<label class="form-label required" for="${p}-unit">Unit</label>${sel("unit", DB.units, d.unit || "NOS")}`)}
@@ -182,7 +182,7 @@ const fcol = (w, html, id = "") => `<div class="col-12 col-md-${w}" ${id ? `id="
 const lbl = (forId, text, req = true) => `<label class="form-label ${req ? "required" : ""}" for="${forId}">${text}</label>`;
 const dateField = () => fcol(3, lbl("f-date", "Date") + `<div class="input-icon"><span class="input-icon-addon">${icon("calendar")}</span>
   <input id="f-date" type="date" class="form-control" value="${today()}" max="${today()}" required></div>`);
-const locField = (label, onchange = "") => fcol(3, lbl("f-loc", label) + `<select id="f-loc" class="form-select" ${onchange ? `onchange="${onchange}"` : ""}>${opt(DB.locations, "Vizag Office")}</select>`);
+const locField = (label, onchange = "", canAdd = false) => fcol(3, lbl("f-loc", label) + `<select id="f-loc" class="form-select" ${onchange ? `onchange="${onchange}"` : ""}${canAdd ? ' data-master="locations" data-noun="location"' : ""}>${opt(DB.locations, "Vizag Office")}</select>`);
 const noteField = (label, req, ph) => fcol(12, lbl("f-note", label, req) + `<textarea id="f-note" class="form-control" rows="2" placeholder="${ph}"></textarea>`);
 
 function entryForm(mode, prefill) {
@@ -197,9 +197,9 @@ function entryForm(mode, prefill) {
     in: fcol(12, lbl("", "Received from") + selectgroup("from", [["SUPPLIER", "From supplier", "truck-delivery"], ["RETURN", "Returned unused from site", "arrow-back-up"],
           ["OPENING", "Opening stock", "clipboard-list"]], "SUPPLIER", "inFromChanged()"))
       + dateField()
-      + fcol(3, lbl("f-supplier", "Supplier / company") + `<select id="f-supplier" class="form-select"><option value="">Choose…</option>${opt(DB.companies, DB.config.defaultCompany)}</select>`, "w-supplier")
+      + fcol(3, lbl("f-supplier", "Supplier / company") + `<select id="f-supplier" class="form-select" data-master="companies" data-noun="company"><option value="">Choose…</option>${opt(DB.companies, DB.config.defaultCompany)}</select>`, "w-supplier")
       + fcol(3, lbl("f-site", "Site / customer") + `<input id="f-site" class="form-control" list="customers" placeholder="e.g. Dr Reddys, Vizag">`, "w-site")
-      + locField("Into location") + fcol(3, lbl("f-ref", "DC / bill no.", false) + `<input id="f-ref" class="form-control" placeholder="e.g. DC 4512">`)
+      + locField("Into location", "", true) + fcol(3, lbl("f-ref", "DC / bill no.", false) + `<input id="f-ref" class="form-control" placeholder="e.g. DC 4512">`)
       + noteField("Remarks", false, "Optional"),
     out: fcol(12, lbl("", "Issued to") + selectgroup("to", [["SITE", "Site / customer", "building-factory-2"], ["TECH", "Technician", "user-cog"], ["OTHER", "Other", "user"]],
           "SITE", "outToChanged()"))
@@ -210,7 +210,7 @@ function entryForm(mode, prefill) {
       + fcol(3, lbl("f-ref", "Job / reference no.", false) + `<input id="f-ref" class="form-control" placeholder="Optional">`)
       + noteField("Remarks", false, "Optional"),
     trf: dateField() + locField("From location", "lines.refreshAll()")
-      + fcol(3, lbl("f-dest", "To location") + `<select id="f-dest" class="form-select">${opt(DB.locations, "TV Shop")}</select>`)
+      + fcol(3, lbl("f-dest", "To location") + `<select id="f-dest" class="form-select" data-master="locations" data-noun="location">${opt(DB.locations, "TV Shop")}</select>`)
       + noteField("Remarks", false, "Optional"),
     adj: dateField() + locField("Location", "lines.refreshAll()")
       + fcol(3, lbl("f-reason", "Reason") + `<select id="f-reason" class="form-select"><option value="">Choose…</option>${opt(ADJ_REASONS)}</select>`)
@@ -269,8 +269,11 @@ function saveEntry(mode) {
     if (!diffs.length) return formFail("The counted quantities match the system. Nothing to adjust.");
     e = { kind: "ADJ", date, reason, note, lines: diffs };
   }
+  if (!window._sanityOk) { const w = sanityWarnings(e); if (w.length) return askSanity(w, mode); }
+  window._sanityOk = false;
   const err = post(e);
   if (err) return formFail(err + " Nothing was saved.");
+  smartEntrySaved(e, loc);
   toastAfterNav(`<b>${e.no}</b> saved · ${e.kind === "TRF" ? e.lines.length / 2 : e.lines.length} item(s). Stock updated.`);
   go(`#entry/${e.no}`);
 }

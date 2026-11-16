@@ -22,6 +22,7 @@ function setHeader(pretitle, title, actions = "") {
 function openModal(html, size = "") {
   document.getElementById("modal-dialog").className = `modal-dialog modal-dialog-centered ${size}`;
   document.getElementById("modal-content").innerHTML = html;
+  upgradeMasters(document.getElementById("modal-content"));
   tabler.Modal.getOrCreateInstance(document.getElementById("modal")).show();
 }
 function closeModal() { tabler.Modal.getOrCreateInstance(document.getElementById("modal")).hide(); }
@@ -33,6 +34,49 @@ function toast(msg, kind = "success") {
     <div class="toast-body">${msg}</div>`;
   document.getElementById("toasts").appendChild(el);
   setTimeout(() => el.remove(), 5000);
+}
+/* ---------- type-to-add master pickers ----------
+   <select data-master="companies" data-noun="company"> becomes a Tom Select where typing an unknown name offers
+   "＋ Add … as a new company". Names are matched ignoring case and extra spaces, so "havells " picks Havells. */
+const cleanName = s => s.trim().replace(/\s+/g, " ");
+// Letter-pair (Dice) similarity, 0..1. The real app uses Postgres pg_trgm for the same job.
+function similarity(a, b) {
+  const pairs = s => { s = String(s).toLowerCase().replace(/[^a-z0-9]/g, ""); const out = []; for (let i = 0; i < s.length - 1; i++) out.push(s.slice(i, i + 2)); return out; };
+  const x = pairs(a), y = pairs(b); if (!x.length || !y.length) return 0;
+  let hit = 0; const pool = y.slice();
+  for (const p of x) { const k = pool.indexOf(p); if (k >= 0) { hit++; pool.splice(k, 1); } }
+  return 2 * hit / (x.length + y.length);
+}
+function masterPicker(select) {
+  const listKey = select.dataset.master, noun = select.dataset.noun;
+  const known = v => DB[listKey].some(x => x.toLowerCase() === cleanName(v).toLowerCase());
+  return new TomSelect(select, {
+    maxOptions: 100, closeAfterSelect: true, allowEmptyOption: true,
+    createFilter: v => cleanName(v).length > 0 && cleanName(v).length <= 60 && !known(v),
+    create: (input, done) => {
+      const name = cleanName(input);
+      DB[listKey].push(name);
+      toast(`Added <b>${esc(name)}</b> as a new ${esc(noun)}. It will be in the list from now on.`);
+      done({ value: name, text: name });
+    },
+    // Typo guard: a close spelling ("Havels") still lists the saved name, marked "Did you mean this?".
+    score: function (search) {
+      this.clearCache("option");   // the "Did you mean" hint depends on what is typed, so don't reuse rendered options
+      const base = this.getScoreFunction(search), q = cleanName(search);
+      return d => base(d) || (q.length >= 3 && similarity(q, d.text) >= 0.5 ? 0.0001 : 0);
+    },
+    render: {
+      option: function (d) {
+        const q = cleanName(this.inputValue()).toLowerCase(), near = q && !d.text.toLowerCase().includes(q);
+        return `<div>${esc(d.text)}${near ? ` <span class="near-hint">${icon("bulb")}Did you mean this?</span>` : ""}</div>`;
+      },
+      option_create: d => `<div class="create">＋ Add <b>${esc(cleanName(d.input))}</b> as a new ${esc(noun)}</div>`,
+      no_results: () => `<div class="no-results">No match. Keep typing to add it.</div>`,
+    },
+  });
+}
+function upgradeMasters(root = document) {
+  root.querySelectorAll("select[data-master]").forEach(s => { if (!s.tomselect) masterPicker(s); });
 }
 let pendingToast = null;
 const toastAfterNav = msg => { pendingToast = msg; };
@@ -113,19 +157,21 @@ function route() {
   const [name, ...rest] = (location.hash.slice(1) || "dash").split("/");
   const arg = rest.length ? decodeURIComponent(rest.join("/")) : undefined;
   const navName = { "item-new": "items", "item-edit": "items", item: "items", entry: "moves", complaint: "complaints", visit: "complaints",
-    site: "sites", piece: "pieces", batch: "batches", "batch-new": "batches" }[name] || name;
+    site: "sites", piece: "pieces", batch: "batches", "batch-new": "batches", digest: "today" }[name] || name;
   document.querySelectorAll("#nav .nav-link").forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + navName));
   const menu = document.getElementById("sidebar-menu");
   if (menu.classList.contains("show")) tabler.Collapse.getOrCreateInstance(menu).hide();
   document.getElementById("gresults").classList.remove("show");
   for (const id in DT) delete DT[id].cfg;
   (ROUTES[name] || ROUTES.dash)(arg);
+  upgradeMasters(view());
   for (const id of Object.keys(DT)) if (DT[id].cfg && document.getElementById(`dt-${id}`)) dtRender(id);
   const low = DB.items.filter(i => i.active && isLow(i)).length;
   document.getElementById("nav-low").textContent = low || "";
   document.getElementById("bell-count").textContent = low || "";
   document.getElementById("nav-open").textContent = DB.complaints.filter(isOpen).length || "";
   document.getElementById("nav-def").textContent = DB.pieces.filter(p => p.status === "IN_STORE").length || "";
+  smartBadges();
   if (pendingToast) { toast(pendingToast); pendingToast = null; }
   window.scrollTo(0, 0);
 }

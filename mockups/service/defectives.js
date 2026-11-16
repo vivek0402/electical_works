@@ -380,7 +380,7 @@ function batchSentCards(b, rows, sentRows) {
           ${fcol(12, lbl("", "Company's answer") + selectgroup("s-outcome", [["REPLACED", "Replaced", "replace"], ["REPAIRED", "Repaired", "tool"],
             ["REJECTED_RETURNED", "Rejected (returned)", "arrow-back"], ["REJECTED_SCRAPPED", "Rejected (scrapped)", "trash"]], "REPLACED", "settleOutcomeChanged()"))}
           ${fcol(3, lbl("s-date", "Date answered") + `<input id="s-date" type="date" class="form-control" value="${today()}" min="${b.dispatchedOn}" max="${today()}">`)}
-          ${fcol(3, lbl("s-loc", "Goes into location") + `<select id="s-loc" class="form-select" onchange="field('settle-err').innerHTML=''"><option value="">Choose…</option>${opt(DB.locations)}</select>`, "w-sloc")}
+          ${fcol(3, lbl("s-loc", "Goes into location") + `<select id="s-loc" class="form-select" data-master="locations" data-noun="location" onchange="field('settle-err').innerHTML=''"><option value="">Choose…</option>${opt(DB.locations)}</select>`, "w-sloc")}
           <div class="col-12 col-md-6"><div class="text-secondary small pt-md-4" id="settle-hint"></div></div>
         </div>
         <div class="d-flex mt-3"><button type="button" class="btn btn-primary ms-auto" onclick="doSettle('${b.no}')">${icon("check")} Settle ticked pieces</button></div>

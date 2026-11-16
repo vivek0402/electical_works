@@ -169,3 +169,28 @@ td.c-check, th.c-check { width: 1%; }
 .lines-table td[data-label="Batch code"] { min-width: 8rem; }
 .lines-table td[data-label="PKD (packed)"] { min-width: 10rem; }
 .table th .def-head { white-space: normal; max-width: 6.5rem; }
+/* Type-to-add pickers: while typing, hide the current value so the typed text sits alone on one line. */
+.ts-wrapper.single.input-active.dropdown-active .ts-control > .item { display: none; }
+
+/* ===== Smart features (mockup, 2026-10-19). Suggestions are brand-blue tinted boxes with a bulb icon; learning states are
+   dashed slate boxes; fields filled by AI get a dashed blue border plus a "From message" tag. Colour still means something. */
+.min-w-0 { min-width: 0; }
+.suggest { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: flex-start; padding: .75rem 1rem; border: 1px solid #c9d8f0;
+  background: var(--tblr-primary-lt); border-radius: .5rem; color: #1f2937; }
+.suggest-ic { color: var(--tblr-primary); font-size: 1.25rem; line-height: 1.2; }
+.suggest-act { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.learning { display: flex; gap: .75rem; padding: .75rem 1rem; border: 1px dashed #cbd5e1; background: #f8fafc; border-radius: .5rem; color: #334155; }
+.learning > .ti { color: #475569; font-size: 1.25rem; }
+.ai-filled { border-color: var(--tblr-primary) !important; border-style: dashed !important; background-color: #f5f8fd !important; }
+.ts-wrapper.ai-filled { background: transparent !important; border: 0 !important; }
+.ts-wrapper.ai-filled .ts-control { border: 1px dashed var(--tblr-primary) !important; background: #f5f8fd !important; }
+tr.ai-line td { background: #f5f8fd; }
+.ai-tag { font-size: .7rem; }
+.fault-read { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.near-hint { font-size: .75rem; color: var(--tblr-primary); margin-left: .35rem; }
+.spark { display: inline-flex; align-items: flex-end; gap: 2px; height: 18px; vertical-align: middle; }
+.spark span { width: 5px; background: var(--tblr-primary); border-radius: 1px; }
+.spark span.z { background: #d5dbe3; height: 2px !important; }
+.today-card { border-left: 4px solid var(--tblr-primary); }
+.digest-mail { max-width: 46rem; margin: 0 auto; }
+.digest-mail .list-group-item { font-size: .875rem; }
