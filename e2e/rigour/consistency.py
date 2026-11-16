@@ -2,8 +2,9 @@
 
     uv run --with requests --with openpyxl python e2e/rigour/consistency.py http://127.0.0.1:8001 admin <password>
 
-1. Every dashboard tile that is a count must equal the 'of N' total of the list it links to.
-2. Every Excel export must have as many data rows as the list it exports (same filter).
+1. Every 'needs attention' block on Home, Complaints and Defectives (its data-count) must equal the 'of N' total of the list it links to.
+2. The top-bar counts equal the lists they open.
+3. Every Excel export must have as many data rows as the list it exports (same filter).
 (That text typed like a formula stays text in Excel is checked in scenario_matrix.py, which creates it.)
 """
 
@@ -33,8 +34,9 @@ def list_total(path):
     return int(m.group(1)) if m else None
 
 
+# Direction B: the "needs attention" blocks carry their count in data-count and link to the list behind it.
 TILE = re.compile(
-    r'<a [^>]*href="([^"]+)"[^>]*class="[^"]*(?:card|kpi|tile|stat)[^"]*"[^>]*>(.*?)</a>|<a [^>]*class="[^"]*(?:card|kpi|tile|stat)[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
+    r'<a class="b-block attn[^"]*"\s+href="([^"]+)"\s+data-count="(\d+)">(.*?)</a>',
     re.S,
 )
 # These tiles show a different thing from the list's row count (a sum of quantities, or lines not entries)
@@ -48,12 +50,10 @@ NOT_A_ROW_COUNT = ("In stock (all locations)",)
 print("== dashboard tiles against the lists they open ==")
 for page in ("/", "/complaints/", "/defectives/"):
     for m in TILE.finditer(c.get(page).text):
-        href = htmllib.unescape(m.group(1) or m.group(3))
-        body = text_of(m.group(2) or m.group(4))
-        number = re.match(r"(\d[\d,]*)", body)
-        if not number or any(s in body for s in NOT_A_ROW_COUNT):
+        href, n, body = htmllib.unescape(m.group(1)), int(m.group(2)), text_of(m.group(3))
+        if any(s in body for s in NOT_A_ROW_COUNT):
             continue
-        n, total = int(number.group(1).replace(",", "")), list_total(href)
+        total = list_total(href)
         known = next((why for key, why in KNOWN_OPEN.items() if key in body), None)
         if known and n != total:
             print(f"KNOWN {page} tile '{body[:42]}' = {n}; its list shows {total}")
@@ -65,21 +65,19 @@ for page in ("/", "/complaints/", "/defectives/"):
             f"tile {n} vs list {total}",
         )
 
-print("\n== menu badges against their lists ==")
-side = c.get("/").text
+print("\n== top-bar counts against their lists ==")
+top_bar = c.get("/").text
 for m in re.finditer(
-    r'<a class="nav-link[^"]*"\s+href="([^"]+)".*?<span class="nav-link-title">([^<]+)</span>\s*(?:<span class="badge[^>]*>(\d+)</span>)?',
-    side,
-    re.S,
+    r'<a class="b-count-link" href="([^"]+)"><span class="badge nav-badge" title="([^"]+)">(\d+)',
+    top_bar,
 ):
     href, label, badge = htmllib.unescape(m.group(1)), m.group(2).strip(), m.group(3)
-    if badge:
-        total = list_total(href)
-        check(
-            f"menu '{label}' badge {badge} = its list's {total}",
-            total is not None and int(badge) == total,
-            f"{href}",
-        )
+    total = list_total(href)
+    check(
+        f"top bar '{label}' count {badge} = its list's {total}",
+        total is not None and int(badge) == total,
+        f"{href}",
+    )
 
 print("\n== Excel exports against the lists ==")
 
@@ -133,6 +131,7 @@ check(
 batch_numbers = sorted(set(re.findall(r"RB-\d{4}", c.get("/defectives/batches/?size=50").text)))
 for rb in batch_numbers:
     page = c.get(f"/defectives/batches/{rb}/").text
+    page = page.split("<h2>Add pieces")[0]  # a draft batch also lists the store pieces it could take
     pieces = len(set(re.findall(r'href="/defectives/pieces/(DEF-\d+)/"', page)))
     _, rows, _ = sheet_rows(f"/defectives/batches/{rb}/export/")
     check(f"dispatch list {rb}: {len(rows)} rows = {pieces} pieces on its page", len(rows) == pieces)

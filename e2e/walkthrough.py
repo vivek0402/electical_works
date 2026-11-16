@@ -1,4 +1,5 @@
-"""End-to-end walkthrough against a running dev server with demo data (ports mockups/stock/walkthrough.py).
+"""End-to-end walkthrough against a running dev server with demo data
+(direction B UI: top-bar section pills, hero with actions, Summary card holding Save, exports in footers).
 
     PYTHONIOENCODING=utf-8 uv run --with playwright==1.63.0 python e2e/walkthrough.py \
         http://127.0.0.1:8000 office [password]
@@ -20,6 +21,9 @@ the visit's parts given), so the demo items' stock ends where it started. Left b
   - two complaints: one at the new site, moved Awaiting material, Resolved, Closed; one at the first demo
     site, closed as Not covered. Closed complaints don't count as open anywhere;
   - the entry/undo pairs, which stay on record by design.
+
+On a phone it checks that Home and Current stock don't scroll sideways, that there is no hamburger
+(the top bar scrolls sideways instead), a complaint page, its Record visit page and the defective pieces list.
 
 Screenshots go to e2e/screen-<width>.png, plus e2e/screen-390-complaint.png and e2e/screen-390-visit.png.
 If a step fails, e2e/screen-<width>-FAIL.png is saved, and the failing step and any JS errors are printed.
@@ -72,7 +76,8 @@ def login(page):
     page.fill("#id_username", USER)
     page.fill("#id_password", PASSWORD)
     page.click("button[type=submit]")
-    expect(page.locator(".page-title")).to_contain_text("Stock dashboard")
+    expect(page.locator(".page-title")).to_be_visible()  # Home: the hero title is today's date
+    expect(page.locator(".b-pill.on")).to_contain_text("Home")
 
 
 def pick_item(page, text, create=False, row=0):
@@ -131,7 +136,8 @@ def stock_row(page, code):
     """Current stock for one item: ({location: qty}, total, defective store)."""
     page.goto(f"{BASE}/stock/?q={code}")
     heads = [
-        h.inner_text().strip().splitlines()[0].strip().upper() for h in page.locator("table thead th").all()
+        h.inner_text().strip().splitlines()[0].strip().upper()
+        for h in page.locator("table thead tr").last.locator("th").all()  # the first header row only groups
     ]
     row = page.locator("table tbody tr", has=page.locator("a.code", has_text=re.compile(rf"^{code}$")))
     expect(row).to_have_count(1)
@@ -176,7 +182,7 @@ def run(page):
     watch(page)
     step("log in (desktop)")
     login(page)
-    expect(page.locator("#chart-weekly .apexcharts-canvas, #chart-weekly svg").first).to_be_visible()
+    expect(page.locator(".b-card").first).to_be_visible()  # the server-rendered cards and bars
 
     step("global search finds an old spelling; Enter opens the item")
     page.fill("#gsearch", "ei08437")
@@ -486,12 +492,16 @@ def service_exports(page):
 
 
 def phone(page):
-    """Phone width: log in, open the off-canvas menu, open a list screen."""
+    """Phone width: log in, use the top-bar pills, open a list screen."""
     watch(page)
-    step("log in (phone) and open the menu")
+    step("log in (phone): the top bar scrolls sideways, Stock opens with its actions")
     login(page)
-    page.click(".navbar-toggler")
+    no_side_scroll(page, "Home")
+    expect(page.locator(".navbar-toggler")).to_have_count(0)  # no hamburger, no sidebar
+    page.locator(".b-nav .b-pill-link", has_text="Stock").first.click()
+    expect(page.locator(".page-title")).to_contain_text("Current stock")
     expect(page.get_by_role("link", name="Stock IN").first).to_be_visible()
+    no_side_scroll(page, "Current stock")
     step("current stock on a phone")
     page.goto(f"{BASE}/stock/")
     expect(page.locator("table")).to_be_visible()

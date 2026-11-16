@@ -158,6 +158,8 @@ with sync_playwright() as p:
 
     # --- a 25-line Stock IN ---------------------------------------------------------------------------------------
     page.goto(f"{BASE}/stock/in/")
+    page.locator("#id_company").select_option(index=1)  # nothing is preselected: pick a supplier and a place
+    page.locator("#id_location").select_option(index=1)
     page.locator("#id_ref").fill("UI-25-LINES")
     for n in range(25):
         if n:
@@ -202,7 +204,8 @@ with sync_playwright() as p:
     errors_before = len(errors)
     watch(ph)
     login(ph)
-    ph.click(".navbar-toggler")
+    expect(ph.locator(".navbar-toggler")).to_have_count(0)  # no hamburger: the top bar scrolls sideways
+    ph.locator(".b-nav .b-pill-link", has_text="Stock").first.click()
     expect(ph.get_by_role("link", name="Stock IN").first).to_be_visible()
     bad = []
     for url in urls:

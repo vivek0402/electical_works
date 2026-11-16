@@ -64,7 +64,7 @@ On a desktop-sized window the walkthrough goes through:
 - **Return batch:** creates a batch for one company, where a piece from another company is refused, and dispatches it. It settles one piece as Replaced (its Stock IN raises good stock) and one as Rejected (returned).
 - **Reports and clean-up:** downloads the pending complaints, complaint list, defective list and dispatch list reports, then undoes the stock entries it can.
 
-At 390px wide it checks the phone menu, current stock, a complaint page, its Record visit page and the defective pieces list (no sideways scrolling).
+At 390px wide it checks that Home and Current stock don't scroll sideways, that the top bar has no hamburger (its section pills scroll sideways instead) and that Stock opens from its pill, then current stock, a complaint page, its Record visit page and the defective pieces list (no sideways scrolling).
 
 It can be run again and again. Each run works on its own new item, complaints and batch, and its docstring lists what a run leaves behind. Re-seed the demo database afterwards if you want clean demo data. It exits 0 only if every step passes and the browser logs no JS errors. Screenshots are saved as `e2e/screen-*.png` (git-ignored). On a failure it saves `e2e/screen-<width>-FAIL.png` and prints the failing step.
 
