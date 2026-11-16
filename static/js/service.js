@@ -6,7 +6,7 @@
      the hidden field is also disabled, so it is never sent;
    - forms marked [data-once] disable their submit button after the first click;
    - a .modal[data-show-on-load] opens when the page loads (it holds an error from the last submit);
-   - the Summary card of the New complaint and Record visit forms is filled from the fields (display only);
+   - the Summary card of the New complaint, Record visit, Mark defective and New return batch forms is filled from the fields (display only);
    - select[data-reload-company] (New batch) reloads the page for the chosen company, keeping the note. */
 (function () {
   const BS = window.bootstrap || (window.tabler && window.tabler.bootstrap);
@@ -94,7 +94,7 @@
   // The Summary card beside the New complaint and Record visit forms (display only: nothing here is posted or
   // validated). It repeats what has been entered so far, and marks a required value that is still missing.
   (function () {
-    const form = document.querySelector("form.b-form[data-summary-form], form[data-visit-form]");
+    const form = document.querySelector("form.b-form[data-summary-form], form[data-visit-form], form[data-mark-form], form[data-batch-form]");
     if (!form) return;
     const $ = id => document.getElementById(id);
     const put = (id, text) => {
@@ -108,6 +108,17 @@
     const date = el => (el && el.value ? el.value.split("-").reverse().join("-") : "");
     const checked = name => { const r = form.querySelector(`input[name=${name}]:checked`); return r ? r.parentElement.textContent.trim() : ""; };
     const refresh = () => {
+      if (form.hasAttribute("data-mark-form")) {
+        put("sum-date", date($("id_entry_date")));
+        put("sum-loc", picked($("id_location")));
+        put("sum-pieces", ($("lines-summary") || {}).textContent.trim());
+        return;
+      }
+      if (form.hasAttribute("data-batch-form")) {
+        put("sum-company", picked($("b-company")));
+        put("sum-note", ($("b-note") || {}).value.trim());
+        return;
+      }
       if (form.hasAttribute("data-visit-form")) {
         put("sum-date", date($("id_visit_date")));
         put("sum-techs", many($("id_technicians")));
@@ -129,7 +140,7 @@
     // later by site-picker.js) is read from its own control, so look again shortly after it changes.
     form.addEventListener("click", () => setTimeout(refresh, 0));
     form.addEventListener("keyup", () => setTimeout(refresh, 0));
-    ["parts-summary", "collect-summary"].forEach(id => {
+    ["parts-summary", "collect-summary", "lines-summary"].forEach(id => {
       const el = $(id);
       if (el) new MutationObserver(refresh).observe(el, { childList: true, characterData: true, subtree: true });
     });

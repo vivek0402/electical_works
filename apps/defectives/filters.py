@@ -13,11 +13,17 @@ from .models import BATCH_LABELS, Outcome, PieceStatus, Source
 class BatchFilters:
     company: Company | None
     status: str  # one of BATCH_LABELS, or "" for any
+    waiting_over: int | None = None  # only batches still waiting on the company for more than this many days
 
 
 def batch_filters(params):
     status = params.get("status", "")
-    return BatchFilters(_obj(Company, params.get("company")), status if status in BATCH_LABELS else "")
+    days = params.get("waiting_over", "")
+    return BatchFilters(
+        _obj(Company, params.get("company")),
+        status if status in BATCH_LABELS else "",
+        int(days) if days.isdigit() and len(days) < 5 else None,
+    )
 
 
 @dataclass

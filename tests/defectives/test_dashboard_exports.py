@@ -1,4 +1,5 @@
 import io
+import re
 from datetime import timedelta
 
 import openpyxl
@@ -64,9 +65,7 @@ def test_dashboard_numbers(office_client, story):
     assert {value: n for value, _, n in d["outcomes"]}["REPLACED"] == 1
     assert [r["piece"].tag for r in d["oldest"]] == ["DEF-0004", "DEF-0005"]
     html = office_client.get("/defectives/").content.decode()
-    assert (
-        "Pieces in store" in html and "Sent, awaiting settlement" in html and "Outcomes, last 90 days" in html
-    )
+    assert "Pieces in store" in html and "With the companies" in html and "Outcomes, last 90 days" in html
 
 
 def test_defective_list_export_groups_by_company(office_client, story):
@@ -213,19 +212,51 @@ def test_piece_counts_is_shared(story):
 
 def test_empty_dashboard_renders(office_client):
     html = office_client.get("/defectives/").content.decode()
-    assert "No answers in the last 90 days" in html and "def-chart-toggle" not in html
-    assert "The Defective store is empty." in html and "Nothing is waiting on a company." in html
+    assert "No answers in the last 90 days" in html and 'class="b-bars"' not in html
+    assert "The Defective store is empty and nothing is waiting on a company." in html
+    assert 'id="attention"' not in html
 
 
-def test_chart_has_counts_in_its_label_and_a_fixed_toggle(office_client, story):
+def test_outcome_bars_show_every_answer_with_its_count(office_client, story):
+    """The bars replaced the chart: a word, a bar and a number per outcome, each linking to its pieces."""
     html = office_client.get("/defectives/").content.decode()
-    assert "Replaced 1, Repaired 0, Rejected (returned) 0, Rejected (scrapped) 0" in html
-    assert "Table view" in html and "View as table" not in html
+    for label, n in (
+        ("Replaced", 1),
+        ("Repaired", 0),
+        ("Rejected (returned)", 0),
+        ("Rejected (scrapped)", 0),
+    ):
+        assert f"<span>{label}</span>" in html and re.search(
+            rf"<span>{re.escape(label)}</span><i [^>]*></i><b>{n}</b>", html
+        )
+    assert "def-chart" not in html and "apexcharts" not in html
+
+
+def test_attention_blocks_equal_their_lists(office_client, story):
+    """Pieces in store: 2 = the rows of ?status=IN_STORE. Nothing is overdue yet, so no second block."""
+    html = office_client.get("/defectives/").content.decode()
+    assert 'data-count="2"' in html and 'href="/defectives/pieces/?status=IN_STORE"' in html
+    assert len(office_client.get("/defectives/pieces/?status=IN_STORE").context["table"]["page"]) == 2
+    assert "waiting_over" not in html
+
+
+def test_overdue_batches_block_matches_the_filtered_list(office_client, story):
+    old = ReturnBatch.objects.get(number="RB-0001")
+    ReturnBatch.objects.filter(pk=old.pk).update(dispatched_on=today() - timedelta(days=45))
+    d = selectors.dashboard(today())
+    assert d["overdue"] == 1
+    html = office_client.get("/defectives/").content.decode()
+    assert 'data-count="1"' in html and 'href="/defectives/batches/?waiting_over=30"' in html
+    rows = office_client.get("/defectives/batches/?waiting_over=30").context["table"]["page"]
+    assert [r["batch"].number for r in rows] == ["RB-0001"]
+    assert office_client.get("/defectives/batches/?waiting_over=60").context["table"]["total"] == 0
 
 
 def test_store_row_link_has_no_status_filter(office_client, story):
     html = office_client.get("/defectives/").content.decode()
-    assert "?company=" in html and "&amp;status=IN_STORE" not in html
+    assert re.search(
+        r'href="/defectives/pieces/\?company=\d+">Havells</a>', html
+    )  # the name links to all of its pieces
 
 
 def test_draft_dispatch_list_status_line(office_client, story):
@@ -247,7 +278,7 @@ def test_sheet_name_never_ends_in_an_apostrophe(office_client, office_user):
 
 
 def test_query_counts_are_bounded(office_client, story, django_assert_max_num_queries):
-    with django_assert_max_num_queries(13):
+    with django_assert_max_num_queries(12):  # 13 before: reuses the menu badge's counts
         assert office_client.get("/defectives/").status_code == 200
     with django_assert_max_num_queries(6):
         assert office_client.get("/defectives/export/").status_code == 200

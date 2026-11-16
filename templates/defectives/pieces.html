@@ -1,43 +1,43 @@
 {% extends "base.html" %}{% load static core_tags defective_tags %}
 {% block title %}Defective pieces{% endblock %}
-{% block pretitle %}Defectives{% endblock %}
 {% block page_title %}Defective pieces{% endblock %}
-{% block actions %}<a href="{% url 'mark_defective' %}" class="btn btn-quiet"><i class="ti ti-alert-octagon"></i> Mark defective</a>
-  <a href="{% url 'defective_list_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export to Excel</a>{% endblock %}
+{% block page_context %}{% if nav_pieces_in_store %}{{ nav_pieces_in_store }} in store waiting for a return batch.{% else %}Nothing is waiting in store.{% endif %} Tick pieces in store to batch or scrap them.{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-body border-bottom py-3"><form method="get" class="row g-2 align-items-end">
+<section class="card b-card">
+  {% if f.outcome or f.answered %}<div class="b-chips">
+    {% if f.outcome %}<span class="cap">Outcome:</span> {{ f.outcome|outcome_badge }}{% endif %}
+    {% if f.answered %}<span class="cap">Answered:</span> {{ f.answered|outcome_badge }}{% if f.since %} <span class="cap">since {{ f.since|date }}</span>{% endif %}{% endif %}
+</div>{% endif %}
+  <form method="get" class="b-filters f-4s">
     {% if f.outcome %}<input type="hidden" name="outcome" value="{{ f.outcome }}">{% endif %}
     {% if f.answered %}<input type="hidden" name="answered" value="{{ f.answered }}">{% if f.since %}<input type="hidden" name="since" value="{{ f.since|date:'Y-m-d' }}">{% endif %}{% endif %}
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-co">Company</label>
+    <div class="fld"><label class="form-label" for="pf-co">Company</label>
       <select id="pf-co" name="company" class="form-select" onchange="this.form.submit()"><option value="">All companies</option>
         {% for c in companies %}<option value="{{ c.pk }}" {% if f.company == c %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-3"><label class="form-label small text-secondary mb-1" for="pf-item">Item</label>
+    <div class="fld"><label class="form-label" for="pf-item">Item</label>
       <select id="pf-item" name="item" class="form-select" data-ts onchange="this.form.submit()"><option value="">All items</option>
         {% for i in items %}<option value="{{ i.pk }}" {% if f.item == i %}selected{% endif %}>{{ i.code }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-st">Status</label>
+    <div class="fld"><label class="form-label" for="pf-st">Status</label>
       <select id="pf-st" name="status" class="form-select" onchange="this.form.submit()"><option value="">Any status</option>
         {% for v, label in statuses %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-sm-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-src">Source</label>
+    <div class="fld"><label class="form-label" for="pf-src">Source</label>
       <select id="pf-src" name="source" class="form-select" onchange="this.form.submit()"><option value="">Any source</option>
         {% for v, label in sources %}<option value="{{ v }}" {% if f.source == v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    <div class="col-12 col-lg-3"><label class="form-label small text-secondary mb-1" for="pf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search"></i></span>
+    <div class="fld grow"><label class="form-label" for="pf-q">Search</label><div class="input-icon"><span class="input-icon-addon"><i class="ti ti-search" aria-hidden="true"></i></span>
       <input id="pf-q" type="search" name="q" value="{{ f.q }}" class="form-control" placeholder="Tag, batch code, RB no., fault"></div></div>
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-from">Collected from</label><input id="pf-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
-    <div class="col-6 col-lg-2"><label class="form-label small text-secondary mb-1" for="pf-to">Collected to</label><input id="pf-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
-    {% if f.outcome %}<div class="col-auto pb-2">Outcome: {{ f.outcome|outcome_badge }}</div>{% endif %}
-    {% if f.answered %}<div class="col-auto pb-2">Answered: {{ f.answered|outcome_badge }}{% if f.since %} <span class="text-secondary small">since {{ f.since|date }}</span>{% endif %}</div>{% endif %}
-    <div class="col-auto ms-auto pb-1"><a href="{% url 'defective_pieces' %}" class="btn btn-link link-secondary px-0"><i class="ti ti-filter-off"></i> Clear filters</a></div>
-  </form></div>
+    <div class="fld"><label class="form-label" for="pf-from">Collected from</label><input id="pf-from" type="date" name="date_from" value="{{ f.date_from|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="fld"><label class="form-label" for="pf-to">Collected to</label><input id="pf-to" type="date" name="date_to" value="{{ f.date_to|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()"></div>
+    <div class="fld"><a href="{% url 'defective_pieces' %}" class="btn btn-link link-secondary px-0"><i class="ti ti-filter-off" aria-hidden="true"></i> Clear filters</a></div>
+  </form>
   <form method="post" action="{% url 'pieces_bulk' %}">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <div class="bulk-bar px-3 py-2 d-flex flex-wrap align-items-center gap-2" data-bulk hidden><b data-tick-count></b>
+    <div class="bulk-bar py-2 d-flex flex-wrap align-items-center gap-2" data-bulk hidden><b data-tick-count></b>
       <div class="ms-auto btn-list"><button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#batch-modal"><i class="ti ti-packages"></i> Add to draft batch…</button>
         <button type="button" class="btn btn-sm btn-quiet" data-bs-toggle="modal" data-bs-target="#scrap-modal"><i class="ti ti-trash"></i> Scrap…</button></div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table table-striped">
+    <div class="table-responsive"><table class="table table-vcenter card-table t">
       <thead><tr><th class="c-check"><input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all pieces in store on this page"></th>
         {% sort_th "tag" "Tag" %}{% sort_th "code" "Item" %}{% sort_th "company" "Company" %}{% sort_th "source" "Source" %}{% sort_th "collected" "Collected" %}{% sort_th "bpkd" "Batch · PKD" %}{% sort_th "status" "Status" %}{% sort_th "rb" "Return batch" %}</tr></thead>
       <tbody>{% for p in table.page %}<tr>
-        <td class="c-check">{% if p.status == "IN_STORE" %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-company="{{ p.company_id }}" data-tick aria-label="Tick {{ p.tag }}">{% else %}<span class="text-secondary" title="Only pieces in store can be batched or scrapped"><i class="ti ti-lock"></i></span>{% endif %}</td>
+        <td class="c-check">{% if p.status == "IN_STORE" %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-company="{{ p.company_id }}" data-tick aria-label="Tick {{ p.tag }}">{% else %}<span class="text-secondary" title="Only pieces in store can be batched or scrapped"><i class="ti ti-lock" aria-hidden="true"></i></span>{% endif %}</td>
         <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td>
         <td><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a><div class="small text-secondary">{{ p.item.description }}</div></td>
         <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="nowrap">{{ p.collected_on|date }}</td>
@@ -58,8 +58,8 @@
     </div></div></div>
     {% include "defectives/_scrap_modal.html" with standalone=False %}
   </form>
-  {% include "core/_pagination.html" %}
-</div>
-<p class="text-secondary small mt-2"><i class="ti ti-info-circle"></i> Tick pieces that are in store to add them to a draft return batch or scrap them. Pieces in a batch, sent or settled are locked.</p>
+  {% include "inventory/_foot.html" with export_name="defective_list_xlsx" %}
+</section>
+<p class="cap"><i class="ti ti-lock" aria-hidden="true"></i> Pieces in a batch, sent or settled are locked: only pieces in store can be batched or scrapped.</p>
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/service.js' %}"></script>{% endblock %}

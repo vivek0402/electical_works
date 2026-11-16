@@ -47,6 +47,8 @@ def batch_rows(f, today):
         if f.status and label != f.status:
             continue
         waiting = (today - b.dispatched_on).days if b.dispatched_on and label != "Settled" else None
+        if f.waiting_over is not None and (waiting is None or waiting <= f.waiting_over):
+            continue
         rows.append({"batch": b, "label": label, "waiting": waiting})
     return rows
 
@@ -162,9 +164,13 @@ def piece_counts():
     }
 
 
-def dashboard(today):
+OVERDUE_DAYS = 30  # a batch still waiting on the company after this many days needs a chase
+
+
+def dashboard(today, counts=None):
     """Figures for the defectives dashboard. Answers come from BatchLine: a piece's own outcome is empty while
-    it sits in a draft or sent batch, and a piece rejected and replaced later has two answers."""
+    it sits in a draft or sent batch, and a piece rejected and replaced later has two answers.
+    `counts` is piece_counts() when the caller already has it (the request's menu badges do)."""
     in_store, in_batch = Q(status=PieceStatus.IN_STORE), Q(status=PieceStatus.IN_BATCH)
     store_rows = list(
         DefectivePiece.objects.filter(in_store | in_batch)
@@ -185,13 +191,44 @@ def dashboard(today):
             {**row, "batches": batches, "oldest": oldest, "waiting": (today - oldest.dispatched_on).days}
         )
     sent_rows.sort(key=lambda r: -r["waiting"])
+    # Batches the companies have kept longer than OVERDUE_DAYS: exactly the rows of /batches/?waiting_over=30.
+    overdue = sum(
+        1
+        for batches in sent_batches.values()
+        for b in batches
+        if (today - b.dispatched_on).days > OVERDUE_DAYS
+    )
+    # One row per company: what is in the store, in a draft batch and out with the company.
+    companies = {
+        r["company_id"]: {
+            "company_id": r["company_id"],
+            "name": r["company__name"],
+            "store": r["store"],
+            "batch": r["batch"],
+            "sent": 0,
+            "batches": [],
+            "waiting": None,
+        }
+        for r in store_rows
+    }
+    for r in sent_rows:
+        row = companies.setdefault(
+            r["company_id"],
+            {"company_id": r["company_id"], "name": r["company__name"], "store": 0, "batch": 0},
+        )
+        row.update(sent=r["n"], batches=r["batches"], waiting=r["waiting"])
+    company_rows = list(companies.values())
+    for row in company_rows:
+        row.setdefault("sent", 0), row.setdefault("batches", []), row.setdefault("waiting", None)
     since = today - timedelta(days=90)  # answers dated after this day: exactly the last 90 days
     answered = BatchLine.objects.exclude(outcome="").filter(settled_on__gt=since)
     by_outcome = dict(answered.values_list("outcome").annotate(n=Count("id")))
     longest = pieces_qs().filter(status=PieceStatus.IN_STORE).order_by("collected_on", "tag")[:6]
     return {
-        **piece_counts(),
+        **(counts or piece_counts()),
         "since": since,
+        "overdue": overdue,
+        "company_rows": company_rows,
         "drafts": ReturnBatch.objects.filter(status=BatchStatus.DRAFT).count(),
         "answered": sum(by_outcome.values()),
         "store_rows": store_rows,

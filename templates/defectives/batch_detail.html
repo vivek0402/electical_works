@@ -1,99 +1,96 @@
 {% extends "base.html" %}{% load static core_tags defective_tags %}
 {% block title %}{{ batch.number }}{% endblock %}
-{% block pretitle %}Return batch · {{ batch.company.name }}{% endblock %}
 {% block page_title %}<span class="code">{{ batch.number }}</span> {{ label|batch_badge }}{% endblock %}
+{% block page_context %}Return batch for {{ batch.company.name }}.{% if batch.note %} {{ batch.note }}{% endif %}{% endblock %}
 {% block actions %}
-  {% if batch.is_draft %}<button type="button" class="btn btn-out" data-bs-toggle="modal" data-bs-target="#dispatch-modal"><i class="ti ti-truck"></i> Dispatch…</button>{% endif %}
-  <a href="{% url 'batch_xlsx' batch.number %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Export dispatch list</a>
-  <a href="{% url 'return_batches' %}" class="btn btn-quiet"><i class="ti ti-list"></i> All batches</a>
+  {% if batch.is_draft %}<button type="button" class="btn btn-out" data-bs-toggle="modal" data-bs-target="#dispatch-modal"><i class="ti ti-truck" aria-hidden="true"></i> Dispatch…</button>{% endif %}
+  <a href="{% url 'batch_xlsx' batch.number %}" class="btn btn-quiet"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Export dispatch list</a>
 {% endblock %}
 {% block content %}
-<div class="row row-cards">
-  <div class="col-12"><div class="d-flex flex-wrap gap-2">
-    <span class="chip"><i class="ti ti-building-store"></i> {{ batch.company.name }}</span>
-    <span class="chip"><i class="ti ti-calendar"></i> Created {{ batch.created_on|date }}</span>
-    <span class="chip"><i class="ti ti-tags"></i> <b>{{ lines|length }}</b> piece(s)</span>
-    {% if not batch.is_draft %}
-      <span class="chip"><i class="ti ti-truck"></i> Dispatched {{ batch.dispatched_on|date }} · {{ batch.courier }} <span class="code">{{ batch.docket_no }}</span></span>
-      <span class="chip{% if sent %} chip-wait{% endif %}"><i class="ti ti-progress-check"></i> Settled <b>{{ settled }}</b> of {{ lines|length }}</span>
-      {% if sent %}<span class="chip{% if waiting > 30 %} chip-alert{% endif %}"><i class="ti ti-clock"></i> Waiting <b>{{ waiting }}</b> days</span>{% endif %}
-      <a class="chip chip-link" href="{% url 'entry_detail' batch.dispatch_entry.number %}" title="The Stock OUT that sent this batch"><i class="ti ti-package-export text-out"></i> {{ batch.dispatch_entry.number }}</a>
-    {% endif %}
-    {% if batch.note %}<span class="chip"><i class="ti ti-note"></i> {{ batch.note }}</span>{% endif %}
-  </div></div>
+<div class="b-tiles four">
+  <div><b>{{ lines|length }}</b>piece{{ lines|length|pluralize }}<span class="cap d-block">{{ batch.company.name }}</span></div>
+  <div><b>{{ batch.created_on|date }}</b>created</div>
+  {% if batch.is_draft %}
+  <div><b>Not yet</b>dispatched<span class="cap d-block">Dispatching posts a Stock OUT.</span></div>
+  <div><b>Draft</b>can still change<span class="cap d-block">Add or remove pieces.</span></div>
+  {% else %}
+  <div><b>{{ batch.dispatched_on|date }}</b>dispatched<span class="cap d-block">{{ batch.courier }} · <span class="code">{{ batch.docket_no }}</span> · <a class="code" href="{% url 'entry_detail' batch.dispatch_entry.number %}" title="The Stock OUT that sent this batch">{{ batch.dispatch_entry.number }}</a></span></div>
+  <div class="{% if sent and waiting > 30 %}alert{% endif %}"><b>{{ settled }} of {{ lines|length }}</b>settled<span class="cap d-block">{% if sent %}Waiting <b>{{ waiting }}</b> days{% else %}All answered{% endif %}</span></div>
+  {% endif %}
+</div>
 {% if batch.is_draft %}
-  <div class="col-12"><div class="alert alert-info mb-0"><i class="ti ti-pencil"></i> <b>Draft.</b> Add or remove {{ batch.company.name }} pieces, then <b>Dispatch</b>. Dispatching posts a Stock OUT from the Defective store and locks the batch.</div></div>
-  <div class="col-lg-7"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-packages"></i> In this batch</h3><span class="badge bg-secondary-lt ms-2">{{ lines|length }}</span></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table">
-      <thead><tr><th>Tag</th><th>Item</th><th>Batch · PKD</th><th>Fault</th><th><span class="visually-hidden">Remove</span></th></tr></thead>
+<div class="alert alert-info mb-0"><i class="ti ti-pencil" aria-hidden="true"></i> <b>Draft.</b> Add or remove {{ batch.company.name }} pieces, then <b>Dispatch</b>. Dispatching posts a Stock OUT from the Defective store and locks the batch.</div>
+<div class="b-two">
+  <section class="card b-card"><h2>In this batch <span class="badge bg-secondary-lt">{{ lines|length }}</span></h2>
+    <div class="table-responsive"><table class="table table-vcenter card-table t">
+      <thead><tr><th>Piece</th><th>Batch · PKD</th><th>Fault</th><th><span class="visually-hidden">Remove</span></th></tr></thead>
       <tbody>{% for line in lines %}{% with p=line.piece %}<tr>
-        <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td>
-        <td><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a><div class="small text-secondary">{{ p.item.description }}</div></td>
+        <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a><span class="sub"><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a> · {{ p.item.description }}</span></td>
         <td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|pkd_month }}{% endif %}</td><td class="cell-wrap">{{ p.fault }}</td>
         <td class="text-end"><form method="post" action="{% url 'batch_remove' batch.number %}" class="m-0" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}"><input type="hidden" name="tag" value="{{ p.tag }}">
-          <button type="submit" class="btn btn-sm btn-icon btn-quiet" title="Remove {{ p.tag }} from the batch" aria-label="Remove {{ p.tag }}"><i class="ti ti-x"></i></button></form></td></tr>{% endwith %}
+          <button type="submit" class="btn btn-sm btn-icon btn-quiet" title="Remove {{ p.tag }} from the batch" aria-label="Remove {{ p.tag }}"><i class="ti ti-x" aria-hidden="true"></i></button></form></td></tr>{% endwith %}
       {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No pieces yet. Add some from the right.</td></tr>{% endfor %}</tbody>
     </table></div>
-    {% if errors.remove %}<div class="px-3 pb-3" aria-live="polite"><div class="alert alert-danger mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.remove }}</div></div></div></div>{% endif %}
-  </div></div>
-  <div class="col-lg-5"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-plus"></i> Add pieces</h3></div>
-    <div class="card-body border-bottom"><label class="form-label" for="add-tag">Type or scan a tag</label>
-      <form method="post" action="{% url 'batch_add' batch.number %}" class="input-group" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-        <input id="add-tag" name="tag_text" class="form-control code{% if add_error_typed %} is-invalid{% endif %}" placeholder="e.g. DEF-0042" autocomplete="off" maxlength="12" value="{{ posted.tag_text|default:'' }}"{% if add_error_typed %} aria-describedby="add-err" autofocus{% endif %}>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> Add</button></form>
-      {% if add_error_typed %}<div id="add-err" class="text-danger small mt-2" role="alert"><i class="ti ti-alert-circle"></i> {{ errors.add }}</div>{% endif %}</div>
+    {% if errors.remove %}<div class="mt-3" aria-live="polite"><div class="alert alert-danger mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle" aria-hidden="true"></i><div>{{ errors.remove }}</div></div></div></div>{% endif %}
+  </section>
+  <section class="card b-card"><h2>Add pieces</h2>
+    <form method="post" action="{% url 'batch_add' batch.number %}" novalidate data-once class="mb-3">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+      <label class="form-label" for="add-tag">Type or scan a tag</label>
+      <div class="input-group"><input id="add-tag" name="tag_text" class="form-control code{% if add_error_typed %} is-invalid{% endif %}" placeholder="e.g. DEF-0042" autocomplete="off" maxlength="12" value="{{ posted.tag_text|default:'' }}"{% if add_error_typed %} aria-describedby="add-err" autofocus{% endif %}>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add</button></div>
+      {% if add_error_typed %}<div id="add-err" class="text-danger small mt-2" role="alert"><i class="ti ti-alert-circle" aria-hidden="true"></i> {{ errors.add }}</div>{% endif %}</form>
     <form method="post" action="{% url 'batch_add' batch.number %}" data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-      <div class="table-responsive"><table class="table table-vcenter card-table">
-        <thead><tr><th class="c-check">{% if available %}<input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all">{% endif %}</th><th>Tag</th><th>Item</th><th>Source</th></tr></thead>
+      <div class="table-responsive b-scroll"><table class="table table-vcenter card-table t">
+        <thead><tr><th class="c-check">{% if available %}<input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all">{% endif %}</th><th>Piece</th><th>Source</th></tr></thead>
         <tbody>{% for p in available %}<tr>
           <td class="c-check"><input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}></td>
-          <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td><td><span class="code">{{ p.item.code }}</span><div class="small text-secondary">{{ p.item.description }}</div></td><td>{% include "defectives/_source.html" %}</td></tr>
+          <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a><span class="sub"><span class="code">{{ p.item.code }}</span> · {{ p.item.description }}</span></td><td>{% include "defectives/_source.html" %}</td></tr>
         {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No other {{ batch.company.name }} pieces in store.</td></tr>{% endfor %}</tbody>
       </table></div>
-      <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span class="text-secondary small" data-tick-count data-empty-text="Only {{ batch.company.name }} pieces in store are listed."></span>
-        {% if available %}<button type="submit" class="btn btn-quiet ms-auto"><i class="ti ti-check"></i> Add ticked</button>{% endif %}</div>
-      {% if errors.add and not add_error_typed %}<div class="px-3 pb-3" role="alert"><div class="text-danger small"><i class="ti ti-alert-circle"></i> {{ errors.add }}</div></div>{% endif %}</form></div></div>
-{% else %}
-  <div class="col-12"><div class="alert alert-secondary mb-0"><i class="ti ti-lock"></i> Dispatched on {{ batch.dispatched_on|date }}, so this batch is locked: pieces can't be added or removed. Settle each piece when the company answers.</div></div>
-  <div class="col-12"><form method="post" action="{% url 'batch_settle' batch.number %}" class="card" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-    <div class="card-header"><h3 class="card-title"><i class="ti ti-tags"></i> Pieces</h3><span class="badge bg-secondary-lt ms-2">{{ lines|length }}</span>
-      <div class="card-subtitle ms-2 text-secondary">{% if sent %}{{ sent|length }} still with {{ batch.company.name }}. Tick the ones they answered for.{% else %}All pieces are settled.{% endif %}</div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table">
-      <thead><tr><th class="c-check">{% if sent %}<input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all sent pieces">{% endif %}</th><th>Tag</th><th>Item</th><th>Batch · PKD</th><th>Fault</th><th>Source</th><th>Outcome</th><th>Entry</th></tr></thead>
-      <tbody>{% for line in lines %}{% with p=line.piece %}<tr>
-        <td class="c-check">{% if line in sent %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}>{% else %}<span class="text-secondary" title="Already answered"><i class="ti ti-lock"></i><span class="visually-hidden">Already answered</span></span>{% endif %}</td>
-        <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td>
-        <td><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a><div class="small text-secondary">{{ p.item.description }}</div></td>
-        <td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|pkd_month }}{% endif %}</td><td class="cell-wrap">{{ p.fault }}</td><td>{% include "defectives/_source.html" %}</td>
-        <td>{% if line.outcome %}{{ line.outcome|outcome_badge }}<div class="small text-secondary mt-1">{{ line.settled_on|date }}{% if line.to_location %} → {{ line.to_location.name }}{% endif %}</div>{% else %}{{ p.status|piece_badge }}{% endif %}</td>
-        <td>{% if line.entry %}<a class="code" href="{% url 'entry_detail' line.entry.number %}">{{ line.entry.number }}</a>{% elif line.outcome %}<span class="text-secondary small">Nothing posted</span>{% endif %}</td></tr>{% endwith %}{% endfor %}</tbody>
-    </table></div>
-    {% if sent %}<div class="card-body settle-panel border-top"><h4 class="mb-3"><i class="ti ti-gavel"></i> Settle ticked pieces <span class="text-secondary fw-normal" data-tick-count></span></h4>
-      <div class="row g-3 align-items-start">
-        <div class="col-12"><div class="form-label required" id="s-outcome-label">Answer from the company</div><div class="form-selectgroup" role="radiogroup" aria-labelledby="s-outcome-label">
-          {% for value, text, icon in outcome_choices %}<label class="form-selectgroup-item"><input type="radio" name="outcome" value="{{ value }}" class="form-selectgroup-input" data-outcome{% if posted.outcome %}{% if posted.outcome == value %} checked{% endif %}{% elif forloop.first %} checked{% endif %}><span class="form-selectgroup-label"><i class="ti ti-{{ icon }}"></i> {{ text }}</span></label>{% endfor %}</div></div>
-        <div class="col-12 col-md-3"><label class="form-label required" for="s-date">Date answered</label><input id="s-date" name="settled_on" type="date" class="form-control" value="{% if posted.settled_on %}{{ posted.settled_on }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" min="{{ batch.dispatched_on|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}"></div>
-        <div class="col-12 col-md-3" id="w-sloc"><label class="form-label required" for="s-loc">Goes into location</label><select id="s-loc" name="to_location" class="form-select"><option value="">Choose…</option>{% for place in locations %}<option value="{{ place.pk }}"{% if posted.to_location == place.pk|stringformat:"d" %} selected{% endif %}>{{ place.name }}</option>{% endfor %}</select></div>
-        <div class="col-12 col-md-6"><div class="text-secondary small pt-md-4" id="settle-hint" aria-live="polite"></div></div>
-      </div>
-      {% if errors.settle %}<div class="alert alert-danger mt-3 mb-0" role="alert" id="settle-err" tabindex="-1"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.settle }}</div></div></div>{% endif %}
-      <div class="d-flex mt-3"><button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-check"></i> Settle ticked pieces</button></div></div>{% endif %}
-  </form></div>
-  {% if groups %}<div class="col-12"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-gavel"></i> Answers recorded</h3>
-    <div class="card-subtitle ms-2 text-secondary">One row per answer: the entry it posted and the pieces it covered</div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table">
-      <thead><tr><th>Date</th><th>Answer</th><th>Went into</th><th>Entry</th><th class="num">Pieces</th><th>Tags</th></tr></thead>
-      <tbody>{% for g in groups %}<tr><td class="nowrap">{{ g.settled_on|date }}</td><td>{{ g.outcome|outcome_badge }}</td>
-        <td>{% if g.to_location %}{{ g.to_location.name }}{% elif g.outcome == "REJECTED_RETURNED" %}Defective store{% else %}<span class="text-secondary">—</span>{% endif %}</td>
-        <td>{% if g.entry %}<a class="code" href="{% url 'entry_detail' g.entry.number %}">{{ g.entry.number }}</a>{% else %}<span class="text-secondary small">Nothing posted</span>{% endif %}</td>
-        <td class="num">{{ g.tags|length }}</td><td class="cell-wrap code">{{ g.tags|join:", " }}</td></tr>{% endfor %}</tbody>
-    </table></div></div></div>{% endif %}
-{% endif %}
+      <div class="d-flex flex-wrap align-items-center gap-2 mt-3"><span class="cap" data-tick-count data-empty-text="Only {{ batch.company.name }} pieces in store are listed."></span>
+        {% if available %}<button type="submit" class="btn btn-quiet ms-auto"><i class="ti ti-check" aria-hidden="true"></i> Add ticked</button>{% endif %}</div>
+      {% if errors.add and not add_error_typed %}<div class="mt-3" role="alert"><div class="text-danger small"><i class="ti ti-alert-circle" aria-hidden="true"></i> {{ errors.add }}</div></div>{% endif %}</form>
+  </section>
 </div>
+{% else %}
+<div class="alert alert-secondary mb-0"><i class="ti ti-lock" aria-hidden="true"></i> Dispatched on {{ batch.dispatched_on|date }}, so this batch is locked: pieces can't be added or removed. Settle each piece when the company answers.</div>
+<form method="post" action="{% url 'batch_settle' batch.number %}" class="card b-card" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <h2>Pieces <span class="badge bg-secondary-lt">{{ lines|length }}</span></h2>
+  <p class="cap" style="margin:-8px 0 14px">{% if sent %}{{ sent|length }} still with {{ batch.company.name }}. Tick the ones they answered for.{% else %}All pieces are settled.{% endif %}</p>
+  <div class="table-responsive"><table class="table table-vcenter card-table t">
+    <thead><tr><th class="c-check">{% if sent %}<input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all sent pieces">{% endif %}</th><th>Piece</th><th>Batch · PKD</th><th>Fault</th><th>Source</th><th>Outcome</th><th>Entry</th></tr></thead>
+    <tbody>{% for line in lines %}{% with p=line.piece %}<tr>
+      <td class="c-check">{% if line in sent %}<input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}>{% else %}<span class="text-secondary" title="Already answered"><i class="ti ti-lock" aria-hidden="true"></i><span class="visually-hidden">Already answered</span></span>{% endif %}</td>
+      <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a><span class="sub"><a class="code" href="{% url 'item_detail' p.item.pk %}">{{ p.item.code }}</a> · {{ p.item.description }}</span></td>
+      <td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|pkd_month }}{% endif %}</td><td class="cell-wrap">{{ p.fault }}</td><td>{% include "defectives/_source.html" %}</td>
+      <td>{% if line.outcome %}{{ line.outcome|outcome_badge }}<span class="sub">{{ line.settled_on|date }}{% if line.to_location %} → {{ line.to_location.name }}{% endif %}</span>{% else %}{{ p.status|piece_badge }}{% endif %}</td>
+      <td>{% if line.entry %}<a class="code" href="{% url 'entry_detail' line.entry.number %}">{{ line.entry.number }}</a>{% elif line.outcome %}<span class="cap">Nothing posted</span>{% endif %}</td></tr>{% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% if sent %}<div class="settle-panel"><h3>Settle ticked pieces <span class="cap" data-tick-count></span></h3>
+    <div class="b-grid">
+      <div class="fld wide"><div class="form-label required" id="s-outcome-label">Answer from the company</div><div class="form-selectgroup" role="radiogroup" aria-labelledby="s-outcome-label">
+        {% for value, text, icon in outcome_choices %}<label class="form-selectgroup-item"><input type="radio" name="outcome" value="{{ value }}" class="form-selectgroup-input" data-outcome{% if posted.outcome %}{% if posted.outcome == value %} checked{% endif %}{% elif forloop.first %} checked{% endif %}><span class="form-selectgroup-label"><i class="ti ti-{{ icon }}" aria-hidden="true"></i> {{ text }}</span></label>{% endfor %}</div></div>
+      <div class="fld"><label class="form-label required" for="s-date">Date answered</label><input id="s-date" name="settled_on" type="date" class="form-control" value="{% if posted.settled_on %}{{ posted.settled_on }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" min="{{ batch.dispatched_on|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}"></div>
+      <div class="fld" id="w-sloc"><label class="form-label required" for="s-loc">Goes into location</label><select id="s-loc" name="to_location" class="form-select"><option value="">Choose…</option>{% for place in locations %}<option value="{{ place.pk }}"{% if posted.to_location == place.pk|stringformat:"d" %} selected{% endif %}>{{ place.name }}</option>{% endfor %}</select></div>
+      <p class="hint wide" id="settle-hint" aria-live="polite"></p>
+    </div>
+    {% if errors.settle %}<div class="alert alert-danger mt-3 mb-0" role="alert" id="settle-err" tabindex="-1"><div class="d-flex gap-2"><i class="ti ti-alert-circle" aria-hidden="true"></i><div>{{ errors.settle }}</div></div></div>{% endif %}
+    <div class="d-flex mt-3"><button type="submit" class="btn btn-primary ms-auto"><i class="ti ti-check" aria-hidden="true"></i> Settle ticked pieces</button></div></div>{% endif %}
+</form>
+{% if groups %}<section class="card b-card"><h2>Answers recorded</h2>
+  <p class="cap" style="margin:-8px 0 14px">One row per answer: the entry it posted and the pieces it covered</p>
+  <div class="table-responsive"><table class="table table-vcenter card-table t">
+    <thead><tr><th>Date</th><th>Answer</th><th>Went into</th><th>Entry</th><th class="num">Pieces</th><th>Tags</th></tr></thead>
+    <tbody>{% for g in groups %}<tr><td class="nowrap">{{ g.settled_on|date }}</td><td>{{ g.outcome|outcome_badge }}</td>
+      <td>{% if g.to_location %}{{ g.to_location.name }}{% elif g.outcome == "REJECTED_RETURNED" %}Defective store{% else %}<span class="cap">—</span>{% endif %}</td>
+      <td>{% if g.entry %}<a class="code" href="{% url 'entry_detail' g.entry.number %}">{{ g.entry.number }}</a>{% else %}<span class="cap">Nothing posted</span>{% endif %}</td>
+      <td class="num">{{ g.tags|length }}</td><td class="cell-wrap code">{{ g.tags|join:", " }}</td></tr>{% endfor %}</tbody>
+  </table></div></section>{% endif %}
+{% endif %}
 {% if batch.is_draft %}
 <div class="modal modal-blur fade" id="dispatch-modal" tabindex="-1" aria-labelledby="dispatch-title" aria-hidden="true"{% if errors.dispatch %} data-show-on-load{% endif %}><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
   <form method="post" action="{% url 'batch_dispatch' batch.number %}" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-    <div class="modal-header"><h5 class="modal-title" id="dispatch-title"><i class="ti ti-truck"></i> Dispatch {{ batch.number }} to {{ batch.company.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-header"><h5 class="modal-title" id="dispatch-title"><i class="ti ti-truck" aria-hidden="true"></i> Dispatch {{ batch.number }} to {{ batch.company.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
     <div class="modal-body"><p class="text-secondary">{{ lines|length }} piece(s). This posts a Stock OUT from the Defective store and locks the batch.</p>
       <div class="row g-3">
         <div class="col-12 col-md-4"><label class="form-label required" for="d-date">Dispatch date</label><input id="d-date" name="dispatched_on" type="date" class="form-control" value="{% if posted.dispatched_on %}{{ posted.dispatched_on }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" min="{{ batch.created_on|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}"></div>
@@ -101,7 +98,7 @@
         <div class="col-12 col-md-4"><label class="form-label required" for="d-docket">Docket / LR no.</label><input id="d-docket" name="docket_no" class="form-control code" maxlength="40" placeholder="e.g. D51243817" autocomplete="off" value="{{ posted.docket_no|default:'' }}"></div>
       </div>
       {% if errors.dispatch %}<div class="alert alert-danger mt-3 mb-0" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ errors.dispatch }}</div></div></div>{% endif %}</div>
-    <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-out ms-auto"><i class="ti ti-truck"></i> Dispatch</button></div>
+    <div class="modal-footer"><button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-out ms-auto"><i class="ti ti-truck" aria-hidden="true"></i> Dispatch</button></div>
   </form></div></div></div>
 {% endif %}
 {% endblock %}

@@ -1,29 +1,40 @@
 {% extends "base.html" %}{% load static %}
 {% block title %}New return batch{% endblock %}
-{% block pretitle %}Defectives · Return batches{% endblock %}
-{% block page_title %}<i class="ti ti-plus"></i> New return batch{% endblock %}
+{% block page_title %}New return batch{% endblock %}
+{% block page_context %}Pick the company the pieces go back to, then tick its pieces in store.{% endblock %}
 {% block content %}
-<form method="post" novalidate data-once>{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
-  <div class="card mb-3"><div class="card-body"><div class="row g-3">
-    <div class="col-12 col-md-4"><label class="form-label required" for="b-company">Company the pieces go back to</label>
-      <select id="b-company" name="company" class="form-select" data-ts data-reload-company><option value="">Choose…</option>
-        {% for c in companies %}<option value="{{ c.pk }}"{% if company == c %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
-      <small class="form-hint">Only companies with pieces in store are listed.</small></div>
-    <div class="col-12 col-md-8"><label class="form-label" for="b-note">Note</label>
-      <input id="b-note" name="note" class="form-control" maxlength="200" value="{{ note }}" placeholder="e.g. Drivers from the bank sites"></div>
-  </div></div></div>
-  <div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-tags"></i> Pieces in store</h3>
-    <div class="card-subtitle ms-2 text-secondary">{% if company %}{{ available|length }} {{ company.name }} piece(s) in store{% else %}Choose the company first{% endif %}</div></div>
-    {% if company %}<div class="table-responsive"><table class="table table-vcenter card-table">
-      <thead><tr><th class="c-check"><input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all"></th><th>Tag</th><th>Item</th><th>Source</th><th>Batch · PKD</th><th>Fault</th><th>Collected</th></tr></thead>
-      <tbody>{% for p in available %}<tr><td class="c-check"><input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}></td>
-        <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td><td><span class="code">{{ p.item.code }}</span><div class="small text-secondary">{{ p.item.description }}</div></td>
-        <td>{% include "defectives/_source.html" %}</td><td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|date:"m-Y" }}{% endif %}</td><td class="cell-wrap">{{ p.fault }}</td><td class="nowrap">{{ p.collected_on|date }}</td></tr>
-      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No {{ company.name }} pieces in store.</td></tr>{% endfor %}</tbody></table></div>
-    {% else %}<div class="card-body text-secondary">Only that company's pieces in store are offered.</div>{% endif %}
-    <div class="card-footer d-flex flex-wrap align-items-center gap-2"><span class="text-secondary" data-tick-count data-empty-text="You can also create an empty draft and add pieces later."></span>
-      <div class="ms-auto btn-list"><a href="{% url 'return_batches' %}" class="btn btn-link link-secondary">Cancel</a><button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Create draft batch</button></div></div></div>
-  <div id="form-error" class="mt-3" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+<form method="post" novalidate data-once data-batch-form class="b-form">{% csrf_token %}<input type="hidden" name="entry_token" value="{{ token }}">
+  <div class="b-steps">
+    <section class="card b-card"><h2><span class="stepn">1</span>Who the pieces go back to</h2>
+      <div class="b-grid">
+        <div class="fld"><label class="form-label required" for="b-company">Company</label>
+          <select id="b-company" name="company" class="form-select" data-ts data-reload-company><option value="">Choose…</option>
+            {% for c in companies %}<option value="{{ c.pk }}"{% if company == c %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+          <span class="hint">Only companies with pieces in store are listed.</span></div>
+        <div class="fld wide2"><label class="form-label" for="b-note">Note</label>
+          <input id="b-note" name="note" class="form-control" maxlength="200" value="{{ note }}" placeholder="e.g. Drivers from the bank sites"></div>
+      </div></section>
+    <section class="card b-card"><h2><span class="stepn">2</span>Pieces in store</h2>
+      <p class="cap" style="margin:-8px 0 14px">{% if company %}{{ available|length }} {{ company.name }} piece{{ available|length|pluralize }} in store{% else %}Choose the company first{% endif %}</p>
+      {% if company %}<div class="table-responsive"><table class="table table-vcenter card-table t">
+        <thead><tr><th class="c-check"><input type="checkbox" class="form-check-input m-0" data-tick-all aria-label="Tick all"></th><th>Piece</th><th>Source</th><th>Batch · PKD</th><th>Fault</th><th>Collected</th></tr></thead>
+        <tbody>{% for p in available %}<tr><td class="c-check"><input type="checkbox" class="form-check-input m-0" name="tag" value="{{ p.tag }}" data-tick aria-label="Tick {{ p.tag }}"{% if p.tag in ticked %} checked{% endif %}></td>
+          <td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a><span class="sub"><span class="code">{{ p.item.code }}</span> · {{ p.item.description }}</span></td>
+          <td>{% include "defectives/_source.html" %}</td><td class="nowrap">{{ p.batch_code|default:"—" }}{% if p.pkd %} · {{ p.pkd|date:"m-Y" }}{% endif %}</td><td class="cell-wrap">{{ p.fault }}</td><td class="nowrap">{{ p.collected_on|date }}</td></tr>
+        {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">No {{ company.name }} pieces in store.</td></tr>{% endfor %}</tbody></table></div>
+      {% else %}<p class="cap">Only that company's pieces in store are offered.</p>{% endif %}</section>
+    <div id="form-error" aria-live="polite">{% if error %}<div class="alert alert-danger" role="alert"><div class="d-flex gap-2"><i class="ti ti-alert-circle" aria-hidden="true"></i><div>{{ error }}</div></div></div>{% endif %}</div>
+  </div>
+  <aside class="card b-card b-summary" aria-label="Summary"><h2>Summary</h2>
+    <dl>
+      <div><dt>Company</dt><dd id="sum-company" class="need" data-need="Choose a company">Choose a company</dd></div>
+      <div><dt>Pieces</dt><dd data-tick-count data-empty-text="None yet"></dd></div>
+      <div><dt>Note</dt><dd id="sum-note" data-none="None">None</dd></div>
+    </dl>
+    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy" aria-hidden="true"></i> Create draft batch</button>
+    <a href="{% url 'return_batches' %}" class="cancel">Cancel</a>
+    <p class="cap" style="margin-top:14px">You can also create an empty draft and add pieces later. Nothing is saved until you press the button.</p>
+  </aside>
 </form>
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/service.js' %}"></script>{% endblock %}

@@ -614,3 +614,28 @@ td .pill-low { margin-right: 6px; }
 .form-selectgroup-boxes .form-selectgroup-input:checked + .form-selectgroup-label .form-selectgroup-check { background-color: var(--ink); border-color: var(--ink); }
 .form-selectgroup-boxes .form-selectgroup-item { width: 100%; }
 .avatar-xs { width: 28px; height: 28px; font-size: var(--s1); line-height: 28px; vertical-align: middle; }
+
+/* ======================================================================================================
+   Defectives screens (task T4): overview, pieces, mark defective, return batches, batch and piece pages.
+   Appended after the T3 block; nothing above was rewritten. Same five sizes and tokens.
+   ====================================================================================================== */
+/* batch page: the settle panel sits inside the Pieces card as a shaded box */
+.settle-panel { margin-top: 20px; padding: 22px; border-radius: 14px; background: var(--page); }
+.settle-panel h3 { margin: 0 0 16px; font-size: var(--s3); }
+.settle-panel h3 .cap { font-weight: 400; margin-left: 6px; }
+.settle-panel .b-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 520px) { .settle-panel { padding: 16px; } .settle-panel .b-grid { grid-template-columns: minmax(0, 1fr); } }
+/* the bulk bar on the pieces list lives inside the list card */
+.b-card .bulk-bar { border: 0; border-radius: 12px; padding-left: 16px; padding-right: 16px; margin-bottom: 14px; }
+.b-card .bulk-bar[hidden] { display: none !important; }
+/* piece page: the timeline dot colours come from the piece status; keep the card's own padding */
+.b-card .tl { margin: 0; }
+/* the "Add to draft batch" dialog: boxed rows, company text may wrap */
+#batch-modal .form-selectgroup-label { height: auto; min-height: 52px; padding-top: 8px !important; padding-bottom: 8px !important; }
+#batch-modal .form-selectgroup-label > span:last-child { overflow-wrap: anywhere; }
+/* overview flow: answers are not a stage a piece waits in, so the last step reads as a result */
+.b-flow a .cap { margin-top: 2px; }
+.b-bars .late span { color: var(--danger); font-weight: 600; }
+/* a long pick list (pieces in store to add) scrolls inside its card instead of stretching the page */
+.b-scroll { max-height: 440px; overflow: auto; }
+.b-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }

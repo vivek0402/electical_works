@@ -1,42 +1,54 @@
-{% extends "base.html" %}{% load static defective_tags %}
-{% block title %}Defectives dashboard{% endblock %}
-{% block pretitle %}Defectives{% endblock %}
-{% block page_title %}Defectives dashboard{% endblock %}
-{% block actions %}<a href="{% url 'mark_defective' %}" class="btn btn-quiet"><i class="ti ti-alert-octagon"></i> Mark defective</a>
-  <a href="{% url 'batch_new' %}" class="btn btn-primary"><i class="ti ti-plus"></i> New return batch</a>
-  <a href="{% url 'defective_list_xlsx' %}" class="btn btn-outline-primary"><i class="ti ti-file-spreadsheet"></i> Defective list</a>{% endblock %}
+{% extends "base.html" %}{% load defective_tags %}
+{% block title %}Defectives overview{% endblock %}
+{% block page_title %}Defectives overview{% endblock %}
+{% block page_context %}{{ d.in_store }} in store, {{ d.in_batch }} in draft batches, {{ d.sent }} with the companies.{% if d.sent_rows %} The longest wait is {{ d.sent_rows.0.waiting }} day{{ d.sent_rows.0.waiting|pluralize }}.{% endif %}{% endblock %}
+{% block actions %}<a href="{% url 'defective_list_xlsx' %}" class="btn btn-quiet"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Defective list</a>{% endblock %}
 {% block content %}{% url 'defective_pieces' as pieces_url %}{% url 'return_batches' as batches_url %}
-<div class="row row-deck row-cards">
-  <div class="col-6 col-lg-3"><a class="card card-sm card-link card-link-pop h-100" href="{{ pieces_url }}?status=IN_STORE"><div class="card-body"><div class="d-flex align-items-center gap-3"><span class="avatar kpi-brand"><i class="ti ti-building-warehouse"></i></span>
-    <div><div class="fw-medium fs-2 lh-1">{{ d.in_store }}</div><div class="text-secondary small mt-1">Pieces in store</div><div class="small text-secondary">not yet in a batch</div></div></div></div></a></div>
-  <div class="col-6 col-lg-3"><a class="card card-sm card-link card-link-pop h-100" href="{{ batches_url }}?status=Draft"><div class="card-body"><div class="d-flex align-items-center gap-3"><span class="avatar kpi-brand"><i class="ti ti-packages"></i></span>
-    <div><div class="fw-medium fs-2 lh-1">{{ d.in_batch }}</div><div class="text-secondary small mt-1">In draft batches</div><div class="small text-secondary">{{ d.drafts }} draft batch(es)</div></div></div></div></a></div>
-  <div class="col-6 col-lg-3"><a class="card card-sm card-link card-link-pop h-100" href="{{ pieces_url }}?status=SENT"><div class="card-body"><div class="d-flex align-items-center gap-3"><span class="avatar {% if d.sent %}kpi-wait{% else %}kpi-brand{% endif %}"><i class="ti ti-truck"></i></span>
-    <div><div class="fw-medium fs-2 lh-1">{{ d.sent }}</div><div class="text-secondary small mt-1">Sent, awaiting settlement</div><div class="small text-secondary">with the companies</div></div></div></div></a></div>
-  <div class="col-6 col-lg-3"><a class="card card-sm card-link card-link-pop h-100" href="{{ batches_url }}"><div class="card-body"><div class="d-flex align-items-center gap-3"><span class="avatar kpi-brand"><i class="ti ti-circle-check"></i></span>
-    <div><div class="fw-medium fs-2 lh-1">{{ d.answered }}</div><div class="text-secondary small mt-1">Answered by companies</div><div class="small text-secondary">last 90 days</div></div></div></div></a></div>
-  <div class="col-lg-5"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-building-warehouse"></i> In the Defective store, per company</h3><div class="card-subtitle">Physical pieces waiting to go back</div></div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Company</th><th class="num">In store</th><th class="num">In draft batch</th><th class="num">Total</th></tr></thead>
-      <tbody>{% for r in d.store_rows %}<tr><td><a href="{{ pieces_url }}?company={{ r.company_id }}">{{ r.company__name }}</a></td><td class="num"><b>{{ r.store }}</b></td><td class="num">{{ r.batch }}</td><td class="num">{{ r.store|add:r.batch }}</td></tr>
-      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">The Defective store is empty.</td></tr>{% endfor %}</tbody></table></div></div></div>
-  <div class="col-lg-7"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-truck"></i> Sent, awaiting settlement</h3><div class="card-subtitle">Red = the oldest batch has waited more than 30 days</div></div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Company</th><th class="num">Pieces</th><th>Batches</th><th>Oldest dispatched</th><th class="num">Waiting</th></tr></thead>
-      <tbody>{% for r in d.sent_rows %}<tr><td><a href="{{ pieces_url }}?company={{ r.company_id }}&amp;status=SENT">{{ r.company__name }}</a></td><td class="num"><b>{{ r.n }}</b></td>
-        <td>{% for b in r.batches %}<a class="code" href="{% url 'batch_detail' b.number %}">{{ b.number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td><td class="nowrap">{{ r.oldest.dispatched_on|date }}</td><td class="num">{{ r.waiting|waiting_badge }}</td></tr>
-      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing is waiting on a company.</td></tr>{% endfor %}</tbody></table></div></div></div>
-  <div class="col-lg-5"><div class="card"><div class="card-header"><div><h3 class="card-title"><i class="ti ti-chart-bar"></i> Outcomes, last 90 days</h3><div class="card-subtitle">{{ d.answered }} pieces answered by the companies</div></div>
-      {% if d.answered %}<div class="card-actions"><button type="button" class="btn btn-sm btn-outline-secondary" id="def-chart-toggle" aria-pressed="false" aria-controls="def-chart-table"><i class="ti ti-table"></i> Table view</button></div>{% endif %}</div>
-    <div class="card-body">{% if d.answered %}<div id="def-chart-outcomes" class="chart-box" role="img" aria-label="Bar chart, answers from the companies in the last 90 days: {% for value, label, n in d.outcomes %}{{ label }} {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}"></div>
-      <table class="table table-sm" id="def-chart-table" hidden><thead><tr><th>Outcome</th><th class="num">Pieces</th></tr></thead>
-        <tbody>{% for value, label, n in d.outcomes %}<tr><td><a href="{{ pieces_url }}?answered={{ value }}&amp;since={{ d.since|date:'Y-m-d' }}">{{ value|outcome_badge }}</a></td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table>
-      {% else %}<div class="text-center text-secondary py-5"><i class="ti ti-chart-bar fs-1 d-block mb-2"></i>No answers in the last 90 days</div>{% endif %}</div></div></div>
-  <div class="col-lg-7"><div class="card"><div class="card-header"><h3 class="card-title"><i class="ti ti-clock"></i> Longest in store</h3>
-    <div class="card-actions"><a href="{{ pieces_url }}?status=IN_STORE" class="btn btn-sm btn-outline-primary">All in store <i class="ti ti-arrow-right"></i></a></div></div>
-    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Tag</th><th>Item</th><th>Company</th><th>Source</th><th class="num">In store</th></tr></thead>
-      <tbody>{% for r in d.oldest %}{% with p=r.piece %}<tr><td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a></td><td><span class="code">{{ p.item.code }}</span><div class="small text-secondary">{{ p.item.description }}</div></td>
-        <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="num">{{ r.days }} days</td></tr>{% endwith %}
-      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing in store.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% if attention %}
+<div class="b-blocks b-n{{ attention|length }}" id="attention">{% for a in attention %}
+  <a class="b-block attn card {{ a.tone }}" href="{{ a.href }}" data-count="{{ a.n }}">
+    <span class="lbl"><i class="ti ti-{{ a.icon }}" aria-hidden="true"></i>Defectives</span>
+    <div class="fig">{{ a.n }}</div>
+    <b>{{ a.title }}</b>
+    {% if a.sub %}<span class="cap">{{ a.sub }}</span>{% endif %}
+    <span class="go">{{ a.go }} →</span>
+  </a>{% endfor %}
 </div>
-{% if d.answered %}{{ outcomes_chart|json_script:"def-chart-data" }}{% endif %}
+{% endif %}
+
+<section class="card b-card"><h2>Where the pieces are <a href="{{ pieces_url }}">All pieces</a></h2>
+  <div class="b-flow">
+    <a href="{{ pieces_url }}?status=IN_STORE"><b>{{ d.in_store }}</b>Pieces in store<span class="cap">not yet in a batch</span></a>
+    <a href="{{ pieces_url }}?status=IN_BATCH"><b>{{ d.in_batch }}</b>In a draft batch<span class="cap">{{ d.drafts }} draft batch{{ d.drafts|pluralize:"es" }}</span></a>
+    <a href="{{ pieces_url }}?status=SENT" class="{% if d.sent %}wait{% endif %}"><b>{{ d.sent }}</b>With the companies<span class="cap">sent, awaiting settlement</span></a>
+    <a href="{{ batches_url }}"><b>{{ d.answered }}</b>Answered<span class="cap">last 90 days</span></a>
+  </div>
+  <p class="b-note">Defective pieces are never counted in stock.</p>
+</section>
+
+<section class="card b-card"><h2>Per company <a href="{{ batches_url }}">Return batches</a></h2>
+  <div class="table-responsive"><table class="table table-vcenter card-table t"><thead><tr><th>Company</th><th class="num">In store</th><th class="num">In draft batch</th><th class="num">With the company</th><th>Batches out</th><th class="num">Waiting</th></tr></thead>
+    <tbody>{% for r in d.company_rows %}<tr><td><a href="{{ pieces_url }}?company={{ r.company_id }}">{{ r.name }}</a></td>
+      <td class="num">{% if r.store %}<a href="{{ pieces_url }}?company={{ r.company_id }}&amp;status=IN_STORE"><b>{{ r.store }}</b></a>{% else %}<span class="cap">0</span>{% endif %}</td>
+      <td class="num">{% if r.batch %}<a href="{{ pieces_url }}?company={{ r.company_id }}&amp;status=IN_BATCH">{{ r.batch }}</a>{% else %}<span class="cap">0</span>{% endif %}</td>
+      <td class="num">{% if r.sent %}<a href="{{ pieces_url }}?company={{ r.company_id }}&amp;status=SENT"><b>{{ r.sent }}</b></a>{% else %}<span class="cap">0</span>{% endif %}</td>
+      <td>{% for b in r.batches %}<a class="code" href="{% url 'batch_detail' b.number %}">{{ b.number }}</a>{% if not forloop.last %}, {% endif %}{% empty %}<span class="cap">—</span>{% endfor %}</td>
+      <td class="num">{% if r.waiting is not None %}{{ r.waiting|waiting_badge }}{% else %}<span class="cap">—</span>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">The Defective store is empty and nothing is waiting on a company.</td></tr>{% endfor %}</tbody></table></div>
+  <p class="b-note">Red means the oldest batch has waited more than 30 days.</p>
+</section>
+
+<div class="b-two">
+  <section class="card b-card"><h2>Outcomes, last 90 days <a href="{{ pieces_url }}">All pieces</a></h2>
+    {% if d.answered %}<p class="cap" style="margin:-6px 0 12px">{{ d.answered }} pieces answered by the companies</p>
+    <div class="b-bars">{% for r in bars %}<a href="{{ r.href }}" class="{% if r.alert %}late{% endif %}"><span>{{ r.label }}</span><i style="width:{% widthratio r.n bars_top 100 %}%"></i><b>{{ r.n }}</b></a>{% endfor %}</div>
+    {% else %}<p class="empty cap">No answers in the last 90 days</p>{% endif %}
+  </section>
+  <section class="card b-card"><h2>Longest in store <a href="{{ pieces_url }}?status=IN_STORE">All in store</a></h2>
+    <div class="table-responsive"><table class="table table-vcenter card-table t"><thead><tr><th>Piece</th><th>Company</th><th>Source</th><th class="num">In store</th></tr></thead>
+      <tbody>{% for r in d.oldest %}{% with p=r.piece %}<tr><td><a class="code" href="{% url 'piece_detail' p.tag %}">{{ p.tag }}</a><span class="sub">{{ p.item.code }}</span></td>
+        <td>{{ p.company.name }}</td><td>{% include "defectives/_source.html" %}</td><td class="num">{{ r.days }} days</td></tr>{% endwith %}
+      {% empty %}<tr><td colspan="99" class="text-center text-secondary py-4">Nothing in store.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+</div>
 {% endblock %}
-{% block scripts %}{% if d.answered %}<script src="{% static 'vendor/apexcharts.min.js' %}"></script><script src="{% static 'js/defectives-dashboard.js' %}"></script>{% endif %}{% endblock %}
