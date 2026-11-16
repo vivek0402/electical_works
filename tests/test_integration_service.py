@@ -93,7 +93,8 @@ def test_menu_badges_and_brand(office_client, visited):
     html = office_client.get("/").content.decode()
     assert 'title="Open complaints">1<span class="visually-hidden"> open</span></span>' in html
     assert (
-        'title="Pieces in the Defective store">2<span class="visually-hidden"> in store</span></span>' in html
+        'title="Pieces in store, not yet in a batch">2'
+        '<span class="visually-hidden"> in store, not yet in a batch</span></span>' in html
     )
     assert '<span class="brand-sub">Service</span>' in html
     # each badge sits on a menu link whose list shows exactly that many rows
@@ -102,7 +103,7 @@ def test_menu_badges_and_brand(office_client, visited):
 
 def test_menu_badges_hidden_when_zero(office_client):
     html = office_client.get("/").content.decode()
-    assert 'title="Open complaints"' not in html and 'title="Pieces in the Defective store"' not in html
+    assert 'title="Open complaints"' not in html and 'title="Pieces in store, not yet in a batch"' not in html
 
 
 # ---------------------------------------------------------------- main dashboard
@@ -174,7 +175,7 @@ def test_dashboard_shows_service_figures_and_each_link_lists_that_many(office_cl
     assert path == "/defectives/pieces/" and count == 1
     assert len(piece_rows(piece_filters(QueryDict(query)))) == count
 
-    for label, expected in (("in the Defective store", 2), ("with companies", 1)):
+    for label, expected in (("in store<span", 2), ("with companies", 1)):
         n, href = _flow(html, label)
         path, _, query = href.partition("?")
         assert path == "/defectives/pieces/" and n == expected

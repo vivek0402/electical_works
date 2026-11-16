@@ -134,6 +134,10 @@ def dashboard(request):
         (place, dict(sorted(units.items(), key=lambda kv: (kv[0] != "NOS", kv[0]))))
         for place, units in selectors.location_unit_totals()
     ]
+    # largest first: NOS, then the other units added together, then name (this list only)
+    locations.sort(
+        key=lambda pu: (-pu[1].get("NOS", 0), -sum(q for u, q in pu[1].items() if u != "NOS"), pu[0].name)
+    )
     service = selectors.service_stats(today, *service_counts(request))
     pieces_urls = {
         status: reverse("defective_pieces") + PIECES_STATUS_QUERY.format(status)
@@ -433,10 +437,6 @@ SUBTYPE_ICONS = {
 }
 
 
-def _default_location():
-    return selectors.default_location()
-
-
 def _save_entry(mode, data, parsed, user):
     kind, place, note = ENTRY_PAGES[mode][0], data["location"], data.get("note", "")
     common = {"entry_date": data["entry_date"], "user": user, "note": note}
@@ -476,9 +476,8 @@ def _save_entry(mode, data, parsed, user):
 
 def _entry_page(request, mode):
     kind, form_class, title, subtitle, icon, button = ENTRY_PAGES[mode]
-    initial = {"entry_date": timezone.localdate(), "location": _default_location()}
-    if mode == "in":
-        initial["location"] = None  # Stock IN never preselects a location (or supplier)
+    # No entry form preselects a location (or supplier): a wrong one is easy to miss.
+    initial = {"entry_date": timezone.localdate()}
     form = form_class(request.POST or None, initial=initial)
     error, lines, token = None, [], ""
     if request.method == "POST":

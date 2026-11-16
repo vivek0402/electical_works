@@ -19,14 +19,14 @@
         <div class="fld"><label class="form-label required" for="{{ form.party.id_for_label }}" id="party-label">Site / customer</label>{{ form.party }}</div>
         <div class="fld"><label class="form-label" for="{{ form.ref.id_for_label }}">Job / reference no.</label>{{ form.ref }}</div>
       {% else %}
-        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "adj" %}Location{% else %}From location{% endif %}</label>{{ form.location }}{% if mode == "trf" %}<span class="hint">Required. Type a new name to add it.</span>{% endif %}</div>
+        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "adj" %}Location{% else %}From location{% endif %}</label>{{ form.location }}<span class="hint">Required.</span></div>
       {% endif %}
       <div class="fld"><label class="form-label required" for="{{ form.entry_date.id_for_label }}">Date</label>{{ form.entry_date }}</div>
       </div></section>
     <section class="card b-card"><h2><span class="stepn">2</span>{% if mode == "in" %}Where it goes{% elif mode == "out" %}Where it comes from{% elif mode == "trf" %}Where it moves to{% else %}Why the count changes{% endif %}</h2>
       <div class="b-grid">
       {% if mode == "in" or mode == "out" %}
-        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "in" %}Into location{% else %}From location{% endif %}</label>{{ form.location }}{% if mode == "in" %}<span class="hint">Required. Type a new name to add it.</span>{% endif %}</div>
+        <div class="fld"><label class="form-label required" for="{{ form.location.id_for_label }}">{% if mode == "in" %}Into location{% else %}From location{% endif %}</label>{{ form.location }}<span class="hint">Required.{% if mode == "in" %} Type a new name to add it.{% endif %}</span></div>
       {% elif mode == "trf" %}
         <div class="fld"><label class="form-label required" for="{{ form.to_location.id_for_label }}">To location</label>{{ form.to_location }}<span class="hint">Required. Type a new name to add it.</span></div>
       {% else %}

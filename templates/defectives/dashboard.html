@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% load defective_tags %}
 {% block title %}Defectives overview{% endblock %}
 {% block page_title %}Defectives overview{% endblock %}
-{% block page_context %}{{ d.in_store }} in store, {{ d.in_batch }} in draft batches, {{ d.sent }} with the companies.{% if d.sent_rows %} The longest wait is {{ d.sent_rows.0.waiting }} day{{ d.sent_rows.0.waiting|pluralize }}.{% endif %}{% endblock %}
+{% block page_context %}{{ d.in_store }} in store (not yet in a batch), {{ d.in_batch }} in draft batches, {{ d.sent }} with the companies.{% if d.sent_rows %} The longest wait is {{ d.sent_rows.0.waiting }} day{{ d.sent_rows.0.waiting|pluralize }}.{% endif %}{% endblock %}
 {% block actions %}<a href="{% url 'defective_list_xlsx' %}" class="btn btn-quiet"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Defective list</a>{% endblock %}
 {% block content %}{% url 'defective_pieces' as pieces_url %}{% url 'return_batches' as batches_url %}
 {% if attention %}

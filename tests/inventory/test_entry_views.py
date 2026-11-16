@@ -389,3 +389,20 @@ def test_stock_out_back_then_different_entry_with_spent_token_saves_nothing(offi
 
 def test_entry_pages_are_never_cached(office_client):
     assert "no-store" in office_client.get("/stock/out/")["Cache-Control"]
+
+
+@pytest.mark.parametrize("url", ["/stock/out/", "/stock/transfer/", "/stock/adjust/"])
+def test_source_location_starts_on_choose_and_missing_one_is_refused(office_client, office_user, url):
+    page = office_client.get(url).content.decode()
+    assert (
+        'value="" selected' in page.split('name="location"')[1].split("</select>")[0]
+    )  # "Choose…", nothing else
+    assert 'id="sum-where" class="need" data-need="Choose a location"' in page
+    a = make_item("EIO6006")
+    stock(a, 4, office_user)
+    before = StockEntry.objects.count()
+    data = {"entry_date": TODAY, "subtype": "SITE", "party": "BARC", "to_location": loc("TV Shop").pk}
+    data |= {"reason": "DAMAGED", "note": "x", **lines((a, 1))}
+    html = submit(office_client, url, data).content.decode()
+    assert "Location: Choose the location." in html
+    assert StockEntry.objects.count() == before

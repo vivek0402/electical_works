@@ -227,7 +227,8 @@ td.c-check, th.c-check { width: 1%; height: 44px; vertical-align: middle; }
 .form-label.required::after { content: " *"; color: var(--danger); }
 .form-control, .form-select { min-height: var(--input-h); padding: 0 14px; border: 1px solid var(--line-strong); border-radius: var(--r-input); background-color: #fff; color: var(--ink); font: 400 var(--s2)/1.4 var(--font); box-shadow: none; }
 .form-select { padding-right: 38px; }
-textarea.form-control { min-height: 96px; padding: 12px 14px; }
+textarea.form-control { min-height: 48px; padding: 12px 14px; }
+#entry-form textarea.form-control { height: 48px; resize: vertical; }
 .form-control-sm, .form-select-sm { min-height: var(--btn-h); font-size: var(--s2); padding-left: 12px; }
 .form-control::placeholder, .ts-control input::placeholder, .ts-wrapper .ts-control > input::placeholder { color: #6b7080; opacity: 1; }
 .form-control:focus, .form-select:focus { border-color: var(--ink); outline: 2px solid var(--ink); outline-offset: 1px; box-shadow: none; background-color: #fff; color: var(--ink); }
@@ -502,7 +503,7 @@ td .pill-low { margin-right: 6px; }
 .b-age a:hover span { text-decoration: underline; }
 .b-flow > div { position: relative; padding: 16px; border-radius: 12px; background: var(--page); }
 .b-flow > div b { display: block; font: 800 var(--s4)/1.1 var(--display); margin-bottom: 4px; }
-.b-flow a.wait .cap, .b-flow a .cap { display: block; }
+.b-flow .cap { display: block; }
 .b-flow .cap { color: var(--muted); }
 .b-flow a.wait .cap { color: #854d0e; }
 @media (max-width: 520px) { .b-age a { grid-template-columns: 80px minmax(0, 1fr) 32px; } }

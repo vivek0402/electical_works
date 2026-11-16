@@ -52,10 +52,10 @@
   </section>
   <section class="card b-card"><h2>Defective pieces <a href="{{ nav_urls.defective_pieces }}">All pieces</a></h2>
     <div class="b-flow">
-      <a href="{{ pieces_urls.IN_STORE }}"><b>{{ service.in_store }}</b>in the Defective store</a>
+      <a href="{{ pieces_urls.IN_STORE }}"><b>{{ service.in_store }}</b>in store<span class="cap">not yet in a batch</span></a>
       <a href="{{ pieces_urls.IN_BATCH }}"><b>{{ service.in_batch }}</b>in a draft batch</a>
       <a href="{{ pieces_urls.SENT }}" class="{% if service.sent %}wait{% endif %}"><b>{{ service.sent }}</b>with companies{% if service.oldest_sent %}<span class="cap">oldest {{ service.oldest_sent_days }} day{{ service.oldest_sent_days|pluralize }}</span>{% endif %}</a>
-      <div><b>{{ service.answered }}</b>answered in the last 90 days</div>
+      <div><b>{{ service.answered }}</b>answered<span class="cap">last 90 days</span></div>
     </div>
     <p class="cap" style="margin-top:14px">Defective pieces are never counted in stock.</p>
   </section>

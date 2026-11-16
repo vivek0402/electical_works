@@ -128,9 +128,14 @@ class EntryHeaderForm(TablerFormMixin, forms.Form):
     entry_date = forms.DateField(
         label="Date", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
     )
-    location = forms.ModelChoiceField(Location.objects.good().filter(is_active=True), empty_label=None)
+    # No preselected location: stock moved against the wrong one is easy to miss.
+    location = forms.ModelChoiceField(
+        Location.objects.good().filter(is_active=True),
+        empty_label="Choose…",
+        error_messages={"required": "Choose the location."},
+    )
     note = forms.CharField(
-        required=False, label="Remarks", widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"})
+        required=False, label="Remarks", widget=forms.Textarea(attrs={"rows": 1, "placeholder": "Optional"})
     )
 
     def __init__(self, *args, **kwargs):
@@ -241,7 +246,7 @@ class AdjustForm(EntryHeaderForm):
     note = forms.CharField(
         label="Note",
         widget=forms.Textarea(
-            attrs={"rows": 2, "placeholder": "What happened? e.g. 2 lenses cracked in storage"}
+            attrs={"rows": 1, "placeholder": "What happened? e.g. 2 lenses cracked in storage"}
         ),
         error_messages={"required": "Write a short note explaining the adjustment."},
     )

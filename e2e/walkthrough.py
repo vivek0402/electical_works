@@ -219,6 +219,10 @@ def run(page):
 
     step("Stock OUT over-issue is flagged live and not posted")
     page.goto(f"{BASE}/stock/out/")
+    expect(page.locator("#id_location option:checked")).to_have_text("Choose…")  # nothing is preselected
+    expect(page.locator("#sum-where")).to_have_text("Choose a location")
+    page.select_option("#id_location", label="Vizag Office")
+    expect(page.locator("#sum-where")).to_have_text("Vizag Office")
     pick_item(page, NEW)
     page.locator("input[name=line_qty]").first.fill("99")
     expect(page.locator(".err").first).to_contain_text("Only 5 NOS available")
@@ -330,6 +334,8 @@ def run(page):
 
     step("transfer to the same location is refused; a real transfer saves")
     page.goto(f"{BASE}/stock/transfer/")
+    expect(page.locator("#id_location option:checked")).to_have_text("Choose…")
+    page.select_option("#id_location", label="Vizag Office")
     page.select_option("#id_to_location", label="Vizag Office")
     pick_item(page, "LG78-150-700")
     page.locator("input[name=line_qty]").first.fill("1")
@@ -343,6 +349,8 @@ def run(page):
 
     step("adjustment shows the difference live and needs a reason and note")
     page.goto(f"{BASE}/stock/adjust/")
+    expect(page.locator("#id_location option:checked")).to_have_text("Choose…")
+    page.select_option("#id_location", label="Vizag Office")
     pick_item(page, "LENS")
     system = int(page.locator(".lines-table .avail b").first.inner_text())
     check(system > 0, f"LENS has no stock at the default location ({system}); re-seed the demo data")

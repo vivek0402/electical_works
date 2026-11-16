@@ -160,3 +160,20 @@ def test_dashboard_links_to_lists_and_locations(office_client, stocked):
     for url in ["/stock/", f"/movements/?{week}", f"/movements/?kind=IN&amp;{week}", "/low-stock/"]:
         assert f'href="{url}"' in html
     assert f'href="/stock/?location={loc().pk}"' in html
+
+
+def test_dashboard_locations_largest_first(office_client, office_user):
+    from apps.inventory.models import Location
+
+    item = make_item("EIO6006")
+    wire = make_item("WIRE 1.5 SQMM", unit="MTR", reorder=0, spare_type="Wire / cable")
+    names = {n: Location.objects.get_or_create(name=n)[0] for n in ("Aaa", "Bbb", "Ccc", "Ddd")}
+    for place, nos, mtr in (("Aaa", 2, 0), ("Bbb", 9, 0), ("Ccc", 2, 50), ("Ddd", 2, 10)):
+        lines = ([Line(item, names[place], nos)] if nos else []) + (
+            [Line(wire, names[place], mtr)] if mtr else []
+        )
+        post_entry(kind=EntryKind.IN, entry_date=TODAY, lines=lines, user=office_user)
+    html = office_client.get("/").content.decode()
+    block = html.split("By location")[1]
+    order = [n for n, _ in sorted(((n, block.find(f"<b>{n}</b>")) for n in names), key=lambda t: t[1])]
+    assert order == ["Bbb", "Ccc", "Ddd", "Aaa"]  # NOS desc, then other units desc, then name

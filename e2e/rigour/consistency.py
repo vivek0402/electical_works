@@ -121,10 +121,14 @@ for list_path, export_path in PAIRS:
 # the defective list export is a summary (one row per company / item / batch / PKD with a quantity column)
 header, data, _ = sheet_rows("/defectives/export/")
 qty_col = next(i for i, h in enumerate(header) if h and "qty" in str(h).lower())
+# the export lists every piece physically held: not yet in a batch + in draft batches (the "in store" tile
+# alone leaves out the draft-batch pieces)
 in_store = list_total("/defectives/pieces/?status=IN_STORE")
+in_draft = list_total("/defectives/pieces/?status=IN_BATCH")
+exported = sum(r[qty_col] or 0 for r in data)
 check(
-    f"defective list export: quantities add up to {sum(r[qty_col] or 0 for r in data)}; pieces in store = {in_store}",
-    sum(r[qty_col] or 0 for r in data) == in_store,
+    f"defective list export: quantities add up to {exported}; in store {in_store} + in draft batches {in_draft}",
+    exported == in_store + in_draft,
 )
 
 # each return batch's dispatch list has one row per piece in the batch
