@@ -20,3 +20,6 @@ e2e/rigour/*.json
 e2e/rigour/shots/
 e2e/rigour/out/
 .gstack/
+
+# local dev Postgres started by scripts/dev.sh
+.pgdata/
