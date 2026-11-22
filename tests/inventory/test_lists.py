@@ -141,3 +141,25 @@ def test_movements_reversed_dates_are_swapped(office_client, stock):
     a = TODAY.isoformat()
     b = (TODAY - datetime.timedelta(days=60)).isoformat()
     assert "IN-0001" in office_client.get(f"/movements/?date_from={a}&date_to={b}").content.decode()
+
+
+def test_movements_sort_by_date_added_not_entry_date(office_client, office_user):
+    item = make_item("SORT-1")
+    first = post_entry(  # typed in first, but dated today
+        kind=EntryKind.IN, entry_date=TODAY, user=office_user, lines=[Line(item, loc(), 5)]
+    )
+    second = post_entry(  # typed in second, but backdated
+        kind=EntryKind.IN,
+        entry_date=TODAY - datetime.timedelta(days=3),
+        user=office_user,
+        lines=[Line(item, loc(), 6)],
+    )
+
+    def order(query):
+        html = office_client.get(f"/movements/?{query}").content.decode()
+        return html.index(first.number + "</a>") < html.index(second.number + "</a>")
+
+    assert "added on" in office_client.get("/movements/").content.decode()
+    assert order("sort=date&dir=desc")  # by the entry's own date: today comes first
+    assert not order("sort=added&dir=desc")  # by when it was added: the later one comes first
+    assert order("sort=added&dir=asc")

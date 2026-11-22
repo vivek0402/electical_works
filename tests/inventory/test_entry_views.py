@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from apps.inventory.models import Company, EntryKind, StockEntry
 from apps.inventory.selectors import picker_data, picker_option
-from apps.inventory.services import Line, post_entry
+from apps.inventory.services import Line, post_entry, undo_entry
 from tests.factories import loc, make_item
 
 pytestmark = pytest.mark.django_db
@@ -406,3 +406,38 @@ def test_source_location_starts_on_choose_and_missing_one_is_refused(office_clie
     html = submit(office_client, url, data).content.decode()
     assert "Location: Choose the location." in html
     assert StockEntry.objects.count() == before
+
+
+def test_entry_page_offers_another_of_the_same_kind(office_client, office_user):
+    a = make_item("EIO6006")
+    entry = stock(a, 10, office_user)
+    out = post_entry(
+        kind=EntryKind.OUT,
+        entry_date=timezone.localdate(),
+        user=office_user,
+        subtype="SITE",
+        party="Dr Reddys",
+        lines=[Line(a, loc(), -1)],
+    )
+    submit(
+        office_client,
+        "/stock/transfer/",
+        {"entry_date": TODAY, "location": loc().pk, "to_location": loc("TV Shop").pk, **lines((a, 1))},
+    )
+    submit(
+        office_client,
+        "/stock/adjust/",
+        {"entry_date": TODAY, "location": loc().pk, "reason": "DAMAGED", "note": "x", **lines((a, 7))},
+    )
+    for number, label, url in [
+        (entry.number, "Add more stock in", "/stock/in/"),
+        (out.number, "Add more stock out", "/stock/out/"),
+        ("TRF-0001", "Add another transfer", "/stock/transfer/"),
+        ("ADJ-0001", "Add another adjustment", "/stock/adjust/"),
+    ]:
+        html = office_client.get(f"/entries/{number}/").content.decode()
+        assert label in html and f'href="{url}"' in html, number
+        assert html.count("Add more") + html.count("Add another") == 1, number
+    undo_entry(entry=out, reason="typed wrong qty", user=office_user)
+    rev = office_client.get("/entries/REV-0001/").content.decode()
+    assert "Add more" not in rev and "Add another" not in rev

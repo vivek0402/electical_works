@@ -199,6 +199,7 @@ tr.undone td:not(.keep), tr.undone td:not(.keep) :is(a, span, small, .code, .sub
 th a.sort { color: inherit; font-weight: 600; }
 th a.sort::after { content: "↕"; opacity: .4; margin-left: 4px; font-size: var(--s1); }
 th a.sort.asc::after { content: "↑"; opacity: 1; } th a.sort.desc::after { content: "↓"; opacity: 1; }
+th a.sort.sort-sub { display: block; font-size: var(--s1); font-weight: 400; color: var(--muted); } /* a second sort under the first (Date / added on) */
 /* grouped header and the shaded "not counted" column (Defective store) */
 .table .grp th, table.t .grp th { border-bottom: 0; padding-bottom: 0; color: var(--muted); font-weight: 400; }
 .table .grp th.span, table.t .grp th.span { border-bottom: 1px solid var(--line); padding-bottom: 6px; text-align: center; color: var(--ink); font-weight: 600; }
@@ -360,9 +361,17 @@ textarea.form-control { min-height: 48px; padding: 12px 14px; }
 .lines-table .avail { padding-top: 12px; font-size: var(--s1); }
 .line-meta { display: block; margin-top: 4px; }
 .lines-table td.c-fault { min-width: 12rem; }
+.lines-table .input-group { flex-wrap: nowrap; } /* the unit (NOS) stays beside the number */
+.lines-table .input-group .qty { min-width: 5rem; } /* a typed quantity (up to 6 digits) is never clipped; the table grows a column instead */
 .lines-table td[data-label="Batch code"] { min-width: 8rem; }
 .lines-table td[data-label="PKD (packed)"] { min-width: 10rem; }
 [data-mode="collect"] .lines-table .ts-wrapper { min-width: 13rem; } /* 3 more columns: fits a 1366px screen */
+@media (max-width: 900px) { /* room for the wider quantity box on tablets */
+  .lines-table .ts-wrapper, [data-mode="collect"] .lines-table .ts-wrapper { min-width: 12rem; }
+  .lines-table td[data-label="Batch code"] { min-width: 7rem; }
+  .lines-table td[data-label="PKD (packed)"] { min-width: 9rem; }
+  .lines-table > :not(caption) > * > * { padding-left: 6px; padding-right: 6px; }
+}
 /* Focusing a picker that has an item must not grow the row (the code would wrap and a click below would miss). */
 .lines-table .ts-wrapper.single .ts-control { flex-wrap: nowrap; }
 .lines-table .ts-wrapper.single .ts-control > .item { white-space: nowrap; flex-shrink: 0; }

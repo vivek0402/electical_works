@@ -52,20 +52,27 @@ def get_item(mapping, key):
     return mapping.get(key, 0) if mapping else 0
 
 
-@register.inclusion_tag("core/_sort_th.html", takes_context=True)
-def sort_th(context, key, label, num=False, th_class="", sub=""):
-    """Column header that sorts by `key`; clicking again flips the direction. `th_class` styles the cell."""
+def _sort_link(context, key, label):
     table = context["table"]
     active = table["sort"] == key
     new_dir = "desc" if active and table["dir"] == "asc" else "asc"
     return {
         "href": url_with(context, sort=key, dir=new_dir, page=None),
         "label": label,
-        "num": num,
-        "th_class": th_class,
-        "sub": sub,
         "cls": table["dir"] if active else "",
     }
+
+
+@register.inclusion_tag("core/_sort_th.html", takes_context=True)
+def sort_th(context, key, label, num=False, th_class="", sub=""):
+    """Column header that sorts by `key`; clicking again flips the direction. `th_class` styles the cell."""
+    return {**_sort_link(context, key, label), "num": num, "th_class": th_class, "sub": sub}
+
+
+@register.inclusion_tag("core/_sort_a.html", takes_context=True)
+def sort_a(context, key, label, a_class=""):
+    """Just the sort link, for a header cell that sorts two ways (e.g. Date, then "added on" under it)."""
+    return {**_sort_link(context, key, label), "a_class": a_class}
 
 
 @register.simple_tag(takes_context=True)

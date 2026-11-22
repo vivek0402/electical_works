@@ -3,6 +3,12 @@
 {% block page_title %}<span class="code">{{ entry.number }}</span> {% include "inventory/_kind_pill.html" with kind=entry.kind label=entry.get_kind_display %}{% if undone_by %} <span class="badge st st-done"><i class="ti ti-arrow-back-up" aria-hidden="true"></i>Undone</span>{% endif %}{% endblock %}
 {% block page_context %}{{ entry.entry_date|date }}{% if entry.party %}, {% if entry.kind == "IN" %}from{% elif entry.kind == "TRF" %}to{% else %}for{% endif %} {{ entry.party }}{% endif %}. Entered by {{ entry.created_by.first_name|default:entry.created_by.username }}.{% endblock %}
 {% block actions %}
+  {% if not entry.reverses and not entry.is_defective and not entry.is_complaint_visit %}{# another of the same kind, on a blank form #}
+    {% if entry.kind == "IN" %}<a href="{% url 'stock_in' %}" class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add more stock in</a>
+    {% elif entry.kind == "OUT" %}<a href="{% url 'stock_out' %}" class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add more stock out</a>
+    {% elif entry.kind == "TRF" %}<a href="{% url 'transfer' %}" class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add another transfer</a>
+    {% elif entry.kind == "ADJ" %}<a href="{% url 'adjust' %}" class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i> Add another adjustment</a>{% endif %}
+  {% endif %}
   {% if can_undo %}<button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#undo-modal"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Undo this entry</button>{% endif %}
   {% if entry.complaint %}<a href="{% url 'complaint_detail' entry.complaint.number %}" class="btn"><i class="ti ti-message-report" aria-hidden="true"></i> Complaint {{ entry.complaint.number }}</a>{% endif %}
   {% if entry.return_batch %}<a href="{% url 'batch_detail' entry.return_batch.number %}" class="btn"><i class="ti ti-truck-return" aria-hidden="true"></i> Batch {{ entry.return_batch.number }}</a>{% endif %}

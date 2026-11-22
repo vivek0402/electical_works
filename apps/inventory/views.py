@@ -243,6 +243,7 @@ def movements(request):
     rows = selectors.movement_rows(f)
     sorters = {
         "date": lambda r: -r["n"],
+        "added": lambda r: (r["entry"].created_at, -r["n"]),  # when it was typed in, not the entry's own date
         "no": lambda r: r["entry"].number,
         "kind": lambda r: r["entry"].kind,
         "code": lambda r: r["line"].item.code,
